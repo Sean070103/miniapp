@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+ provider = "prisma-client-js"
+}
+
+datasource db {
+ provider = "mongodb"
+ url      = "mongodb+srv://lornayocor:cXqrgEX74ex576j3@juntos.n0m0ol6.mongodb.net/miniapp?retryWrites=true&w=majority&appName=juntos"
+}
+
+//schema for Employee table
+model BaseUsers {
+ id          String   @id @default(auto()) @map("_id") @db.ObjectId
+ baseUserId  String
+ bio         String?
+ profile     String?
+ dateCreated DateTime @default(now())
+}
+
+model Journal {
+ id          String   @id @default(auto()) @map("_id") @db.ObjectId
+ baseUserId  String
+ photo       String?
+ journal     String
+ likes       Int      @default(0)
+ tags        String[]
+ privacy     String
+ dateCreated DateTime @default(now())
+}
+
+model Repost {
+ id          String   @id @default(auto()) @map("_id") @db.ObjectId
+ journalId   String
+ baseUserId  String
+ dateCreated DateTime @default(now())
+}
+
+model Comment {
+ id          String   @id @default(auto()) @map("_id") @db.ObjectId
+ baseUserId  String
+ journalId   String
+ comment     String
+ dateCreated DateTime @default(now())
+}
+
+model Chaincomments {
+ id          String   @id @default(auto()) @map("_id") @db.ObjectId
+ commentId   String
+ baseUserId  String
+ comment     String
+ dateCreated DateTime @default(now())
+}
