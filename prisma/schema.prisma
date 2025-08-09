@@ -24,6 +24,7 @@ model BaseUsers {
 
 model Journal {
  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+ BaseUserId  String
  photo       String?
  journal     String
  likes       Int      @default(0)
@@ -35,7 +36,7 @@ model Journal {
 model Repost {
  id          String   @id @default(auto()) @map("_id") @db.ObjectId
  journalId   String
- userId      String
+ BaseUserId  String
  dateCreated DateTime @default(now())
 }
 
@@ -48,9 +49,9 @@ model Comment {
 }
 
 model ChainComments {
- id         String @id @default(auto()) @map("_id") @db.ObjectId
- commentId  String
- BaseUserId String
- comment    String
+ id          String   @id @default(auto()) @map("_id") @db.ObjectId
+ commentId   String
+ BaseUserId  String
+ comment     String
  dateCreated DateTime @default(now())
 }

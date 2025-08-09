@@ -1,6 +1,7 @@
 import prisma from '../../../../../utils/connect';
 
-//find user by baseUserId
+
+// get post bu baseUserId
 export async function POST(req: Request) {
   const body = await req.json();
   const { baseUserId } = body;
@@ -13,18 +14,18 @@ export async function POST(req: Request) {
   }
 
   try {
-    const baseUserDetails = await prisma.baseUsers.findFirst({
+    const baseUserJournal = await prisma.journal.findFirst({
       where: { base: baseUserId },
     });
 
-    if (!baseUserDetails) {
+    if (!baseUserJournal) {
       return new Response(JSON.stringify({ error: "Base user not found" }), {
         status: 404,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify(baseUserDetails), {
+    return new Response(JSON.stringify(baseUserJournal), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

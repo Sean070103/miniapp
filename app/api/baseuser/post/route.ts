@@ -1,7 +1,7 @@
 
 import prisma from '../../../../utils/connect'
 
-
+//CREATE BASE ACC( IN APP NOT WEB3)
 export async function POST(req:Request) {
  
  const body = await req.json()

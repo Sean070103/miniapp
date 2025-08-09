@@ -1,8 +1,10 @@
 import prisma from '../../../../utils/connect'
 
+
+// GET ALL JOURNAL
 export async function GET() {
   try {
-    const allJournal = await prisma.Journal.findMany();
+    const allJournal = await prisma.journal.findMany();
 
     return new Response(
       JSON.stringify(allJournal),
