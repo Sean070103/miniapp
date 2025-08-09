@@ -17,8 +17,8 @@ datasource db {
 model BaseUsers {
  id          String   @id @default(auto()) @map("_id") @db.ObjectId
  base        String
- bio         String
- profile     String
+ bio         String?
+ profile     String?
  dateCreated DateTime @default(now())
 }
 
