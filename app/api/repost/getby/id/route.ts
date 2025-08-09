@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
   try {
    const userRepost = await prisma.repost.findMany({
-     where: { base: baseUserId },
+     where: { baseUserId: baseUserId },
    });
 
 

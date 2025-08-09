@@ -1,30 +1,25 @@
 import prisma from '../../../../../utils/connect';
 
-//find user by baseUserId
+
+// get post bu baseUserId
 export async function POST(req: Request) {
   const body = await req.json();
-  const { baseUserId } = body;
+  const { commentId } = body;
 
-  if (!baseUserId) {
-    return new Response(JSON.stringify({ error: "Missing baseUserId" }), {
+  if (!commentId) {
+    return new Response(JSON.stringify({ error: "Missing commentId" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
   }
 
   try {
-    const baseUserDetails = await prisma.baseUsers.findFirst({
-      where: { baseUserId: baseUserId },
-    });
+   const chainCommentUser = await prisma.chaincomments.findMany({
+     where: { commentId: commentId },
+   });
 
-    if (!baseUserDetails) {
-      return new Response(JSON.stringify({ error: "Base user not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
 
-    return new Response(JSON.stringify(baseUserDetails), {
+    return new Response(JSON.stringify(chainCommentUser), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

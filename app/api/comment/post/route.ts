@@ -1,34 +1,35 @@
 
 import prisma from '../../../../utils/connect'
 
-//POST JOURNAL
+//POST comment
 export async function POST(req:Request) {
  
  const body = await req.json()
 
  const {
- journalId,
- BaseUserId 
+ BaseUserId,
+ JournalId,  
+ comment,    
  } = body
 
  try {
-  if (!BaseUserId|| !journalId) {
+  if (!BaseUserId|| !JournalId) {
    return new Response(
     JSON.stringify({ error: "please input a journalId or BaseUserId", }),
     { status: 500, headers: { "Content-Type": "application/json" } }
    )
   }
 
-  const createJournal = await prisma.repost.create({
-
+  const createComment  = await prisma.comment.create({
    data: {
-    journalId,
-    BaseUserId  
+     BaseUserId,
+     JournalId,  
+     comment, 
    }
   })
   
 
-  return new Response(JSON.stringify(createJournal), {
+  return new Response(JSON.stringify(createComment), {
      status:201,
      headers: {"Content-Type": "application/json"},
   })

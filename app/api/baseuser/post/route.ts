@@ -7,13 +7,13 @@ export async function POST(req:Request) {
  const body = await req.json()
 
  const {
-  base,
+  baseUserId,
   Bio,
   profile,
  } = body
 
  try {
-  if (!base) {
+  if (!baseUserId) {
    return new Response(
     JSON.stringify({ error: "please input a baseId", }),
     { status: 500, headers: { "Content-Type": "application/json" } }
@@ -23,7 +23,7 @@ export async function POST(req:Request) {
   const createUser = await prisma.baseUsers.create({
 
    data: {
-     base,
+     baseUserId,
      Bio,
      profile,
    }

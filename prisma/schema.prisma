@@ -16,7 +16,7 @@ datasource db {
 //schema for Employee table
 model BaseUsers {
  id          String   @id @default(auto()) @map("_id") @db.ObjectId
- base        String
+ baseUserId  String
  bio         String?
  profile     String?
  dateCreated DateTime @default(now())
@@ -24,7 +24,7 @@ model BaseUsers {
 
 model Journal {
  id          String   @id @default(auto()) @map("_id") @db.ObjectId
- BaseUserId  String
+ baseUserId  String
  photo       String?
  journal     String
  likes       Int      @default(0)
@@ -36,22 +36,22 @@ model Journal {
 model Repost {
  id          String   @id @default(auto()) @map("_id") @db.ObjectId
  journalId   String
- BaseUserId  String
+ baseUserId  String
  dateCreated DateTime @default(now())
 }
 
 model Comment {
  id          String   @id @default(auto()) @map("_id") @db.ObjectId
- BaseUserId  String
- JournalId   String
+ baseUserId  String
+ journalId   String
  comment     String
  dateCreated DateTime @default(now())
 }
 
-model ChainComments {
+model Chaincomments {
  id          String   @id @default(auto()) @map("_id") @db.ObjectId
  commentId   String
- BaseUserId  String
+ baseUserId  String
  comment     String
  dateCreated DateTime @default(now())
 }
