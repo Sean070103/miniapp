@@ -1,41 +1,43 @@
-import prisma from '../../../../../utils/connect'
+import prisma from '../../../../../utils/connect';
 
-
-export async function GET(req: Request) {
- 
- const body = await req.json()
-
- const {baseUserId}= body
-
- try {
+export async function POST(req: Request) {
+  const body = await req.json();
+  const { baseUserId } = body;
 
   if (!baseUserId) {
-   return new Response(JSON.stringify("no baseUserId!"),{
-    status: 500,
-    headers:{"Content-Type":"application/json"}
-  })
+    return new Response(JSON.stringify({ error: "Missing baseUserId" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
-  const baseUserDetails = await prisma.baseUsers.findFirst({
-   where: {
-    base:baseUserId
-   }
-  })
+  try {
+    const baseUserDetails = await prisma.baseUsers.findFirst({
+      where: { base: baseUserId },
+    });
 
-  return new Response(JSON.stringify(baseUserDetails),
-   {
-    status: 200,
-    headers:{"Content-type":"application/json"}
-   }
-  )
-  
-  
- } catch (e) {
-  return new Response(JSON.stringify({ error: "error at getting baseuser", details: e }),
-   {
-    status: 500,
-    headers:{"Content-Type":"application/json"}
+    if (!baseUserDetails) {
+      return new Response(JSON.stringify({ error: "Base user not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify(baseUserDetails), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+
+  } catch (e) {
+    return new Response(
+      JSON.stringify({
+        error: "Error fetching base user",
+        details: e instanceof Error ? e.message : String(e),
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
-  )
- }
 }
