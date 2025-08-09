@@ -14,18 +14,12 @@ export async function POST(req: Request) {
   }
 
   try {
-    const baseUserJournal = await prisma.journal.findFirst({
-      where: { base: baseUserId },
-    });
+   const userRepost = await prisma.repost.findMany({
+     where: { base: baseUserId },
+   });
 
-    // if (!baseUserJournal) {
-    //   return new Response(JSON.stringify({ error: "Base user not found" }), {
-    //     status: 404,
-    //     headers: { "Content-Type": "application/json" },
-    //   });
-    // }
 
-    return new Response(JSON.stringify(baseUserJournal), {
+    return new Response(JSON.stringify(userRepost), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
