@@ -3,7 +3,8 @@ import { coinbaseWallet, injectedWallet } from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, http } from 'wagmi';
 import { base } from 'wagmi/chains';
 
-const projectId = 'YOUR_PROJECT_ID'; // TODO: Replace with your WalletConnect Cloud project ID
+// Use a default project ID for development
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'c4f79cc821944d9680842e34466bfbd9';
 
 const connectors = connectorsForWallets(
   [

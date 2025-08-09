@@ -31,7 +31,7 @@ export function UserProfile() {
   return (
     <Card className="border-0 shadow-xl glass-effect">
       <CardHeader className="pb-6">
-        <CardTitle className="text-white flex items-center gap-3 text-2xl">
+        <CardTitle className="text-white flex items-center gap-3 text-2xl pixelated-text">
           <User className="w-6 h-6" />
           Your Profile
         </CardTitle>
@@ -44,16 +44,16 @@ export function UserProfile() {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-white mb-3 pixelated-text">
               {user.account ? 'Base Account' : 'Wallet Connected'}
             </h3>
             <div className="flex items-center gap-3">
-              <Badge variant="outline" className="glass-effect border-white/30 text-white px-4 py-2">
+              <Badge variant="outline" className="glass-effect border-white/30 text-white px-4 py-2 pixelated-text">
                 <Wallet className="w-4 h-4 mr-2" />
                 {getAddressDisplay(user.address)}
               </Badge>
               {user.account && (
-                <Badge className="bg-green-500/20 text-green-300 border-green-500/30 px-4 py-2">
+                <Badge className="bg-green-500/20 text-green-300 border-green-500/30 px-4 py-2 pixelated-text">
                   <Shield className="w-4 h-4 mr-2" />
                   Base Account
                 </Badge>
@@ -64,16 +64,16 @@ export function UserProfile() {
 
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 rounded-2xl glass-effect">
-            <span className="text-blue-100 text-base font-medium">Full Address</span>
+            <span className="text-blue-100 text-base font-medium pixelated-text">Full Address</span>
             <div className="flex items-center gap-3">
-              <code className="text-white text-sm font-mono bg-white/10 px-3 py-1 rounded-lg">
+              <code className="text-white text-sm font-mono bg-white/10 px-3 py-1 rounded-lg pixelated-text">
                 {user.address}
               </code>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={copyAddress}
-                className="h-10 w-10 p-0 text-white hover:bg-white/10 rounded-xl"
+                className="h-10 w-10 p-0 text-white rounded-xl pixelated-text"
               >
                 {copied ? (
                   <Check className="w-5 h-5 text-green-400" />
@@ -85,16 +85,16 @@ export function UserProfile() {
           </div>
 
           <div className="flex items-center justify-between p-4 rounded-2xl glass-effect">
-            <span className="text-blue-100 text-base font-medium">Network</span>
-            <Badge variant="outline" className="glass-effect border-white/30 text-white px-4 py-2">
+            <span className="text-blue-100 text-base font-medium pixelated-text">Network</span>
+            <Badge variant="outline" className="glass-effect border-white/30 text-white px-4 py-2 pixelated-text">
               Base
             </Badge>
           </div>
 
           {user.account && (
             <div className="flex items-center justify-between p-4 rounded-2xl glass-effect">
-              <span className="text-blue-100 text-base font-medium">Account Status</span>
-              <Badge className="bg-green-500/20 text-green-300 border-green-500/30 px-4 py-2">
+              <span className="text-blue-100 text-base font-medium pixelated-text">Account Status</span>
+              <Badge className="bg-green-500/20 text-green-300 border-green-500/30 px-4 py-2 pixelated-text">
                 Active
               </Badge>
             </div>
@@ -112,7 +112,7 @@ export function UserProfile() {
             }
           }}
           variant="outline"
-          className="w-full bg-red-500/10 border-red-500/30 text-red-300 hover:bg-red-500/20 hover:border-red-500/50 py-6 text-lg font-medium rounded-2xl"
+          className="w-full bg-red-500/10 border-red-500/30 text-red-300 py-6 text-lg font-medium rounded-2xl pixelated-text"
         >
           <LogOut className="w-5 h-5 mr-3" />
           Disconnect Wallet

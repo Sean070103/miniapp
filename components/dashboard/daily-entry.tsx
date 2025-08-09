@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Calendar, Plus, Save, Edit3, PenTool } from 'lucide-react'
+import { Calendar, Plus, Save, Edit3, PenTool, Info, Hash } from 'lucide-react'
 
 interface DailyEntry {
   id: string
@@ -26,7 +26,18 @@ export function DailyEntry({ onSave, todayEntry }: DailyEntryProps) {
   const [tags, setTags] = useState<string[]>(todayEntry?.tags || [])
 
   const today = new Date().toISOString().split('T')[0]
-  const suggestedTags = ['DeFi', 'NFT', 'Learning', 'Trading', 'Building', 'Community', 'Rewards']
+  
+  const articleTypeTags = [
+    { type: "DeFi", icon: "💱", color: "from-blue-400 to-blue-600" },
+    { type: "NFT", icon: "🖼️", color: "from-blue-500 to-blue-700" },
+    { type: "Event", icon: "🎪", color: "from-blue-300 to-blue-500" },
+    { type: "Learning", icon: "📚", color: "from-blue-600 to-blue-800" },
+    { type: "Governance", icon: "🏛️", color: "from-blue-700 to-blue-900" },
+    { type: "Rewards", icon: "🎁", color: "from-blue-200 to-blue-400" },
+    { type: "Other", icon: "✨", color: "from-blue-500 to-blue-600" }
+  ]
+  
+  const suggestedTags = ['Base', 'FirstTime', 'Milestone', 'Trading', 'Building', 'Community', 'Web3']
 
   const handleSave = () => {
     if (!content.trim()) return
@@ -55,101 +66,123 @@ export function DailyEntry({ onSave, todayEntry }: DailyEntryProps) {
 
   if (!isEditing && todayEntry) {
     return (
-      <Card className="border-0 shadow-xl bg-white">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-gray-800 flex items-center gap-3">
-            <PenTool className="w-6 h-6 text-blue-600" />
-            Today's Journal Entry
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-            <p className="text-gray-800 text-lg leading-relaxed">{todayEntry.content}</p>
-            {todayEntry.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-4">
-                {todayEntry.tags.map((tag, index) => (
-                  <Badge key={index} className="bg-blue-100 text-blue-800 border-blue-200">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-          <Button
-            onClick={() => setIsEditing(true)}
-            variant="outline"
-            className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            <Edit3 className="w-4 h-4 mr-2" />
-            Edit Entry
-          </Button>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  return (
-    <Card className="border-0 shadow-xl bg-white">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-gray-800 flex items-center gap-3">
-          <PenTool className="w-6 h-6 text-blue-600" />
-          Write Today's Entry
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <Textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="What did you learn or experience in crypto today? Share your thoughts, trades, or discoveries..."
-          className="min-h-[150px] bg-gray-50 border-gray-300 text-gray-800 placeholder:text-gray-500 resize-none rounded-xl"
-        />
-        
-        <div className="space-y-3">
-          <p className="text-gray-700 text-sm font-semibold">Add tags to categorize your entry:</p>
-          <div className="flex flex-wrap gap-2">
-            {suggestedTags.map((tag) => (
-              <Button
-                key={tag}
-                variant="outline"
-                size="sm"
-                onClick={() => addTag(tag)}
-                disabled={tags.includes(tag)}
-                className={`${
-                  tags.includes(tag)
-                    ? 'bg-blue-100 text-blue-800 border-blue-300'
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <Plus className="w-3 h-3 mr-1" />
-                {tag}
-              </Button>
-            ))}
-          </div>
-          
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag, index) => (
-                <Badge
-                  key={index}
-                  className="bg-blue-100 text-blue-800 border-blue-200 cursor-pointer hover:bg-blue-200"
-                  onClick={() => removeTag(tag)}
-                >
-                  {tag} ×
+      <div className="space-y-4">
+        <div className="bg-slate-700/50 rounded-xl p-6 border border-slate-600">
+          <p className="text-white text-lg leading-relaxed pixelated-text">{todayEntry.content}</p>
+          {todayEntry.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-4">
+              {todayEntry.tags.map((tag, index) => (
+                <Badge key={index} className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text">
+                  <Hash className="w-3 h-3 mr-1" />
+                  {tag}
                 </Badge>
               ))}
             </div>
           )}
         </div>
+        <Button
+          onClick={() => setIsEditing(true)}
+          variant="outline"
+          className="bg-slate-700 border-slate-600 text-white pixelated-text"
+        >
+          <Edit3 className="w-4 h-4 mr-2" />
+          Edit Entry
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-4">
+        <Textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="What's happening in your Web3 world today?"
+          className="min-h-[120px] bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-400 pixelated-text"
+        />
         
-        <Button 
+        {/* Article Type Tags */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-blue-300 text-sm pixelated-text">
+            <Info className="w-4 h-4" />
+            <span>Article Type</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {articleTypeTags.map((tag) => (
+              <Button
+                key={tag.type}
+                variant={tags.includes(tag.type) ? "default" : "outline"}
+                size="sm"
+                onClick={() => addTag(tag.type)}
+                className={`pixelated-text ${
+                  tags.includes(tag.type)
+                    ? 'bg-gradient-to-r ' + tag.color + ' text-white border-0'
+                    : 'bg-slate-700/50 border-slate-600 text-white'
+                }`}
+              >
+                {tag.icon} {tag.type}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Suggested Tags */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-blue-300 text-sm pixelated-text">
+            <Hash className="w-4 h-4" />
+            <span>Suggested Tags</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {suggestedTags.map((tag) => (
+              <Button
+                key={tag}
+                variant={tags.includes(tag) ? "default" : "outline"}
+                size="sm"
+                onClick={() => addTag(tag)}
+                className={`pixelated-text ${
+                  tags.includes(tag)
+                    ? 'bg-blue-500 text-white border-0'
+                    : 'bg-slate-700/50 border-slate-600 text-white'
+                }`}
+              >
+                #{tag}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Selected Tags */}
+        {tags.length > 0 && (
+          <div className="space-y-2">
+            <div className="text-blue-300 text-sm pixelated-text">Selected Tags</div>
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <Badge
+                  key={tag}
+                  className="bg-blue-500/20 text-blue-300 border-blue-400/30 cursor-pointer pixelated-text"
+                  onClick={() => removeTag(tag)}
+                >
+                  <Hash className="w-3 h-3 mr-1" />
+                  {tag}
+                  <span className="ml-1 text-blue-200">×</span>
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-end">
+        <Button
           onClick={handleSave}
           disabled={!content.trim()}
-          className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+          className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white pixelated-text"
         >
           <Save className="w-4 h-4 mr-2" />
-          Save Journal Entry
+          Post Entry
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

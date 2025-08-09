@@ -79,122 +79,114 @@ export function CalendarView({ entries, onDateSelect, selectedDate }: CalendarVi
   }
 
   return (
-         <Card className="border-0 shadow-xl bg-white">
-       <CardHeader className="pb-4">
-         <CardTitle className="text-black flex items-center gap-3">
-           <CalendarIcon className="w-6 h-6" />
-           Calendar View
-         </CardTitle>
-       </CardHeader>
-       <CardContent className="space-y-6">
-         {/* Month Navigation */}
-         <div className="flex items-center justify-between">
-           <Button
-             variant="outline"
-             size="sm"
-             onClick={() => navigateMonth('prev')}
-             className="bg-white border-gray-300 text-black hover:bg-gray-50"
-           >
-             <ChevronLeft className="w-4 h-4" />
-           </Button>
-           <h3 className="text-xl font-semibold text-black">{monthName}</h3>
-           <Button
-             variant="outline"
-             size="sm"
-             onClick={() => navigateMonth('next')}
-             className="bg-white border-gray-300 text-black hover:bg-gray-50"
-           >
-             <ChevronRight className="w-4 h-4" />
-           </Button>
-         </div>
+    <div className="space-y-6">
+      {/* Month Navigation */}
+      <div className="flex items-center justify-between">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigateMonth('prev')}
+          className="bg-slate-700 border-slate-600 text-white pixelated-text"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </Button>
+        <h3 className="text-xl font-semibold text-white pixelated-text">{monthName}</h3>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigateMonth('next')}
+          className="bg-slate-700 border-slate-600 text-white pixelated-text"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
 
-        {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-1">
-                     {/* Day Headers */}
-           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-             <div key={day} className="p-2 text-center">
-               <span className="text-black text-sm font-semibold">{day}</span>
-             </div>
-           ))}
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {/* Day Headers */}
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+          <div key={day} className="p-2 text-center">
+            <span className="text-blue-300 text-sm font-semibold pixelated-text">{day}</span>
+          </div>
+        ))}
+        
+        {/* Calendar Days */}
+        {days.map((date, index) => {
+          const dateString = formatDate(date)
+          const entry = getEntryForDate(dateString)
+          const hasEntry = !!entry
           
-          {/* Calendar Days */}
-          {days.map((date, index) => {
-            const dateString = formatDate(date)
-            const entry = getEntryForDate(dateString)
-            const hasEntry = !!entry
-            
-            return (
-              <Button
-                key={index}
-                variant="outline"
-                onClick={() => onDateSelect(dateString)}
-                                 className={`h-12 p-1 relative ${
-                   isToday(date)
-                     ? 'bg-black text-white border-black'
-                     : isSelected(date)
-                     ? 'bg-gray-100 text-black border-gray-300'
-                     : isCurrentMonth(date)
-                     ? 'bg-white border-gray-300 text-black hover:bg-gray-50'
-                     : 'border-gray-200 text-gray-400'
-                 }`}
-              >
-                <div className="flex flex-col items-center justify-center w-full h-full">
-                  <span className="text-sm font-medium">{date.getDate()}</span>
-                  {hasEntry && (
-                    <CheckCircle className="w-3 h-3 text-green-400 mt-1" />
-                  )}
+          return (
+            <Button
+              key={index}
+              variant="outline"
+              onClick={() => onDateSelect(dateString)}
+              className={`h-12 p-1 relative pixelated-text ${
+                isToday(date)
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-blue-400'
+                  : isSelected(date)
+                  ? 'bg-slate-700 text-white border-slate-500'
+                  : isCurrentMonth(date)
+                  ? 'bg-slate-700/50 border-slate-600 text-white'
+                  : 'border-slate-700 text-slate-500'
+              }`}
+            >
+              <div className="flex flex-col items-center justify-center w-full h-full">
+                <span className="text-sm font-medium">{date.getDate()}</span>
+                {hasEntry && (
+                  <CheckCircle className="w-3 h-3 text-green-400 mt-1" />
+                )}
+              </div>
+            </Button>
+          )
+        })}
+      </div>
+
+      {/* Selected Date Info */}
+      {selectedDate && (
+        <div className="bg-slate-700/50 rounded-2xl p-4 border border-slate-600">
+          <h4 className="text-white font-semibold mb-2 pixelated-text">
+            {new Date(selectedDate).toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </h4>
+          {getEntryForDate(selectedDate) ? (
+            <div className="space-y-2">
+              <p className="text-blue-300 text-sm font-medium pixelated-text">
+                {getEntryForDate(selectedDate)?.content}
+              </p>
+              {getEntryForDate(selectedDate)?.tags && getEntryForDate(selectedDate)!.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {getEntryForDate(selectedDate)!.tags.map((tag, index) => (
+                    <Badge key={index} className="bg-blue-500/20 text-blue-300 border-blue-400/30 text-xs pixelated-text">
+                      {tag}
+                    </Badge>
+                  ))}
                 </div>
-              </Button>
-            )
-          })}
+              )}
+            </div>
+          ) : (
+            <p className="text-slate-400 text-sm pixelated-text">No entry for this date</p>
+          )}
         </div>
+      )}
 
-                 {/* Selected Date Info */}
-         {selectedDate && (
-           <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
-             <h4 className="text-black font-semibold mb-2">
-               {new Date(selectedDate).toLocaleDateString('en-US', { 
-                 weekday: 'long', 
-                 year: 'numeric', 
-                 month: 'long', 
-                 day: 'numeric' 
-               })}
-             </h4>
-             {getEntryForDate(selectedDate) ? (
-               <div className="space-y-2">
-                 <p className="text-black text-sm font-medium">
-                   {getEntryForDate(selectedDate)?.content}
-                 </p>
-                 {getEntryForDate(selectedDate)?.tags.length > 0 && (
-                   <div className="flex flex-wrap gap-1">
-                                           {getEntryForDate(selectedDate)?.tags.map((tag, index) => (
-                        <Badge key={index} className="bg-black text-white border-black text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                   </div>
-                 )}
-               </div>
-             ) : (
-               <p className="text-gray-600 text-sm">No entry for this date</p>
-             )}
-           </div>
-         )}
-
-                 {/* Stats */}
-         <div className="flex justify-between text-sm">
-           <div className="text-black font-medium">
-             Total Entries: {entries.length}
-           </div>
-           <div className="text-black font-medium">
-             This Month: {entries.filter(entry => {
-               const entryDate = new Date(entry.date)
-               return entryDate.getMonth() === currentMonth.getMonth() && 
-                      entryDate.getFullYear() === currentMonth.getFullYear()
-             }).length}
-           </div>
-         </div>
-      </CardContent>
-    </Card>
+      {/* Stats */}
+      <div className="flex justify-between text-sm">
+        <div className="text-blue-300 font-medium pixelated-text">
+          Total Entries: {entries.length}
+        </div>
+        <div className="text-blue-300 font-medium pixelated-text">
+          This Month: {entries.filter(entry => {
+            const entryDate = new Date(entry.date)
+            return entryDate.getMonth() === currentMonth.getMonth() && 
+                   entryDate.getFullYear() === currentMonth.getFullYear()
+          }).length}
+        </div>
+      </div>
+    </div>
   )
 }

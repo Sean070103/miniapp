@@ -40,22 +40,22 @@ export function ContributionGrid({ entries, weeks = 20 }: ContributionGridProps)
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 contribution-grid">
       <div className="flex items-center gap-2 mb-3">
         <div className="w-3 h-3 bg-blue-400 rounded-sm"></div>
-        <span className="text-sm text-gray-600 font-medium">Your Journal Activity</span>
+        <span className="text-sm text-blue-300 font-medium pixelated-text">Your Journal Activity</span>
       </div>
-      <div className="flex gap-1 p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <div className="flex gap-1 p-4 bg-slate-700/50 rounded-lg border border-slate-600">
         {grid.map((week, wi) => (
           <div key={wi} className="flex flex-col gap-1">
             {week.map((day, di) => (
               <div
                 key={di}
                 title={day.date.toLocaleDateString() + (day.hasEntry ? ': Journal Entry' : ': No entry')}
-                className={`w-3 h-3 rounded-sm transition-all duration-200 cursor-pointer
+                className={`w-3 h-3 rounded-sm
                   ${day.hasEntry 
-                    ? 'bg-blue-400 hover:bg-blue-500 shadow-sm' 
-                    : 'bg-gray-200 hover:bg-gray-300'
+                    ? 'bg-blue-500' 
+                    : 'bg-slate-600'
                   }
                 `}
               />
@@ -63,7 +63,7 @@ export function ContributionGrid({ entries, weeks = 20 }: ContributionGridProps)
           </div>
         ))}
       </div>
-      <p className="text-xs text-gray-500 text-center">
+      <p className="text-xs text-blue-300 text-center pixelated-text">
         Each square represents a day. Blue squares show days with journal entries.
       </p>
     </div>

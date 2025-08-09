@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P:wght@400&display=swap');
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -99,10 +101,6 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -113,15 +111,31 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+html {
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  scroll-behavior: smooth;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: Georgia, 'Times New Roman', Times, serif;
   }
   html {
-    font-family: var(--font-sans);
+    font-family: Georgia, 'Times New Roman', Times, serif;
     scroll-behavior: smooth;
   }
 }
@@ -160,11 +174,150 @@
   }
   
   @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(180deg); }
   }
   
   .animate-pulse-slow {
     animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* System-themed animations */
+  .animate-system-pulse {
+    animation: systemPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes systemPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  .animate-data-stream {
+    animation: dataStream 3s linear infinite;
+  }
+
+  @keyframes dataStream {
+    0% { transform: translateX(-100%); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
+  }
+
+  /* System status indicators */
+  .system-status {
+    animation: statusBlink 1.5s ease-in-out infinite;
+  }
+
+  @keyframes statusBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Creative background effects */
+  .bg-creative {
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+  }
+
+  .animate-glow {
+    animation: glow 4s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow {
+    from { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+    to { box-shadow: 0 0 40px rgba(59, 130, 246, 0.6); }
+  }
+
+  /* Custom animations for landing page */
+  .animate-fade-in-up {
+    animation: fadeInUp 1s ease-out forwards;
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  .animate-fade-in-delayed {
+    animation: fadeInUp 1s ease-out 0.5s forwards;
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Pixelated blocky font style */
+  .pixelated-text,
+  h1.pixelated-text,
+  .pixelated-text h1,
+  h1[class*="pixelated-text"],
+  .pixelated-text *,
+  *[class*="pixelated-text"] {
+    font-family: 'Press Start 2P', monospace !important;
+    font-weight: 400 !important;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: white !important;
+  }
+
+  /* Pixelated font for buttons */
+  button.pixelated-text,
+  .pixelated-text button,
+  .pixelated-text input,
+  .pixelated-text textarea {
+    font-family: 'Press Start 2P', monospace !important;
+    font-weight: 400 !important;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    color: white !important;
+  }
+
+  /* Remove hover effects */
+  .pixelated-text:hover,
+  button.pixelated-text:hover,
+  .pixelated-text button:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Remove all hover effects and glow from contribution grid */
+  .contribution-grid *,
+  [class*="contribution"] *,
+  .grid * {
+    transition: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+
+  /* Remove hover effects from all interactive elements */
+  *:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+
+  /* Remove glow effects from scrollbars */
+  ::-webkit-scrollbar-thumb {
+    box-shadow: none !important;
+    background-image: none !important;
+  }
+
+  ::-webkit-scrollbar-track {
+    box-shadow: none !important;
+    background-image: none !important;
+  }
+
+  /* Remove any remaining glow effects */
+  .glow,
+  .shadow-glow,
+  .shadow-glow-purple {
+    box-shadow: none !important;
+    filter: none !important;
   }
 }
