@@ -12,9 +12,9 @@ export async function generateMetadata(): Promise<Metadata> {
     description: 'Track your daily crypto activities on Base. Build streaks, reflect on your journey, and maintain your Web3 life log.',
     generator: 'Next.js',
     icons: {
-      icon: '/favicon.svg',
-      shortcut: '/favicon.svg',
-      apple: '/favicon.svg',
+      icon: '/db-removebg.png',
+      shortcut: '/db-removebg.png',
+      apple: '/db-removebg.png',
     },
     other: {
       "fc:frame": JSON.stringify({

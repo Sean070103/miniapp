@@ -40,32 +40,32 @@ export function ContributionGrid({ entries, weeks = 20 }: ContributionGridProps)
   }
 
   return (
-    <div className="space-y-4 contribution-grid">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-3 h-3 bg-blue-400 rounded-sm"></div>
-        <span className="text-sm text-blue-300 font-medium pixelated-text">Your Journal Activity</span>
-      </div>
-      <div className="flex gap-1 p-4 bg-slate-700/50 rounded-lg border border-slate-600">
+    <div className="contribution-grid">
+      <div className="flex gap-1 justify-center">
         {grid.map((week, wi) => (
           <div key={wi} className="flex flex-col gap-1">
-            {week.map((day, di) => (
-              <div
-                key={di}
-                title={day.date.toLocaleDateString() + (day.hasEntry ? ': Journal Entry' : ': No entry')}
-                className={`w-3 h-3 rounded-sm
-                  ${day.hasEntry 
-                    ? 'bg-blue-500' 
-                    : 'bg-slate-600'
-                  }
-                `}
-              />
-            ))}
+            {week.map((day, di) => {
+              const isToday = getDateKey(day.date) === getDateKey(today);
+              return (
+                <div
+                  key={di}
+                  title={`${day.date.toLocaleDateString()}${day.hasEntry ? ': Journal Entry' : ': No entry'}${isToday ? ' (Today)' : ''}`}
+                  className={`w-4 h-4 rounded-sm transition-all duration-200 hover:scale-110 cursor-pointer
+                    ${day.hasEntry 
+                      ? isToday
+                        ? 'bg-blue-400 border border-blue-300 shadow-sm'
+                        : 'bg-blue-500 hover:bg-blue-400'
+                      : isToday
+                        ? 'bg-slate-500 border border-slate-400'
+                        : 'bg-slate-600 hover:bg-slate-500'
+                    }
+                  `}
+                />
+              );
+            })}
           </div>
         ))}
       </div>
-      <p className="text-xs text-blue-300 text-center pixelated-text">
-        Each square represents a day. Blue squares show days with journal entries.
-      </p>
     </div>
   );
 }
