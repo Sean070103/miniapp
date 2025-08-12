@@ -8,13 +8,13 @@ export async function POST(req:Request) {
 
  const {
  journalId,
- BaseUserId 
+ baseUserId 
  } = body
 
  try {
-  if (!BaseUserId|| !journalId) {
+  if (!baseUserId || !journalId) {
    return new Response(
-    JSON.stringify({ error: "please input a journalId or BaseUserId", }),
+    JSON.stringify({ error: "please input a journalId and baseUserId", }),
     { status: 500, headers: { "Content-Type": "application/json" } }
    )
   }
@@ -23,7 +23,7 @@ export async function POST(req:Request) {
 
    data: {
     journalId,
-    BaseUserId  
+    baseUserId  
    }
   })
   
