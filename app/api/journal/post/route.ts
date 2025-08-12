@@ -7,6 +7,7 @@ export async function POST(req:Request) {
  const body = await req.json()
 
  const {
+    baseUserId,
     photo,      
     journal,    
     likes, 
@@ -15,9 +16,9 @@ export async function POST(req:Request) {
  } = body
 
  try {
-  if (!journal|| !privacy) {
+  if (!journal || !privacy || !baseUserId) {
    return new Response(
-    JSON.stringify({ error: "please input a journal or privacy", }),
+    JSON.stringify({ error: "please input journal, privacy, and baseUserId", }),
     { status: 500, headers: { "Content-Type": "application/json" } }
    )
   }
@@ -25,6 +26,7 @@ export async function POST(req:Request) {
   const createJournal = await prisma.journal.create({
 
    data: {
+    baseUserId,
     photo,      
     journal,    
     likes, 

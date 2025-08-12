@@ -8,14 +8,14 @@ export async function POST(req:Request) {
 
  const {
  commentId,
- BaseUserId,  
+ baseUserId,  
  comment,    
  } = body
 
  try {
-  if (!BaseUserId|| !commentId) {
+  if (!baseUserId || !commentId) {
    return new Response(
-    JSON.stringify({ error: "please input a BaseUserId or commentId", }),
+    JSON.stringify({ error: "please input a baseUserId and commentId", }),
     { status: 500, headers: { "Content-Type": "application/json" } }
    )
   }
@@ -23,7 +23,7 @@ export async function POST(req:Request) {
   const createChainComment  = await prisma.chaincomments.create({
    data: {
     commentId,
-    BaseUserId,  
+    baseUserId,  
     comment, 
    }
   })

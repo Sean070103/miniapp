@@ -8,7 +8,7 @@ export async function POST(req:Request) {
 
  const {
   baseUserId,
-  Bio,
+  bio,
   profile,
  } = body
 
@@ -24,7 +24,7 @@ export async function POST(req:Request) {
 
    data: {
      baseUserId,
-     Bio,
+     bio,
      profile,
    }
   })
