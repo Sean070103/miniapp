@@ -320,4 +320,70 @@ html {
     box-shadow: none !important;
     filter: none !important;
   }
+
+  /* Enhanced layout utilities */
+  .animate-float-slow {
+    animation: float 8s ease-in-out infinite;
+  }
+
+  .animate-glow-subtle {
+    animation: glowSubtle 6s ease-in-out infinite alternate;
+  }
+
+  @keyframes glowSubtle {
+    from { box-shadow: 0 0 10px rgba(59, 130, 246, 0.1); }
+    to { box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+  }
+
+  /* Improved backdrop blur for cards */
+  .card-glass {
+    @apply bg-slate-800/40 backdrop-blur-md border border-slate-600/50;
+  }
+
+  /* Better hover states */
+  .hover-lift {
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  /* Sticky header utilities */
+  .sticky-header {
+    @apply sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-700;
+  }
+
+  /* Loading skeleton animations */
+  .skeleton-pulse {
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes skeletonPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  /* Enhanced card interactions */
+  .card-interactive {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  .card-interactive:hover {
+    @apply bg-slate-800/70 transform -translate-y-1;
+  }
+
+  /* Mobile-first responsive utilities */
+  .mobile-collapsible {
+    @apply lg:hidden;
+  }
+
+  .desktop-only {
+    @apply hidden lg:block;
+  }
+
+  /* Accessibility improvements */
+  .focus-visible-ring {
+    @apply focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900;
+  }
 }
