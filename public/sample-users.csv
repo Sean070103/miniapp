@@ -1,0 +1,6 @@
+walletAddress,username,email,profilePicture,bio
+0x1234567890abcdef,alice_crypto,alice@example.com,https://example.com/alice.jpg,Crypto enthusiast and blockchain developer
+0xabcdef1234567890,bob_web3,bob@example.com,https://example.com/bob.jpg,Web3 developer building the future
+0x9876543210fedcba,carol_nft,carol@example.com,https://example.com/carol.jpg,NFT collector and digital artist
+0xfedcba0987654321,dave_defi,dave@example.com,https://example.com/dave.jpg,DeFi researcher and yield farmer
+0x5555555555555555,eve_dao,eve@example.com,https://example.com/eve.jpg,DAO governance expert and community builder

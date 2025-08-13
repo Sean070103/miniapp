@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '../../../../utils/connect'
+import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 }
 
 function determineUploadType(headers: string[]): string {
-  if (headers.includes('baseUserId') && headers.includes('bio')) {
+  if (headers.includes('walletAddress')) {
     return 'users'
   } else if (headers.includes('baseUserId') && headers.includes('journal')) {
     return 'journals'
@@ -90,16 +90,19 @@ async function uploadUsers(records: any[]) {
   const results = []
   for (const record of records) {
     try {
-      const user = await prisma.baseUsers.create({
+      const user = await prisma.baseUser.create({
         data: {
-          baseUserId: record.baseUserId,
-          bio: record.bio || null,
-          profile: record.profile || null
+          walletAddress: record.walletAddress,
+          username: record.username || null,
+          email: record.email || null,
+          profilePicture: record.profilePicture || null,
+          bio: record.bio || null
         }
       })
       results.push(user)
-    } catch (error) {
-      results.push({ error: `Failed to create user ${record.baseUserId}` })
+    } catch (error: any) {
+      console.error('Error creating user:', error)
+      results.push({ error: `Failed to create user ${record.walletAddress}: ${error?.message || 'Unknown error'}` })
     }
   }
   return results
@@ -120,8 +123,9 @@ async function uploadJournals(records: any[]) {
         }
       })
       results.push(journal)
-    } catch (error) {
-      results.push({ error: `Failed to create journal for user ${record.baseUserId}` })
+    } catch (error: any) {
+      console.error('Error creating journal:', error)
+      results.push({ error: `Failed to create journal for user ${record.baseUserId}: ${error?.message || 'Unknown error'}` })
     }
   }
   return results
@@ -139,8 +143,9 @@ async function uploadComments(records: any[]) {
         }
       })
       results.push(comment)
-    } catch (error) {
-      results.push({ error: `Failed to create comment for journal ${record.journalId}` })
+    } catch (error: any) {
+      console.error('Error creating comment:', error)
+      results.push({ error: `Failed to create comment for journal ${record.journalId}: ${error?.message || 'Unknown error'}` })
     }
   }
   return results

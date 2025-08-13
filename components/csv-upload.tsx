@@ -163,7 +163,7 @@ export default function CSVUpload({ onUploadSuccess, onUploadError }: CSVUploadP
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-xs">
               <Users className="h-3 w-3" />
-              <span>Users: baseUserId, bio, profile</span>
+              <span>Users: walletAddress, username, email, profilePicture, bio</span>
             </div>
             <div className="flex items-center gap-2 text-xs">
               <BookOpen className="h-3 w-3" />

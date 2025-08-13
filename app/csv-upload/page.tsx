@@ -1,3 +1,5 @@
+'use client'
+
 import CSVUpload from '../../components/csv-upload'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
@@ -54,7 +56,7 @@ export default function CSVUploadPage() {
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
                     <h4 className="font-medium">Users CSV</h4>
-                    <p className="text-sm text-muted-foreground">Sample user data with baseUserId, bio, and profile</p>
+                    <p className="text-sm text-muted-foreground">Sample user data with walletAddress, username, and bio</p>
                   </div>
                   <Button 
                     size="sm" 
@@ -112,7 +114,7 @@ export default function CSVUploadPage() {
                 <div>
                   <h4 className="font-medium text-sm mb-2">Users Format:</h4>
                   <code className="text-xs bg-muted p-2 rounded block">
-                    baseUserId,bio,profile
+                    walletAddress,username,email,profilePicture,bio
                   </code>
                 </div>
                 
