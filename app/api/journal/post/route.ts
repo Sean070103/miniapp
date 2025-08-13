@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { baseUserId, photo, journal, likes, tags, privacy } = body;
 
-    // ✅ Basic validation
+
     if (!baseUserId || !journal) {
       return NextResponse.json(
         { error: "Missing required fields: baseUserId or journal" },
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Create Journal in DB
+
     const newJournal = await prisma.journal.create({
       data: {
         baseUserId,
