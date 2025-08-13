@@ -67,10 +67,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     setIsLoading(true)
     try {
+      // Create Base Account using the API
+      const response = await fetch('/api/baseuser', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          walletAddress: user.address,
+          username: null,
+          email: null,
+          profilePicture: null,
+          bio: null
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create account')
+      }
+
       // Create Base Account - simplified for now
       const account = {
         address: user.address,
-        type: 'base-account'
+        type: 'base-account',
+        id: result.data.id
       }
 
       const updatedUser: User = {
@@ -81,7 +103,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(updatedUser)
       localStorage.setItem('cryptojournal-user', JSON.stringify(updatedUser))
       
-      console.log('Account created successfully')
+      console.log('Account created successfully:', result.data)
     } catch (error) {
       console.error('Account creation failed:', error)
       throw error
