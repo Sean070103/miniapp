@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Wallet, Settings, User, Shield, Copy, Check, Calendar, Flame, Target, BookOpen, Plus, MessageSquare, Heart, Share2, Menu, Home, Calculator, BarChart3, X } from 'lucide-react'
+import { Wallet, Settings, User, Shield, Copy, Check, Calendar, Flame, Target, BookOpen, Plus, MessageSquare, Heart, Share2, Menu, Home, Calculator, BarChart3, X, Download, Trash2, Lock as LockIcon, LogOut } from 'lucide-react'
 import { UserProfile } from "@/components/auth/user-profile"
 import { DailyEntry } from "@/components/dashboard/daily-entry"
+
+import Link from "next/link"
 
 import { StreakTracker } from "@/components/dashboard/streak-tracker"
 import { ContributionGrid } from "@/components/dashboard/contribution-grid"
@@ -28,7 +30,7 @@ interface DashboardProps {
   address: string
 }
 
-type SidebarItem = 'home' | 'calendar' | 'calculator' | 'stats' | 'streak' | 'settings'
+type SidebarItem = 'home' | 'calendar' | 'calculator' | 'stats' | 'streak' | 'profile' | 'settings'
 
 export default function Dashboard({ address }: DashboardProps) {
   const { user } = useAuth()
@@ -453,6 +455,7 @@ export default function Dashboard({ address }: DashboardProps) {
     { id: 'streak' as SidebarItem, label: 'Streak', icon: Flame },
     { id: 'calculator' as SidebarItem, label: 'Basio', icon: Calculator },
     { id: 'stats' as SidebarItem, label: 'Stats', icon: BarChart3 },
+    { id: 'profile' as SidebarItem, label: 'Profile', icon: User },
     { id: 'settings' as SidebarItem, label: 'Settings', icon: Settings },
   ]
 
@@ -1590,6 +1593,167 @@ export default function Dashboard({ address }: DashboardProps) {
             </div>
           </div>
         )
+      case 'profile':
+        return (
+          <div className="space-y-6">
+            {/* Profile Header */}
+            <div className="text-center mb-6">
+              <h1 className="text-3xl font-bold text-white pixelated-text mb-2">Profile</h1>
+              <p className="text-blue-300 pixelated-text">Your DailyBase account</p>
+            </div>
+
+            {/* Simple Profile Card */}
+            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass max-w-2xl mx-auto">
+              <CardHeader className="text-center">
+                <Avatar className="w-20 h-20 mx-auto mb-4 ring-4 ring-blue-400/20">
+                  <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-2xl font-bold">
+                    {user?.address?.slice(2, 4).toUpperCase() || 'DB'}
+                  </AvatarFallback>
+                </Avatar>
+                <CardTitle className="text-blue-300 pixelated-text text-xl mb-2">
+                  DailyBase User
+                </CardTitle>
+                <div className="flex items-center justify-center gap-2">
+                  <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text">
+                    <Wallet className="w-3 h-3 mr-1" />
+                    {getAddressDisplay(address)}
+                  </Badge>
+                  {user?.account && (
+                    <Badge className="bg-green-500/20 text-green-300 border-green-400/30 pixelated-text">
+                      <Shield className="w-3 h-3 mr-1" />
+                      Base Account
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                  <div>
+                    <h3 className="text-white pixelated-text font-semibold">Wallet Address</h3>
+                    <p className="text-blue-300 pixelated-text text-sm">{getAddressDisplay(address)}</p>
+                  </div>
+                  <Button
+                    onClick={copyAddress}
+                    variant="outline"
+                    size="sm"
+                    className="bg-slate-700 border-slate-600 text-white pixelated-text"
+                  >
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                  <div>
+                    <h3 className="text-white pixelated-text font-semibold">Network</h3>
+                    <p className="text-blue-300 pixelated-text text-sm">Base Network</p>
+                  </div>
+                  <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text">
+                    Connected
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Simple Statistics */}
+            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass max-w-2xl mx-auto">
+              <CardHeader>
+                <CardTitle className="text-blue-300 pixelated-text flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5" />
+                  Your Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-slate-700/50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-400 pixelated-text mb-1">{entries.length}</div>
+                    <div className="text-sm text-blue-300 pixelated-text">Total Entries</div>
+                  </div>
+                  <div className="text-center p-4 bg-slate-700/50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-400 pixelated-text mb-1">
+                      {entries.length > 0 ? Math.max(...entries.map((_, i) => i + 1)) : 0}
+                    </div>
+                    <div className="text-sm text-blue-300 pixelated-text">Current Streak</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+                         {/* Simple Data Management */}
+             <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass max-w-2xl mx-auto">
+               <CardHeader>
+                 <CardTitle className="text-blue-300 pixelated-text flex items-center gap-2">
+                   <Download className="w-5 h-5" />
+                   Data
+                 </CardTitle>
+               </CardHeader>
+               <CardContent className="space-y-3">
+                 <Button
+                   onClick={() => {
+                     const data = {
+                       entries: entries,
+                       exportDate: new Date().toISOString()
+                     }
+                     
+                     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+                     const url = URL.createObjectURL(blob)
+                     const a = document.createElement('a')
+                     a.href = url
+                     a.download = `dailybase-entries-${address.slice(0, 8)}.json`
+                     document.body.appendChild(a)
+                     a.click()
+                     document.body.removeChild(a)
+                     URL.revokeObjectURL(url)
+                   }}
+                   variant="outline"
+                   className="w-full bg-slate-700 border-slate-600 text-white pixelated-text"
+                 >
+                   <Download className="w-4 h-4 mr-2" />
+                   Export Entries
+                 </Button>
+                 
+                 <Button
+                   onClick={() => {
+                     if (confirm('Are you sure you want to clear all your data? This action cannot be undone.')) {
+                       localStorage.removeItem(`dailybase-entries-${address}`)
+                       window.location.reload()
+                     }
+                   }}
+                   variant="outline"
+                   className="w-full bg-red-600/20 border-red-500 text-red-300 pixelated-text hover:bg-red-600/30"
+                 >
+                   <Trash2 className="w-4 h-4 mr-2" />
+                   Clear All Data
+                 </Button>
+               </CardContent>
+             </Card>
+
+             {/* Disconnect Button */}
+             <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass max-w-2xl mx-auto">
+               <CardContent className="pt-6">
+                 <Button
+                   onClick={() => {
+                     if (confirm('Are you sure you want to disconnect your wallet?')) {
+                       // Clear local storage
+                       localStorage.removeItem(`dailybase-entries-${address}`)
+                       // Use the enhanced logout function if available
+                       if (typeof window !== 'undefined' && (window as any).enhancedLogout) {
+                         (window as any).enhancedLogout()
+                       } else {
+                         // Fallback to regular logout
+                         window.location.reload()
+                       }
+                     }
+                   }}
+                   variant="outline"
+                   className="w-full bg-orange-600/20 border-orange-500 text-orange-300 pixelated-text hover:bg-orange-600/30"
+                 >
+                   <LogOut className="w-4 h-4 mr-2" />
+                   Disconnect Wallet
+                 </Button>
+               </CardContent>
+             </Card>
+           </div>
+         )
       case 'settings':
         return (
           <div className="space-y-6">
@@ -1838,27 +2002,26 @@ export default function Dashboard({ address }: DashboardProps) {
         <div className="flex-1 min-w-0 lg:ml-64">
           <div className="container mx-auto px-4 py-8">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-4">
-                <Button
-                  onClick={() => setSidebarOpen(true)}
-                  variant="outline"
-                  size="sm"
-                  className="lg:hidden bg-slate-800 border-slate-600 text-white"
-                >
-                  <Menu className="w-4 h-4" />
-                </Button>
-                <img 
-                  src="/db-removebg.png" 
-                  alt="DailyBase Logo" 
-                  className="w-12 h-12 object-contain shadow-lg"
-                />
-                <div>
-                  <h1 className="text-3xl font-bold text-white pixelated-text">DailyBase</h1>
+                          <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <Button
+                    onClick={() => setSidebarOpen(true)}
+                    variant="outline"
+                    size="sm"
+                    className="lg:hidden bg-slate-800 border-slate-600 text-white"
+                  >
+                    <Menu className="w-4 h-4" />
+                  </Button>
+                  <img 
+                    src="/db-removebg.png" 
+                    alt="DailyBase Logo" 
+                    className="w-12 h-12 object-contain shadow-lg"
+                  />
+                  <div>
+                    <h1 className="text-3xl font-bold text-white pixelated-text">DailyBase</h1>
+                  </div>
                 </div>
               </div>
-
-            </div>
 
             {/* Page Content */}
             <div className="max-w-4xl">
