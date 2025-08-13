@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Save, Edit3, Info, Hash } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context" // adjust path
 
 interface Journal {
   id?: string;
@@ -30,6 +31,9 @@ export function DailyEntry({ userId, onSave, todayEntry }: DailyEntryProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  const { user } = useAuth();
+  
 
   const articleTypeTags = [
     { type: "DeFi", icon: "💱", color: "from-blue-400 to-blue-600" },
@@ -58,8 +62,11 @@ export function DailyEntry({ userId, onSave, todayEntry }: DailyEntryProps) {
     setError(null);
     setSuccess(false);
 
+    if (!user) {
+      throw new Error("User not logged in");
+    }
     const journalData: Journal = {
-      baseUserId: "angelo yocor",
+      baseUserId: user.address,
       journal: content.trim(),
       tags,
       photo: null,
