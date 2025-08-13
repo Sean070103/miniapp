@@ -1419,7 +1419,7 @@ export default function Dashboard({ address }: DashboardProps) {
                   </CardContent>
                 </Card>
               </div>
-            )}
+            )
           </div>
         )}
 

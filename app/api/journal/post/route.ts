@@ -1,58 +1,39 @@
 
 import prisma from '../../../../utils/connect'
+import { NextResponse } from "next/server";
 
 //POST JOURNAL
-export async function POST(req:Request) {
- 
- const body = await req.json()
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { baseUserId, photo, journal, likes, tags, privacy } = body;
 
- const {
-    baseUserId,
-    photo,      
-    journal,    
-    likes, 
-    tags,
-    privacy,    
- } = body
+    // ✅ Basic validation
+    if (!baseUserId || !journal) {
+      return NextResponse.json(
+        { error: "Missing required fields: baseUserId or journal" },
+        { status: 400 }
+      );
+    }
 
- try {
-  if (!journal || !privacy || !baseUserId) {
-   return new Response(
-    JSON.stringify({ error: "please input journal, privacy, and baseUserId", }),
-    { status: 500, headers: { "Content-Type": "application/json" } }
-   )
+    // ✅ Create Journal in DB
+    const newJournal = await prisma.journal.create({
+      data: {
+        baseUserId,
+        photo: photo || null,
+        journal,
+        likes: likes ?? 0,
+        tags: Array.isArray(tags) ? tags : [],
+        privacy: privacy || "public",
+      },
+    });
+
+    return NextResponse.json(newJournal, { status: 201 });
+  } catch (error) {
+    console.error("Error creating journal:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
-
-  const createJournal = await prisma.journal.create({
-
-   data: {
-    baseUserId,
-    photo,      
-    journal,    
-    likes, 
-    tags,
-    privacy, 
-   }
-  })
-  
-
-  return new Response(JSON.stringify(createJournal), {
-     status:201,
-     headers: {"Content-Type": "application/json"},
-  })
-
-  
- } catch (e) {
-  return new Response(
-   JSON.stringify({
-    error: "error at",
-    details: e
-   }),
-   {
-    status: 500,
-    headers:{"Content-Type":"application/json"},
-   }
-  )
- }
-
 }
