@@ -13,13 +13,14 @@ datasource db {
  url      = "mongodb+srv://lornayocor:cXqrgEX74ex576j3@juntos.n0m0ol6.mongodb.net/miniapp?retryWrites=true&w=majority&appName=juntos"
 }
 
-//schema for Employee table
-model BaseUsers {
- id          String   @id @default(auto()) @map("_id") @db.ObjectId
- baseUserId  String
- bio         String?
- profile     String?
- dateCreated DateTime @default(now())
+model BaseUser {
+ id             String   @id @default(auto()) @map("_id") @db.ObjectId
+ walletAddress  String   @unique
+ username       String?
+ email          String?
+ profilePicture String?
+ bio            String?
+ dateCreated    DateTime @default(now())
 }
 
 model Journal {
@@ -29,7 +30,7 @@ model Journal {
  journal     String
  likes       Int      @default(0)
  tags        String[]
- privacy     String
+ privacy     String   @default("public")
  dateCreated DateTime @default(now())
 }
 
@@ -49,9 +50,9 @@ model Comment {
 }
 
 model Chaincomments {
- id          String   @id @default(auto()) @map("_id") @db.ObjectId
- commentId   String
- baseUserId  String
- comment     String
- dateCreated DateTime @default(now())
+ id           String   @id @default(auto()) @map("_id") @db.ObjectId
+ commentId    String
+ baseUserId   String
+ chainComment String
+ dateCreated  DateTime @default(now())
 }
