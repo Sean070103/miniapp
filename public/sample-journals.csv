@@ -1,0 +1,6 @@
+baseUserId,journal,privacy,photo,likes,tags
+0x1234567890abcdef,"Just deployed my first smart contract! The feeling of creating something that runs on the blockchain is incredible. #Web3 #Solidity #Blockchain",public,https://example.com/contract.jpg,15,"web3,solidity,blockchain"
+0xabcdef1234567890,"Exploring the world of DeFi protocols today. The innovation happening in this space is mind-blowing. Yield farming, liquidity pools, and more! #DeFi #Crypto",public,https://example.com/defi.jpg,23,"defi,crypto,yield-farming"
+0x9876543210fedcba,"Minted my first NFT collection today. Digital art is the future of creativity and ownership. #NFT #DigitalArt #Creativity",public,https://example.com/nft.jpg,8,"nft,digital-art,creativity"
+0xfedcba0987654321,"DAO governance is fascinating. The power of decentralized decision-making is revolutionary. #DAO #Governance #Decentralization",friends,https://example.com/dao.jpg,12,"dao,governance,decentralization"
+0x5555555555555555,"Building the future of social media on the blockchain. Privacy, ownership, and user control are key principles. #SocialFi #Privacy #Ownership",public,https://example.com/socialfi.jpg,31,"socialfi,privacy,ownership"
