@@ -6,8 +6,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { baseUserId, photo, journal, likes, tags, privacy } = body;
-
+    const { baseUserId, photos, journal, likes, tags, privacy } = body;
 
     if (!baseUserId || !journal) {
       return NextResponse.json(
@@ -16,11 +15,10 @@ export async function POST(req: Request) {
       );
     }
 
-
     const newJournal = await prisma.journal.create({
       data: {
         baseUserId,
-        photo: photo || null,
+        photos: Array.isArray(photos) ? photos : [],
         journal,
         likes: likes ?? 0,
         tags: Array.isArray(tags) ? tags : [],

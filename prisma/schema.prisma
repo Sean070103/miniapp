@@ -26,7 +26,7 @@ model BaseUser {
 model Journal {
  id          String   @id @default(auto()) @map("_id") @db.ObjectId
  baseUserId  String
- photo       String?
+ photos      String[] // Changed from photo String? to photos String[]
  journal     String
  likes       Int      @default(0)
  tags        String[]

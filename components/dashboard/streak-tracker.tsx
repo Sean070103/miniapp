@@ -21,46 +21,53 @@ export function StreakTracker({ entries }: StreakTrackerProps) {
   const calculateStreak = () => {
     if (entries.length === 0) return { current: 0, longest: 0, consecutive: 0 }
     
+    // Sort entries by date (newest first)
     const sortedEntries = entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    const today = new Date().toISOString().split('T')[0]
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    
+    // Get unique dates where posts were made
+    const postedDates = [...new Set(sortedEntries.map(entry => entry.date))].sort()
     
     let currentStreak = 0
     let longestStreak = 0
     let tempStreak = 0
     
-    // Calculate current streak
-    let currentDate = new Date()
+    // Calculate current streak (consecutive days from today backwards)
+    const today = new Date().toISOString().split('T')[0]
+    let checkDate = new Date()
+    
     while (true) {
-      const dateString = currentDate.toISOString().split('T')[0]
-      const hasEntry = sortedEntries.some(entry => entry.date === dateString)
+      const dateString = checkDate.toISOString().split('T')[0]
       
-      if (hasEntry) {
+      // Check if there's a post on this date
+      if (postedDates.includes(dateString)) {
         currentStreak++
-        currentDate.setDate(currentDate.getDate() - 1)
+        checkDate.setDate(checkDate.getDate() - 1) // Go to previous day
       } else {
-        break
+        break // Streak broken
       }
     }
     
-    // Calculate longest streak
-    const dates = sortedEntries.map(entry => entry.date).sort()
-    let prevDate = null
-    
-    for (const date of dates) {
-      if (prevDate) {
-        const daysDiff = Math.floor((new Date(date).getTime() - new Date(prevDate).getTime()) / (24 * 60 * 60 * 1000))
+    // Calculate longest streak from all posted dates
+    for (let i = 0; i < postedDates.length; i++) {
+      if (i === 0) {
+        tempStreak = 1
+      } else {
+        const currentDate = new Date(postedDates[i])
+        const previousDate = new Date(postedDates[i - 1])
+        const daysDiff = Math.floor((currentDate.getTime() - previousDate.getTime()) / (24 * 60 * 60 * 1000))
+        
         if (daysDiff === 1) {
+          // Consecutive day
           tempStreak++
         } else {
-          longestStreak = Math.max(longestStreak, tempStreak + 1)
-          tempStreak = 0
-        }
-      } else {
+          // Streak broken, update longest and reset
+          longestStreak = Math.max(longestStreak, tempStreak)
         tempStreak = 1
       }
-      prevDate = date
+      }
     }
+    
+    // Don't forget the last streak
     longestStreak = Math.max(longestStreak, tempStreak)
     
     return { current: currentStreak, longest: longestStreak, consecutive: currentStreak }
@@ -215,6 +222,19 @@ export function StreakTracker({ entries }: StreakTrackerProps) {
               : `Amazing! You've been consistent for ${current} day${current > 1 ? 's' : ''}. Keep it up!`
             }
           </p>
+        </div>
+      )}
+
+      {/* Debug Info - Only show in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-600">
+          <h4 className="text-blue-300 font-semibold mb-2 pixelated-text">Debug Info</h4>
+          <div className="text-xs text-slate-400 space-y-1">
+            <p>Posted dates: {[...new Set(entries.map(entry => entry.date))].sort().join(', ')}</p>
+            <p>Current streak: {current} days</p>
+            <p>Longest streak: {longest} days</p>
+            <p>Total entries: {entries.length}</p>
+          </div>
         </div>
       )}
     </div>

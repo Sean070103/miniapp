@@ -17,13 +17,15 @@ import { useAuth } from "@/contexts/auth-context"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Skeleton } from "@/components/ui/skeleton"
 import { exchangeRateService } from "@/lib/config"
-import { baseNetworkAPI } from "@/lib/baseNetworkAPI"
+import { CombinedFeed } from "@/components/dashboard/combined-feed"
+
 
 interface DailyEntry {
   id: string
   date: string
   content: string
   tags: string[]
+  photos?: string[]
   timestamp: number
 }
 
@@ -31,7 +33,7 @@ interface DashboardProps {
   address: string
 }
 
-type SidebarItem = 'home' | 'calendar' | 'calculator' | 'stats' | 'streak' | 'profile' | 'settings' | 'base'
+type SidebarItem = 'home' | 'calendar' | 'calculator' | 'stats' | 'streak' | 'profile' | 'settings'
 
 export default function Dashboard({ address }: DashboardProps) {
   const { user } = useAuth()
@@ -41,6 +43,9 @@ export default function Dashboard({ address }: DashboardProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [activeSidebarItem, setActiveSidebarItem] = useState<SidebarItem>('home')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [profileImage, setProfileImage] = useState<string | null>(null)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
   
   // Calculator states
   const [calculatorDisplay, setCalculatorDisplay] = useState('0')
@@ -100,29 +105,7 @@ export default function Dashboard({ address }: DashboardProps) {
   const [liveExchangeRates, setLiveExchangeRates] = useState<{ [key: string]: number }>({})
   const [isLoadingRates, setIsLoadingRates] = useState(false)
   
-  // Base network data state
-  const [baseNetworkData, setBaseNetworkData] = useState({
-    totalTransactions: 0,
-    dailyTransactions: 0,
-    totalUsers: 0,
-    activeUsers: 0,
-    totalVolume: 0,
-    gasPrice: 0,
-    blockHeight: 0,
-    tvl: 0,
-    price: 0,
-    marketCap: 0
-  })
-  const [baseUserActivity, setBaseUserActivity] = useState({
-    totalEntries: 0,
-    weeklyEntries: 0,
-    monthlyEntries: 0,
-    averageEntriesPerDay: 0,
-    mostActiveDay: '',
-    totalGasSpent: 0,
-    favoriteTags: [] as string[]
-  })
-  const [isLoadingBaseData, setIsLoadingBaseData] = useState(false)
+  
   
   const currencies = [
     { code: 'USD', name: 'US Dollar', symbol: '$' },
@@ -233,51 +216,86 @@ export default function Dashboard({ address }: DashboardProps) {
     return () => clearInterval(interval)
   }, [])
 
-  // Fetch Base network data
-  const fetchBaseNetworkData = async () => {
-    setIsLoadingBaseData(true)
-    try {
-      // Fetch real Base network data from APIs
-      const networkData = await baseNetworkAPI.getBaseNetworkData()
-      setBaseNetworkData(networkData)
-    } catch (error) {
-      console.error('Error fetching Base network data:', error)
-      // Fallback to mock data if API fails
-      const fallbackData = {
-        totalTransactions: 50000000 + Math.floor(Math.random() * 10000000),
-        dailyTransactions: 500000 + Math.floor(Math.random() * 100000),
-        totalUsers: 2000000 + Math.floor(Math.random() * 1000000),
-        activeUsers: 50000 + Math.floor(Math.random() * 100000),
-        totalVolume: 500000 + Math.random() * 1000000,
-        gasPrice: 5 + Math.random() * 50,
-        blockHeight: 50000000 + Math.floor(Math.random() * 1000000),
-        tvl: 500000000 + Math.random() * 1000000000,
-        price: 2000 + Math.random() * 3000,
-        marketCap: 500000000000 + Math.random() * 1000000000000
-      }
-      setBaseNetworkData(fallbackData)
-    } finally {
-      setIsLoadingBaseData(false)
-    }
-  }
 
-  // Calculate user activity on Base
-  const calculateUserActivity = () => {
-    const userActivity = baseNetworkAPI.calculateUserActivity(entries)
-    setBaseUserActivity(userActivity)
-  }
-
-  // Load Base data on component mount and when entries change
-  useEffect(() => {
-    fetchBaseNetworkData()
-    calculateUserActivity()
-  }, [entries])
 
   // Get baseuser ID from user account
   const baseUserId = user?.account?.id
 
-  // Load entries from localStorage (prioritizing baseuser ID, fallback to address)
+  // Load profile image from localStorage on component mount
   useEffect(() => {
+    const savedImage = localStorage.getItem(`profile-image-${address}`)
+    if (savedImage) {
+      setProfileImage(savedImage)
+    }
+  }, [address])
+
+  // Handle profile image upload
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size must be less than 5MB')
+      return
+    }
+
+    setIsUploadingImage(true)
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const result = e.target?.result as string
+      setProfileImage(result)
+      // Save to localStorage
+      localStorage.setItem(`profile-image-${address}`, result)
+      setIsUploadingImage(false)
+    }
+    reader.onerror = () => {
+      alert('Error reading image file')
+      setIsUploadingImage(false)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  // Remove profile image
+  const removeProfileImage = () => {
+    setProfileImage(null)
+    localStorage.removeItem(`profile-image-${address}`)
+  }
+
+  // Fetch posts from database
+  const fetchPosts = async () => {
+    try {
+      const response = await fetch('/api/journal/get')
+      if (response.ok) {
+        const data = await response.json()
+        // Convert database posts to DailyEntry format
+        const fetchedEntries: DailyEntry[] = data.map((post: any) => ({
+          id: post.id,
+          date: new Date(post.dateCreated).toISOString().split('T')[0],
+          content: post.journal,
+          tags: post.tags || [],
+          photos: post.photos || [],
+          timestamp: new Date(post.dateCreated).getTime()
+        }))
+        setEntries(fetchedEntries)
+      }
+    } catch (error) {
+      console.error('Error fetching posts:', error)
+      // Fallback to localStorage if API fails
+      loadFromLocalStorage()
+    }
+    setIsLoading(false)
+  }
+
+  // Load entries from localStorage (fallback)
+  const loadFromLocalStorage = () => {
     let savedEntries = null
     
     // First try to load from baseuser ID storage
@@ -312,7 +330,11 @@ export default function Dashboard({ address }: DashboardProps) {
     if (savedEntries) {
       setEntries(savedEntries)
     }
-    setIsLoading(false)
+  }
+
+  // Load entries from database (prioritizing database, fallback to localStorage)
+  useEffect(() => {
+    fetchPosts()
   }, [address, baseUserId])
 
   // Save entries to localStorage (using baseuser ID when available, fallback to address)
@@ -333,15 +355,22 @@ export default function Dashboard({ address }: DashboardProps) {
   }
 
   // Convert Journal to DailyEntry for the DailyEntry component
-  const handleJournalSave = (journal: any) => {
+  const handleJournalSave = async (journal: any) => {
+    // Save to local storage for immediate UI update
     const dailyEntry: DailyEntry = {
       id: journal.id || Date.now().toString(),
       date: new Date().toISOString().split('T')[0],
       content: journal.journal,
       tags: journal.tags || [],
+      photos: journal.photos || [], // Save photos from journal
       timestamp: Date.now()
     }
     saveEntry(dailyEntry)
+    
+    // Refresh posts from database to ensure consistency
+    setTimeout(() => {
+      fetchPosts()
+    }, 1000)
   }
 
   // Convert DailyEntry to Journal for the DailyEntry component
@@ -352,7 +381,7 @@ export default function Dashboard({ address }: DashboardProps) {
       baseUserId: baseUserId || address,
       journal: entry.content,
       tags: entry.tags,
-      photo: null,
+      photos: entry.photos || [], // Use actual photos from entry
       likes: 0,
       privacy: "public",
       createdAt: new Date(entry.timestamp)
@@ -617,9 +646,8 @@ export default function Dashboard({ address }: DashboardProps) {
     { id: 'streak' as SidebarItem, label: 'Streak', icon: Flame },
     { id: 'calculator' as SidebarItem, label: 'Basio', icon: Calculator },
     { id: 'stats' as SidebarItem, label: 'Stats', icon: BarChart3 },
-    { id: 'profile' as SidebarItem, label: 'Profile', icon: User },
-    { id: 'settings' as SidebarItem, label: 'Settings', icon: Settings },
-    { id: 'base' as SidebarItem, label: 'Base', icon: Network },
+      { id: 'profile' as SidebarItem, label: 'Profile', icon: User },
+  { id: 'settings' as SidebarItem, label: 'Settings', icon: Settings },
   ]
 
   const [activeCalculatorTab, setActiveCalculatorTab] = useState('gas')
@@ -733,7 +761,7 @@ export default function Dashboard({ address }: DashboardProps) {
             {/* Feed Header */}
             <div className="text-center mb-6">
               <h1 className="text-3xl font-bold text-white pixelated-text mb-2">DailyBase Feed</h1>
-              <p className="text-blue-300 pixelated-text">Your personal crypto journey timeline</p>
+              <p className="text-blue-300 pixelated-text">Your personal crypto journey timeline & community posts</p>
             </div>
 
             {/* Create New Post */}
@@ -783,109 +811,8 @@ export default function Dashboard({ address }: DashboardProps) {
                 ))}
               </div>
             ) : (
-              /* Feed Posts */
-              entries.length === 0 ? (
-                <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-                  <CardContent className="flex flex-col items-center justify-center py-16">
-                    <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-6">
-                      <BookOpen className="w-10 h-10 text-white" />
-                    </div>
-                    <h3 className="text-2xl font-semibold text-white pixelated-text mb-3">Your Feed is Empty</h3>
-                    <p className="text-blue-300 text-center mb-8 max-w-md leading-relaxed">
-                      Start your DailyBase journey by creating your first entry. Share your crypto activities, track your progress, and build meaningful streaks.
-                    </p>
-                    <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white pixelated-text px-8 py-3 text-lg">
-                      <Plus className="w-5 h-5 mr-2" />
-                      Create Your First Entry
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-6">
-                  {entries.map((entry, index) => (
-                    <Card key={entry.id} className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass hover-lift transition-all duration-300">
-                      <CardHeader className="pb-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-4">
-                            <Avatar className="w-12 h-12 ring-2 ring-blue-400/20 flex-shrink-0">
-                              <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold">
-                                {entry.date ? entry.date.slice(-2) : 'DB'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <div className="font-semibold text-white pixelated-text text-lg">DailyBase</div>
-                                <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text text-xs">
-                                  Entry #{index + 1}
-                                </Badge>
-                              </div>
-                              <div className="text-sm text-blue-300 pixelated-text flex items-center gap-2">
-                                <Calendar className="w-3 h-3" />
-                                {new Date(entry.date).toLocaleDateString('en-US', {
-                                  weekday: 'long',
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric'
-                                })}
-                                <span className="text-blue-300/60">•</span>
-                                <span>{new Date(entry.timestamp).toLocaleTimeString('en-US', {
-                                  hour: 'numeric',
-                                  minute: '2-digit',
-                                  hour12: true
-                                })}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="sm" className="text-blue-300 hover:text-blue-200 hover:bg-blue-500/10 rounded-full p-2">
-                              <Heart className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-blue-300 hover:text-blue-200 hover:bg-blue-500/10 rounded-full p-2">
-                              <MessageSquare className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-blue-300 hover:text-blue-200 hover:bg-blue-500/10 rounded-full p-2">
-                              <Share2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="bg-slate-700/30 rounded-xl p-4 mb-4">
-                          <p className="text-white leading-relaxed pixelated-text text-lg">{entry.content}</p>
-                        </div>
-                        {entry.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {entry.tags.map((tag, tagIndex) => (
-                              <Badge key={tagIndex} className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text hover:bg-blue-500/30 transition-colors">
-                                #{tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                        <div className="flex items-center justify-between pt-4 border-t border-slate-600/30">
-                          <div className="flex items-center gap-4 text-sm text-blue-300/70">
-                            <span className="flex items-center gap-1">
-                              <Heart className="w-3 h-3" />
-                              0 likes
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <MessageSquare className="w-3 h-3" />
-                              0 comments
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Share2 className="w-3 h-3" />
-                              Share
-                            </span>
-                          </div>
-                          <div className="text-xs text-blue-300/50">
-                            Entry #{entries.length - index}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )
+              /* Combined Feed Posts */
+              <CombinedFeed entries={entries} userAddress={address} />
             )}
           </div>
         )
@@ -1017,6 +944,53 @@ export default function Dashboard({ address }: DashboardProps) {
                               })}
                             </span>
                           </div>
+                          
+                          {/* Photo Display for Calendar View */}
+                          {entry.photos && entry.photos.length > 0 && (
+                            <div className="mb-3">
+                              <div className={`grid gap-1 rounded-lg overflow-hidden ${
+                                entry.photos.length === 1 ? 'grid-cols-1' :
+                                entry.photos.length === 2 ? 'grid-cols-2' :
+                                entry.photos.length === 3 ? 'grid-cols-2' :
+                                'grid-cols-2'
+                              }`}>
+                                {entry.photos.slice(0, 4).map((photo, photoIndex) => (
+                                  <div key={photoIndex} className={`relative group cursor-pointer ${
+                                    entry.photos!.length === 3 && photoIndex === 2 ? 'col-span-2' : ''
+                                  }`}>
+                                    <div className="w-full h-full bg-slate-600 overflow-hidden">
+                                      <img
+                                        src={photo}
+                                        alt={`Post image ${photoIndex + 1}`}
+                                        className={`w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 ${
+                                          entry.photos!.length === 1 ? 'h-32' :
+                                          entry.photos!.length === 2 ? 'h-24' :
+                                          entry.photos!.length === 3 && photoIndex === 2 ? 'h-24' : 'h-24'
+                                        }`}
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                          target.parentElement!.innerHTML = `
+                                            <div class="w-full h-full bg-slate-600 flex items-center justify-center">
+                                              <div class="text-center text-slate-400">
+                                                <span class="text-xs">Image failed to load</span>
+                                              </div>
+                                            </div>
+                                          `;
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                ))}
+                                {entry.photos.length > 4 && (
+                                  <div className="h-24 bg-slate-600 rounded flex items-center justify-center text-xs text-slate-400">
+                                    +{entry.photos.length - 4} more
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          
                           {entry.tags.length > 0 && (
                             <div className="flex items-center gap-2">
                               <span className="text-sm text-blue-300 pixelated-text">Tags:</span>
@@ -1758,399 +1732,194 @@ export default function Dashboard({ address }: DashboardProps) {
         )
       case 'profile':
         return (
-          <div className="space-y-6">
-            {/* Profile Header */}
-            <div className="text-center mb-6">
-              <h1 className="text-3xl font-bold text-white pixelated-text mb-2">Profile</h1>
-              <p className="text-blue-300 pixelated-text">Your DailyBase account</p>
+          <div className="max-w-2xl mx-auto space-y-6">
+            {/* Game Theme Header */}
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-cyan-400 pixelated-text mb-2 animate-pulse">
+                PLAYER PROFILE
+              </h1>
+              <div className="w-32 h-1 bg-gradient-to-r from-cyan-400 to-purple-500 mx-auto rounded-full"></div>
             </div>
 
-            {/* Simple Profile Card */}
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass max-w-2xl mx-auto">
-              <CardHeader className="text-center">
-                <Avatar className="w-20 h-20 mx-auto mb-4 ring-4 ring-blue-400/20">
-                  <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-2xl font-bold">
-                    {user?.address?.slice(2, 4).toUpperCase() || 'DB'}
-                  </AvatarFallback>
-                </Avatar>
-                <CardTitle className="text-blue-300 pixelated-text text-xl mb-2">
-                  DailyBase User
-                </CardTitle>
-                <div className="flex items-center justify-center gap-2">
-                  <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text">
+            {/* Profile Card - Gaming Style */}
+            <Card className="bg-slate-900/80 border-2 border-cyan-500/50 text-white backdrop-blur-sm card-glass relative overflow-hidden">
+              {/* Animated Background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-purple-500/10 animate-pulse"></div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500"></div>
+              
+              <CardHeader className="text-center relative z-10">
+                {/* Profile Picture - Gaming Style */}
+                <div className="relative mx-auto mb-6">
+                  <div className="relative">
+                    <Avatar className="w-32 h-32 ring-4 ring-cyan-500/50 bg-slate-800 shadow-lg shadow-cyan-500/25">
+                      {profileImage ? (
+                        <img 
+                          src={profileImage} 
+                          alt="Profile" 
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                      ) : (
+                        <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-purple-600 text-white text-4xl font-bold pixelated-text">
+                          {user?.address?.slice(2, 4).toUpperCase() || 'DB'}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    
+                    {/* Upload Button Overlay - Gaming Style */}
+                    <div className="absolute -bottom-2 -right-2">
+                      <label htmlFor="profile-image-upload" className="cursor-pointer">
+                        <div className="bg-cyan-500 hover:bg-cyan-400 p-2 rounded-full shadow-lg shadow-cyan-500/50 transition-all duration-300 hover:scale-110">
+                          {isUploadingImage ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                          )}
+                        </div>
+                      </label>
+                      <input
+                        id="profile-image-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </div>
+                    
+                    {/* Remove Image Button - Gaming Style */}
+                    {profileImage && isEditingProfile && (
+                      <button
+                        onClick={removeProfileImage}
+                        className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-400 p-1 rounded-full shadow-lg shadow-red-500/50 transition-all duration-300 hover:scale-110"
+                        title="Remove profile image"
+                      >
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Player Info - Gaming Style */}
+                                 <CardTitle className="text-cyan-400 pixelated-text text-3xl mb-2 text-shadow-glow">
+                   DAILY BASE EXPLORER
+                 </CardTitle>
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-400/50 pixelated-text">
                     <Wallet className="w-3 h-3 mr-1" />
                     {getAddressDisplay(address)}
                   </Badge>
                   {user?.account && (
-                    <Badge className="bg-green-500/20 text-green-300 border-green-400/30 pixelated-text">
+                    <Badge className="bg-green-500/20 text-green-300 border-green-400/50 pixelated-text">
                       <Shield className="w-3 h-3 mr-1" />
-                      Base Account
+                      BASE ACCOUNT
                     </Badge>
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                  <div>
-                    <h3 className="text-white pixelated-text font-semibold">Wallet Address</h3>
-                    <p className="text-blue-300 pixelated-text text-sm">{getAddressDisplay(address)}</p>
-                  </div>
-                  <Button
-                    onClick={copyAddress}
-                    variant="outline"
-                    size="sm"
-                    className="bg-slate-700 border-slate-600 text-white pixelated-text"
-                  >
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  </Button>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                  <div>
-                    <h3 className="text-white pixelated-text font-semibold">Network</h3>
-                    <p className="text-blue-300 pixelated-text text-sm">Base Network</p>
-                  </div>
-                  <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text">
-                    Connected
-                  </Badge>
-                </div>
-                
-                {baseUserId && (
-                  <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                    <div>
-                      <h3 className="text-white pixelated-text font-semibold">Base User ID</h3>
-                      <p className="text-blue-300 pixelated-text text-sm">{baseUserId.slice(0, 8)}...</p>
-                    </div>
-                    <Badge className="bg-green-500/20 text-green-300 border-green-400/30 pixelated-text">
-                      Active
-                    </Badge>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Simple Statistics */}
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass max-w-2xl mx-auto">
-              <CardHeader>
-                <CardTitle className="text-blue-300 pixelated-text flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5" />
-                  Your Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+              
+              <CardContent className="space-y-6 relative z-10">
+                {/* Stats Grid - Gaming Style */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-400 pixelated-text mb-1">{entries.length}</div>
-                    <div className="text-sm text-blue-300 pixelated-text">Total Entries</div>
+                  <div className="text-center p-4 bg-slate-800/50 border border-cyan-500/30 rounded-lg hover:bg-slate-800/70 transition-colors">
+                    <div className="text-3xl font-bold text-cyan-400 pixelated-text mb-1">{entries.length}</div>
+                    <div className="text-sm text-cyan-300 pixelated-text">TOTAL ENTRIES</div>
                   </div>
-                  <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-400 pixelated-text mb-1">
+                  <div className="text-center p-4 bg-slate-800/50 border border-purple-500/30 rounded-lg hover:bg-slate-800/70 transition-colors">
+                    <div className="text-3xl font-bold text-purple-400 pixelated-text mb-1">
                       {entries.length > 0 ? Math.max(...entries.map((_, i) => i + 1)) : 0}
                     </div>
-                    <div className="text-sm text-blue-300 pixelated-text">Current Streak</div>
+                    <div className="text-sm text-purple-300 pixelated-text">STREAK</div>
                   </div>
                 </div>
+
+                {/* Account Details - Gaming Style */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-slate-800/50 border border-cyan-500/30 rounded-lg hover:bg-slate-800/70 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <Wallet className="w-5 h-5 text-cyan-400" />
+                      <div>
+                        <p className="text-cyan-300 pixelated-text font-semibold">WALLET ADDRESS</p>
+                        <p className="text-slate-300 pixelated-text text-sm">{getAddressDisplay(address)}</p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={copyAddress}
+                      variant="ghost"
+                      size="sm"
+                      className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/20"
+                    >
+                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                  
+                  {baseUserId && (
+                    <div className="flex items-center justify-between p-4 bg-slate-800/50 border border-green-500/30 rounded-lg hover:bg-slate-800/70 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <Shield className="w-5 h-5 text-green-400" />
+                        <div>
+                          <p className="text-green-300 pixelated-text font-semibold">BASE ACCOUNT</p>
+                          <p className="text-slate-300 pixelated-text text-sm">{baseUserId.slice(0, 8)}...</p>
+                        </div>
+                      </div>
+                      <Badge className="bg-green-500/20 text-green-300 border-green-400/50 pixelated-text">
+                        ACTIVE
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+
+                                 {/* Action Buttons - Gaming Style */}
+                 <div className="flex gap-4 pt-4">
+                   <Button
+                     onClick={() => setIsEditingProfile(!isEditingProfile)}
+                     variant="outline"
+                     className={`flex-1 pixelated-text font-semibold transition-all duration-300 hover:scale-105 ${
+                       isEditingProfile 
+                         ? 'bg-green-500/20 border-green-500 text-green-300 hover:bg-green-500/30' 
+                         : 'bg-cyan-500/20 border-cyan-500 text-cyan-300 hover:bg-cyan-500/30'
+                     }`}
+                   >
+                     {isEditingProfile ? (
+                       <>
+                         <Check className="w-4 h-4 mr-2" />
+                         SAVE PROFILE
+                       </>
+                     ) : (
+                       <>
+                         <User className="w-4 h-4 mr-2" />
+                         EDIT PROFILE
+                       </>
+                     )}
+                   </Button>
+                   <Button
+                     onClick={() => {
+                       if (confirm('Are you sure you want to disconnect your wallet?')) {
+                         localStorage.removeItem(`dailybase-entries-${address}`)
+                         if (baseUserId) {
+                           localStorage.removeItem(`dailybase-entries-${baseUserId}`)
+                         }
+                         if (typeof window !== 'undefined' && (window as any).enhancedLogout) {
+                           (window as any).enhancedLogout()
+                         } else {
+                           window.location.reload()
+                         }
+                       }
+                     }}
+                     variant="outline"
+                     className="flex-1 bg-red-500/20 border-red-500 text-red-300 hover:bg-red-500/30 pixelated-text font-semibold transition-all duration-300 hover:scale-105"
+                   >
+                     <LogOut className="w-4 h-4 mr-2" />
+                     DISCONNECT
+                   </Button>
+                 </div>
               </CardContent>
             </Card>
-
-                         
-
-             {/* Disconnect Button */}
-             <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass max-w-2xl mx-auto">
-               <CardContent className="pt-6">
-                 <Button
-                                     onClick={() => {
-                    if (confirm('Are you sure you want to disconnect your wallet?')) {
-                      // Clear local storage for both address and baseuser ID
-                      localStorage.removeItem(`dailybase-entries-${address}`)
-                      if (baseUserId) {
-                        localStorage.removeItem(`dailybase-entries-${baseUserId}`)
-                      }
-                      // Use the enhanced logout function if available
-                      if (typeof window !== 'undefined' && (window as any).enhancedLogout) {
-                        (window as any).enhancedLogout()
-                      } else {
-                        // Fallback to regular logout
-                        window.location.reload()
-                      }
-                    }
-                  }}
-                   variant="outline"
-                   className="w-full bg-orange-600/20 border-orange-500 text-orange-300 pixelated-text hover:bg-orange-600/30"
-                 >
-                   <LogOut className="w-4 h-4 mr-2" />
-                   Disconnect Wallet
-                 </Button>
-               </CardContent>
-             </Card>
-           </div>
-         )
-      case 'base':
-        return (
-          <div className="flex h-full">
-            {/* Left Sidebar - Twitter-like */}
-            <div className="w-80 bg-slate-900/50 border-r border-slate-700 p-4 space-y-6">
-              {/* Profile Section */}
-              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-600">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Avatar className="w-12 h-12">
-                    <AvatarFallback className="bg-blue-500 text-white">
-                      {address ? address.slice(2, 4).toUpperCase() : 'DB'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="text-white font-semibold pixelated-text">
-                      {getAddressDisplay(address)}
-                    </h3>
-                    <p className="text-blue-300 text-sm pixelated-text">Base Network User</p>
-                  </div>
-                </div>
-                
-                {/* Quick Stats */}
-                <div className="grid grid-cols-2 gap-3 text-center">
-                  <div className="bg-slate-700/50 rounded-lg p-2">
-                    <p className="text-white font-bold text-lg">{baseUserActivity.totalEntries}</p>
-                    <p className="text-blue-300 text-xs">Entries</p>
-                  </div>
-                  <div className="bg-slate-700/50 rounded-lg p-2">
-                    <p className="text-white font-bold text-lg">{baseUserActivity.weeklyEntries}</p>
-                    <p className="text-blue-300 text-xs">This Week</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Network Stats */}
-              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-600">
-                <h3 className="text-white font-semibold mb-3 pixelated-text flex items-center gap-2">
-                  <Network className="w-4 h-4" />
-                  Network Stats
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-blue-300 text-sm">Gas Price</span>
-                    <span className="text-white font-semibold">
-                      {isLoadingBaseData ? (
-                        <Skeleton className="h-4 w-12" />
-                      ) : (
-                        `${baseNetworkData.gasPrice.toFixed(1)} Gwei`
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-blue-300 text-sm">Block Height</span>
-                    <span className="text-white font-semibold">
-                      {isLoadingBaseData ? (
-                        <Skeleton className="h-4 w-16" />
-                      ) : (
-                        baseNetworkData.blockHeight.toLocaleString()
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-blue-300 text-sm">Daily TX</span>
-                    <span className="text-white font-semibold">
-                      {isLoadingBaseData ? (
-                        <Skeleton className="h-4 w-16" />
-                      ) : (
-                        `${(baseNetworkData.dailyTransactions / 1000).toFixed(0)}K`
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-blue-300 text-sm">TVL</span>
-                    <span className="text-white font-semibold">
-                      {isLoadingBaseData ? (
-                        <Skeleton className="h-4 w-12" />
-                      ) : (
-                        `$${(baseNetworkData.tvl / 1000000000).toFixed(1)}B`
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Trending Tags */}
-              {baseUserActivity.favoriteTags.length > 0 && (
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-600">
-                  <h3 className="text-white font-semibold mb-3 pixelated-text flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" />
-                    Trending Tags
-                  </h3>
-                  <div className="space-y-2">
-                    {baseUserActivity.favoriteTags.slice(0, 5).map((tag, index) => (
-                      <div key={tag} className="flex items-center justify-between">
-                        <span className="text-blue-300 text-sm">#{tag}</span>
-                        <span className="text-white text-xs bg-blue-500/20 px-2 py-1 rounded">
-                          #{index + 1}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Main Content Area - Right Side */}
-            <div className="flex-1 p-6 space-y-6">
-              {/* Header */}
-              <div className="border-b border-slate-700 pb-4">
-                <h1 className="text-2xl font-bold text-white pixelated-text">Base Network</h1>
-                <p className="text-blue-300 pixelated-text">Real-time network metrics and your activity</p>
-              </div>
-
-              {/* Network Overview Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-blue-300 pixelated-text text-sm">Total Transactions</p>
-                        <p className="text-2xl font-bold text-white pixelated-text">
-                          {isLoadingBaseData ? (
-                            <Skeleton className="h-8 w-20" />
-                          ) : (
-                            baseNetworkData.totalTransactions.toLocaleString()
-                          )}
-                        </p>
-                      </div>
-                      <Activity className="w-8 h-8 text-blue-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-blue-300 pixelated-text text-sm">Daily Transactions</p>
-                        <p className="text-2xl font-bold text-white pixelated-text">
-                          {isLoadingBaseData ? (
-                            <Skeleton className="h-8 w-20" />
-                          ) : (
-                            baseNetworkData.dailyTransactions.toLocaleString()
-                          )}
-                        </p>
-                      </div>
-                      <TrendingUp className="w-8 h-8 text-green-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-blue-300 pixelated-text text-sm">Active Users</p>
-                        <p className="text-2xl font-bold text-white pixelated-text">
-                          {isLoadingBaseData ? (
-                            <Skeleton className="h-8 w-20" />
-                          ) : (
-                            baseNetworkData.activeUsers.toLocaleString()
-                          )}
-                        </p>
-                      </div>
-                      <Users className="w-8 h-8 text-purple-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-blue-300 pixelated-text text-sm">Market Cap</p>
-                        <p className="text-2xl font-bold text-white pixelated-text">
-                          {isLoadingBaseData ? (
-                            <Skeleton className="h-8 w-20" />
-                          ) : (
-                            `$${(baseNetworkData.marketCap / 1000000000000).toFixed(1)}T`
-                          )}
-                        </p>
-                      </div>
-                      <Coins className="w-8 h-8 text-yellow-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Activity Feed */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-                  <CardHeader>
-                    <CardTitle className="text-blue-300 pixelated-text flex items-center gap-2">
-                      <Activity className="w-5 h-5" />
-                      Your Activity
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-3 bg-slate-700/50 rounded-lg">
-                        <p className="text-blue-300 pixelated-text text-sm">This Month</p>
-                        <p className="text-lg font-semibold text-white pixelated-text">
-                          {baseUserActivity.monthlyEntries}
-                        </p>
-                      </div>
-                      <div className="p-3 bg-slate-700/50 rounded-lg">
-                        <p className="text-blue-300 pixelated-text text-sm">Avg/Day</p>
-                        <p className="text-lg font-semibold text-white pixelated-text">
-                          {baseUserActivity.averageEntriesPerDay.toFixed(1)}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="p-3 bg-slate-700/50 rounded-lg">
-                      <p className="text-blue-300 pixelated-text text-sm">Most Active Day</p>
-                      <p className="text-lg font-semibold text-white pixelated-text">
-                        {baseUserActivity.mostActiveDay}
-                      </p>
-                    </div>
-                    
-                    <div className="p-3 bg-slate-700/50 rounded-lg">
-                      <p className="text-blue-300 pixelated-text text-sm">Gas Spent</p>
-                      <p className="text-lg font-semibold text-white pixelated-text">
-                        {baseUserActivity.totalGasSpent.toFixed(4)} ETH
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-                  <CardHeader>
-                    <CardTitle className="text-blue-300 pixelated-text flex items-center gap-2">
-                      <BarChart3 className="w-5 h-5" />
-                      Network Activity
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-48 flex items-end justify-between gap-2 p-4">
-                      {Array.from({ length: 7 }, (_, i) => {
-                        const day = new Date()
-                        day.setDate(day.getDate() - (6 - i))
-                        const dayName = day.toLocaleDateString('en-US', { weekday: 'short' })
-                        const height = Math.random() * 100 + 20
-                        const isToday = i === 6
-                        
-                        return (
-                          <div key={i} className="flex flex-col items-center flex-1">
-                            <div 
-                              className={`w-full rounded-t transition-all duration-300 ${
-                                isToday ? 'bg-blue-500' : 'bg-blue-400/60'
-                              }`}
-                              style={{ height: `${height}%` }}
-                            />
-                            <p className="text-xs text-blue-300 pixelated-text mt-2">
-                              {dayName}
-                            </p>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
           </div>
         )
+
       case 'settings':
         return (
           <div className="space-y-6">
