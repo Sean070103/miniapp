@@ -1,14 +1,41 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Wallet, Settings, User, Shield, Copy, Check, Calendar, Flame, Target, BookOpen, Plus, MessageSquare, Heart, Share2, Menu, Home, Calculator, BarChart3, X, Download, Trash2, Lock as LockIcon, LogOut, TrendingUp, Activity, Network, Coins, Users, Zap, Globe } from 'lucide-react'
-import { UserProfile } from "@/components/auth/user-profile"
-import { DailyEntry } from "@/components/dashboard/daily-entry"
+import { UserProfile } from "@/components/auth/user-profile";
+import { DailyEntry } from "@/components/dashboard/daily-entry";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Activity,
+  BarChart3,
+  BookOpen,
+  Calculator,
+  Calendar,
+  Check,
+  Coins,
+  Copy,
+  Flame,
+  Heart,
+  Home,
+  LogOut,
+  Menu,
+  MessageSquare,
+  Network,
+  Plus,
+  Settings,
+  Share2,
+  Shield,
+  Target,
+  TrendingUp,
+  User,
+  Users,
+  Wallet,
+  X,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
+<<<<<<< HEAD
 import Link from "next/link"
 
 import { StreakTracker } from "@/components/dashboard/streak-tracker"
@@ -27,10 +54,25 @@ interface DailyEntry {
   tags: string[]
   photos?: string[]
   timestamp: number
+=======
+import { ContributionGrid } from "@/components/dashboard/contribution-grid";
+import { StreakTracker } from "@/components/dashboard/streak-tracker";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/auth-context";
+import { baseNetworkAPI } from "@/lib/baseNetworkAPI";
+import { exchangeRateService } from "@/lib/config";
+
+interface DailyEntry {
+  id: string;
+  date: string;
+  content: string;
+  tags: string[];
+  timestamp: number;
+>>>>>>> db2fe4d25d1a608d3868323295d3a1c20914cc26
 }
 
 interface DashboardProps {
-  address: string
+  address: string;
 }
 
 <<<<<<< HEAD
@@ -52,7 +94,7 @@ export default function Dashboard({ address }: DashboardProps) {
 interface Journal {
   id: string;
   baseUserId: string;
-  photo?: string;  // Optional because it has ? in the model
+  photo?: string; // Optional because it has ? in the model
   journal: string;
   likes: number;
   tags: string[];
@@ -61,97 +103,155 @@ interface Journal {
 }
 
 //ito gagamtin pag sa commnets(blueprint)
-interface Comment{
-  id:String;
+interface Comment {
+  id: String;
   baseUserId: String;
- journalId:   String;
- comment:     String;
+  journalId: String;
+  comment: String;
   dateCreated: Date;
 }
 
-type SidebarItem = 'home' | 'calendar' | 'calculator' | 'stats' | 'streak' | 'profile' | 'settings' | 'base'
+type SidebarItem =
+  | "home"
+  | "calendar" 
+  | "calculator"
+  | "stats"
+  | "streak"
+  | "profile"
+  | "settings"
+  | "base";
 
 export default function Dashboard({ address }: DashboardProps) {
   const [showProfile, setShowProfile] = useState(false);
   const [entries, setEntries] = useState<DailyEntry[]>([]);
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeSidebarItem, setActiveSidebarItem] =useState<SidebarItem>("home");
+  const [activeSidebarItem, setActiveSidebarItem] =
+    useState<SidebarItem>("home");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-const fetchIntervalRef = useRef<NodeJS.Timeout>();
-const { user } = useAuth();
-const [dbEntries, setDbEntries] = useState<Journal[]>([]);
+  const fetchIntervalRef = useRef<NodeJS.Timeout>();
+  const { user } = useAuth();
+  const [dbEntries, setDbEntries] = useState<Journal[]>([]);
+const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
+  const [dbComments, setDbComments] = useState<Comment[]>([]);
+   const [currentJournalId, setCurrentJournalId] = useState<string | null>(
+     null
+   );
 
-
-
-  //post comment
+  console.log("ito yung db comments",dbComments)
+  // Post comment
   const postComment = async (journalId: string, comment: string) => {
-  if (!baseUserId || !journalId || !comment) {
-    throw new Error("Missing required fields: journalId, baseUserId, or comment");
-  }
-
-  try {
-    const response = await fetch("/api/comment/post", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        journalId,
-        baseUserId: user.address,
-        comment,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to post comment");
+    if (!user?.address) {
+      throw new Error("User not authenticated");
     }
 
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Post comment error:", error);
-    throw error;
-  }
-};
+    if (!journalId || !comment) {
+      throw new Error("Missing required fields: journalId or comment");
+    }
 
-// Example usage:
-// try {
-//   const newComment = await postComment('journal123', 'user456', 'Great post!');
-//   console.log('Comment created:', newComment);
-// } catch (error) {
-//   console.error('Error posting comment:', error);
-// }
+    try {
+      const response = await fetch("/api/comment/post", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          journalId,
+          baseUserId: user.address, // Automatically use the authenticated user's address
+          comment,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to post comment");
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Post comment error:", error);
+      throw error;
+    }
+  };
+
+  
+
+  // Example usage:
+  // try {
+  //   const newComment = await postComment('journal123', 'user456', 'Great post!');
+  //   console.log('Comment created:', newComment);
+  // } catch (error) {
+  //   console.error('Error posting comment:', error);
+  // }
+
+
+  //fetching comments
+  const fetchJournalComments = async (journalId: string) => {
+    if (!journalId) {
+      throw new Error("Journal ID is required");
+    }
+
+    try {
+      const response = await fetch("/api/comments/get", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ journalId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch comments");
+      }
+
+      const data: Comment[] = await response.json();
+      setDbComments(data);
+      return data;
+    } catch (error) {
+      console.error("Fetch comments error:", error);
+      throw error;
+    }
+  };
+
+  // Set up interval for auto-refresh
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (currentJournalId) {
+      // Fetch immediately
+      fetchJournalComments(currentJournalId);
+
+      // Then set up interval for every 5 seconds
+      intervalId = setInterval(() => {
+        fetchJournalComments(currentJournalId);
+      }, 5000);
+    }
+
+    // Clean up interval on component unmount or when journalId changes
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [currentJournalId]);
+
+  
 
 
   //fetching ng mga journal sa database
-const fetchBaseUserJournal = async () => {
-  if (!user?.address) {
-    throw new Error("User not authenticated or address missing");
-  }
-
-  try {
-    const response = await fetch("/api/journal/getby/id", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ baseUserId: user.address }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch entries");
+  const fetchBaseUserJournal = async () => {
+    if (!user?.address) {
+      throw new Error("User not authenticated or address missing");
     }
 
-    const data: Journal[] = await response.json();
-    setDbEntries(data);
-    return data;
-  } catch (error) {
-    console.error("Fetch error:", error);
-    throw error;
-  }
-};
+    try {
+      const response = await fetch("/api/journal/getby/id", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ baseUserId: user.address }),
+      });
 
+<<<<<<< HEAD
 // Set up the interval for fetchiung post journal of the user
 useEffect(() => {
   // Initial fetch
@@ -162,14 +262,38 @@ useEffect(() => {
   fetchIntervalRef.current = setInterval(() => {
     fetchBaseUserJournal().catch(console.error);
   }, 7000); // 7 seconds
+=======
+      if (!response.ok) {
+        throw new Error("Failed to fetch entries");
+      }
+>>>>>>> db2fe4d25d1a608d3868323295d3a1c20914cc26
 
-  // Cleanup function to clear interval
-  return () => {
-    if (fetchIntervalRef.current) {
-      clearInterval(fetchIntervalRef.current);
+      const data: Journal[] = await response.json();
+      setDbEntries(data);
+      return data;
+    } catch (error) {
+      console.error("Fetch error:", error);
+      throw error;
     }
   };
-}, [user?.address]); // Re-run when user address changes
+
+  // Set up the interval for fetchiung post journal of the user
+  useEffect(() => {
+    // Initial fetch
+    fetchBaseUserJournal().catch(console.error);
+
+    // Set up periodic fetching
+    fetchIntervalRef.current = setInterval(() => {
+      fetchBaseUserJournal().catch(console.error);
+    }, 7000); // 7 seconds
+
+    // Cleanup function to clear interval
+    return () => {
+      if (fetchIntervalRef.current) {
+        clearInterval(fetchIntervalRef.current);
+      }
+    };
+  }, [user?.address]); // Re-run when user address changes
 
   // Calculator states
   const [calculatorDisplay, setCalculatorDisplay] = useState("0");
@@ -1263,9 +1387,29 @@ useEffect(() => {
                             <Heart className="w-3 h-3" />
                             {entry.likes} likes
                           </span>
-                          <span className="flex items-center gap-1">
-                            <MessageSquare className="w-3 h-3" />0 comments
-                          </span>
+
+                          <button
+                            onClick={async () => {
+                              const comment = prompt("Enter your comment:");
+                              if (comment) {
+                                try {
+                                  await postComment(entry.id, comment);
+                                  alert("Comment posted!");
+                                  // Optionally refresh comments after posting
+                                  const updatedComments =
+                                    await fetchJournalComments(entry.id);
+                                  // Update your state here if needed
+                                } catch (err: any) {
+                                  alert(`Error: ${err.message}`);
+                                }
+                              }
+                            }}
+                            className="flex items-center gap-1 hover:text-blue-200 cursor-pointer"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                           {dbComments.length} comments
+                          </button>
+
                           <span className="flex items-center gap-1">
                             <Share2 className="w-3 h-3" />
                             Share
