@@ -58,12 +58,12 @@ export default function ProfilePage() {
   
   // Profile form state
   const [profileForm, setProfileForm] = useState({
-    displayName: user?.displayName || 'DailyBase User',
-    bio: user?.bio || 'Crypto enthusiast and DailyBase user',
-    email: user?.email || '',
-    website: user?.website || '',
-    location: user?.location || '',
-    timezone: user?.timezone || 'UTC'
+    displayName: 'DailyBase User',
+    bio: 'Crypto enthusiast and DailyBase user',
+    email: '',
+    website: '',
+    location: '',
+    timezone: 'UTC'
   })
   
   // Preferences state
@@ -76,18 +76,40 @@ export default function ProfilePage() {
     showStats: true
   })
 
-  // Load entries from localStorage
+  // Load entries from database
   useEffect(() => {
+    const fetchEntries = async () => {
+      try {
+        const response = await fetch('/api/journal/get')
+        if (response.ok) {
+          const data = await response.json()
+          // Convert database posts to DailyEntry format
+          const fetchedEntries: DailyEntry[] = data.map((post: any) => ({
+            id: post.id,
+            date: new Date(post.dateCreated).toISOString().split('T')[0],
+            content: post.journal,
+            tags: post.tags || [],
+            timestamp: new Date(post.dateCreated).getTime()
+          }))
+          setEntries(fetchedEntries)
+        }
+      } catch (error) {
+        console.error('Error fetching entries:', error)
+        // Fallback to localStorage if API fails
     if (user?.address) {
       const savedEntries = localStorage.getItem(`dailybase-entries-${user.address}`)
       if (savedEntries) {
         try {
           setEntries(JSON.parse(savedEntries))
         } catch (error) {
-          console.error('Error loading entries:', error)
+              console.error('Error loading entries from localStorage:', error)
+            }
+          }
         }
       }
     }
+
+    fetchEntries()
   }, [user?.address])
 
   const copyAddress = async () => {
@@ -113,12 +135,12 @@ export default function ProfilePage() {
 
   const cancelEdit = () => {
     setProfileForm({
-      displayName: user?.displayName || 'DailyBase User',
-      bio: user?.bio || 'Crypto enthusiast and DailyBase user',
-      email: user?.email || '',
-      website: user?.website || '',
-      location: user?.location || '',
-      timezone: user?.timezone || 'UTC'
+      displayName: 'DailyBase User',
+      bio: 'Crypto enthusiast and DailyBase user',
+      email: '',
+      website: '',
+      location: '',
+      timezone: 'UTC'
     })
     setIsEditing(false)
   }
@@ -157,34 +179,68 @@ export default function ProfilePage() {
   const totalEntries = entries.length
   const totalDays = entries.length > 0 ? Math.ceil(entries.length / 7) : 0
   const consistency = entries.length > 0 ? Math.round((entries.length / 30) * 100) : 0
-  const currentStreak = entries.length > 0 ? Math.max(...entries.map((_, i) => i + 1)) : 0
+  
+  // Calculate current streak (consecutive days from today backwards)
+  const calculateCurrentStreak = () => {
+    if (entries.length === 0) return 0
+    
+    // Get unique dates where posts were made
+    const postedDates = [...new Set(entries.map(entry => entry.date))].sort()
+    
+    let currentStreak = 0
+    let checkDate = new Date()
+    
+    while (true) {
+      const dateString = checkDate.toISOString().split('T')[0]
+      
+      // Check if there's a post on this date
+      if (postedDates.includes(dateString)) {
+        currentStreak++
+        checkDate.setDate(checkDate.getDate() - 1) // Go to previous day
+      } else {
+        break // Streak broken
+      }
+    }
+    
+    return currentStreak
+  }
+  
+  const currentStreak = calculateCurrentStreak()
   
   // Calculate longest streak
   const calculateLongestStreak = () => {
     if (entries.length === 0) return 0
     
-    let longestStreak = 0
-    let currentStreak = 0
-    const sortedEntries = entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    // Get unique dates where posts were made
+    const postedDates = [...new Set(entries.map(entry => entry.date))].sort()
     
-    for (let i = 0; i < sortedEntries.length; i++) {
+    let longestStreak = 0
+    let tempStreak = 0
+    
+    // Calculate longest streak from all posted dates
+    for (let i = 0; i < postedDates.length; i++) {
       if (i === 0) {
-        currentStreak = 1
+        tempStreak = 1
       } else {
-        const prevDate = new Date(sortedEntries[i - 1].date)
-        const currDate = new Date(sortedEntries[i].date)
-        const diffDays = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24))
+        const currentDate = new Date(postedDates[i])
+        const previousDate = new Date(postedDates[i - 1])
+        const daysDiff = Math.floor((currentDate.getTime() - previousDate.getTime()) / (24 * 60 * 60 * 1000))
         
-        if (diffDays === 1) {
-          currentStreak++
+        if (daysDiff === 1) {
+          // Consecutive day
+          tempStreak++
         } else {
-          longestStreak = Math.max(longestStreak, currentStreak)
-          currentStreak = 1
+          // Streak broken, update longest and reset
+          longestStreak = Math.max(longestStreak, tempStreak)
+          tempStreak = 1
         }
       }
     }
     
-    return Math.max(longestStreak, currentStreak)
+    // Don't forget the last streak
+    longestStreak = Math.max(longestStreak, tempStreak)
+    
+    return longestStreak
   }
 
   const longestStreak = calculateLongestStreak()
@@ -486,6 +542,19 @@ export default function ProfilePage() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Debug Info - Only show in development */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <div className="mt-6 p-4 bg-slate-800/50 rounded-lg border border-slate-600">
+                      <h4 className="text-blue-300 font-semibold mb-2 pixelated-text">Debug Info</h4>
+                      <div className="text-xs text-slate-400 space-y-1">
+                        <p>Posted dates: {[...new Set(entries.map(entry => entry.date))].sort().join(', ')}</p>
+                        <p>Current streak: {currentStreak} days</p>
+                        <p>Longest streak: {longestStreak} days</p>
+                        <p>Total entries: {entries.length}</p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

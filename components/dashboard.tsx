@@ -35,6 +35,26 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+<<<<<<< HEAD
+import Link from "next/link"
+
+import { StreakTracker } from "@/components/dashboard/streak-tracker"
+import { ContributionGrid } from "@/components/dashboard/contribution-grid"
+import { useAuth } from "@/contexts/auth-context"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Skeleton } from "@/components/ui/skeleton"
+import { exchangeRateService } from "@/lib/config"
+import { CombinedFeed } from "@/components/dashboard/combined-feed"
+
+
+interface DailyEntry {
+  id: string
+  date: string
+  content: string
+  tags: string[]
+  photos?: string[]
+  timestamp: number
+=======
 import { ContributionGrid } from "@/components/dashboard/contribution-grid";
 import { StreakTracker } from "@/components/dashboard/streak-tracker";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -48,12 +68,28 @@ interface DailyEntry {
   content: string;
   tags: string[];
   timestamp: number;
+>>>>>>> db2fe4d25d1a608d3868323295d3a1c20914cc26
 }
 
 interface DashboardProps {
   address: string;
 }
 
+<<<<<<< HEAD
+type SidebarItem = 'home' | 'calendar' | 'calculator' | 'stats' | 'streak' | 'profile' | 'settings'
+
+export default function Dashboard({ address }: DashboardProps) {
+  const { user } = useAuth()
+  const [showProfile, setShowProfile] = useState(false)
+  const [entries, setEntries] = useState<DailyEntry[]>([])
+  const [copied, setCopied] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [activeSidebarItem, setActiveSidebarItem] = useState<SidebarItem>('home')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [profileImage, setProfileImage] = useState<string | null>(null)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
+=======
 //ito gagamitin pag galing db yung JOURNAL NA GUSTO MO KUNIN
 interface Journal {
   id: string;
@@ -250,9 +286,22 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
         body: JSON.stringify({ baseUserId: user.address }),
       });
 
+<<<<<<< HEAD
+// Set up the interval for fetchiung post journal of the user
+useEffect(() => {
+  // Initial fetch
+  fetchBaseUserJournal().catch(console.error);
+>>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
+  
+  // Set up periodic fetching
+  fetchIntervalRef.current = setInterval(() => {
+    fetchBaseUserJournal().catch(console.error);
+  }, 7000); // 7 seconds
+=======
       if (!response.ok) {
         throw new Error("Failed to fetch entries");
       }
+>>>>>>> db2fe4d25d1a608d3868323295d3a1c20914cc26
 
       const data: Journal[] = await response.json();
       setDbEntries(data);
@@ -341,6 +390,13 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
   });
 
   // Real-time exchange rates state
+<<<<<<< HEAD
+  const [liveExchangeRates, setLiveExchangeRates] = useState<{ [key: string]: number }>({})
+  const [isLoadingRates, setIsLoadingRates] = useState(false)
+  
+  
+  
+=======
   const [liveExchangeRates, setLiveExchangeRates] = useState<{
     [key: string]: number;
   }>({});
@@ -370,6 +426,7 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
   });
   const [isLoadingBaseData, setIsLoadingBaseData] = useState(false);
 
+>>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
   const currencies = [
     { code: "USD", name: "US Dollar", symbol: "$" },
     { code: "PHP", name: "Philippine Peso", symbol: "₱" },
@@ -479,6 +536,9 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
     return () => clearInterval(interval);
   }, []);
 
+<<<<<<< HEAD
+
+=======
   // Fetch Base network data
   const fetchBaseNetworkData = async () => {
     setIsLoadingBaseData(true);
@@ -518,14 +578,93 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
     fetchBaseNetworkData();
     calculateUserActivity();
   }, [entries]);
+>>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
 
   // Get baseuser ID from user account
   const baseUserId = user?.account?.id;
 
-  // Load entries from localStorage (prioritizing baseuser ID, fallback to address)
+  // Load profile image from localStorage on component mount
   useEffect(() => {
+<<<<<<< HEAD
+    const savedImage = localStorage.getItem(`profile-image-${address}`)
+    if (savedImage) {
+      setProfileImage(savedImage)
+    }
+  }, [address])
+
+  // Handle profile image upload
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size must be less than 5MB')
+      return
+    }
+
+    setIsUploadingImage(true)
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const result = e.target?.result as string
+      setProfileImage(result)
+      // Save to localStorage
+      localStorage.setItem(`profile-image-${address}`, result)
+      setIsUploadingImage(false)
+    }
+    reader.onerror = () => {
+      alert('Error reading image file')
+      setIsUploadingImage(false)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  // Remove profile image
+  const removeProfileImage = () => {
+    setProfileImage(null)
+    localStorage.removeItem(`profile-image-${address}`)
+  }
+
+  // Fetch posts from database
+  const fetchPosts = async () => {
+    try {
+      const response = await fetch('/api/journal/get')
+      if (response.ok) {
+        const data = await response.json()
+        // Convert database posts to DailyEntry format
+        const fetchedEntries: DailyEntry[] = data.map((post: any) => ({
+          id: post.id,
+          date: new Date(post.dateCreated).toISOString().split('T')[0],
+          content: post.journal,
+          tags: post.tags || [],
+          photos: post.photos || [],
+          timestamp: new Date(post.dateCreated).getTime()
+        }))
+        setEntries(fetchedEntries)
+      }
+    } catch (error) {
+      console.error('Error fetching posts:', error)
+      // Fallback to localStorage if API fails
+      loadFromLocalStorage()
+    }
+    setIsLoading(false)
+  }
+
+  // Load entries from localStorage (fallback)
+  const loadFromLocalStorage = () => {
+    let savedEntries = null
+    
+=======
     let savedEntries = null;
 
+>>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
     // First try to load from baseuser ID storage
     if (baseUserId) {
       const baseUserEntries = localStorage.getItem(
@@ -565,8 +704,17 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
     if (savedEntries) {
       setEntries(savedEntries);
     }
+<<<<<<< HEAD
+  }
+
+  // Load entries from database (prioritizing database, fallback to localStorage)
+  useEffect(() => {
+    fetchPosts()
+  }, [address, baseUserId])
+=======
     setIsLoading(false);
   }, [address, baseUserId]);
+>>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
 
   // Save entries to localStorage (using baseuser ID when available, fallback to address)
   const saveEntry = (entry: DailyEntry) => {
@@ -592,16 +740,30 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
   };
 
   // Convert Journal to DailyEntry for the DailyEntry component
-  const handleJournalSave = (journal: any) => {
+  const handleJournalSave = async (journal: any) => {
+    // Save to local storage for immediate UI update
     const dailyEntry: DailyEntry = {
       id: journal.id || Date.now().toString(),
       date: new Date().toISOString().split("T")[0],
       content: journal.journal,
       tags: journal.tags || [],
+<<<<<<< HEAD
+      photos: journal.photos || [], // Save photos from journal
+      timestamp: Date.now()
+    }
+    saveEntry(dailyEntry)
+    
+    // Refresh posts from database to ensure consistency
+    setTimeout(() => {
+      fetchPosts()
+    }, 1000)
+  }
+=======
       timestamp: Date.now(),
     };
     saveEntry(dailyEntry);
   };
+>>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
 
   // Convert DailyEntry to Journal for the DailyEntry component
   const convertToJournal = (entry: DailyEntry | undefined) => {
@@ -611,7 +773,7 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
       baseUserId: baseUserId || address,
       journal: entry.content,
       tags: entry.tags,
-      photo: null,
+      photos: entry.photos || [], // Use actual photos from entry
       likes: 0,
       privacy: "public",
       createdAt: new Date(entry.timestamp),
@@ -903,6 +1065,16 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
   };
 
   const sidebarItems = [
+<<<<<<< HEAD
+    { id: 'home' as SidebarItem, label: 'Home', icon: Home },
+    { id: 'calendar' as SidebarItem, label: 'Calendar', icon: Calendar },
+    { id: 'streak' as SidebarItem, label: 'Streak', icon: Flame },
+    { id: 'calculator' as SidebarItem, label: 'Basio', icon: Calculator },
+    { id: 'stats' as SidebarItem, label: 'Stats', icon: BarChart3 },
+      { id: 'profile' as SidebarItem, label: 'Profile', icon: User },
+  { id: 'settings' as SidebarItem, label: 'Settings', icon: Settings },
+  ]
+=======
     { id: "home" as SidebarItem, label: "Home", icon: Home },
     { id: "calendar" as SidebarItem, label: "Calendar", icon: Calendar },
     { id: "streak" as SidebarItem, label: "Streak", icon: Flame },
@@ -912,6 +1084,7 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
     { id: "settings" as SidebarItem, label: "Settings", icon: Settings },
     { id: "base" as SidebarItem, label: "Base", icon: Network },
   ];
+>>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
 
   const [activeCalculatorTab, setActiveCalculatorTab] = useState("gas");
 
@@ -1040,12 +1213,17 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
           <div className="space-y-6">
             {/* Feed Header */}
             <div className="text-center mb-6">
+<<<<<<< HEAD
+              <h1 className="text-3xl font-bold text-white pixelated-text mb-2">DailyBase Feed</h1>
+              <p className="text-blue-300 pixelated-text">Your personal crypto journey timeline & community posts</p>
+=======
               <h1 className="text-3xl font-bold text-white pixelated-text mb-2">
                 DailyBase Feed
               </h1>
               <p className="text-blue-300 pixelated-text">
                 Your personal crypto journey timeline
               </p>
+>>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
             </div>
 
             {/* Create New Post */}
@@ -1123,6 +1301,10 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
                 </CardContent>
               </Card>
             ) : (
+<<<<<<< HEAD
+              /* Combined Feed Posts */
+              <CombinedFeed entries={entries} userAddress={address} />
+=======
               <div className="space-y-6">
                 {dbEntries.map((entry, index) => (
                   <Card
@@ -1315,6 +1497,7 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
                   </Card>
                 ))}
               </div>
+>>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
             )}
           </div>
         );
@@ -1467,6 +1650,53 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
                               )}
                             </span>
                           </div>
+                          
+                          {/* Photo Display for Calendar View */}
+                          {entry.photos && entry.photos.length > 0 && (
+                            <div className="mb-3">
+                              <div className={`grid gap-1 rounded-lg overflow-hidden ${
+                                entry.photos.length === 1 ? 'grid-cols-1' :
+                                entry.photos.length === 2 ? 'grid-cols-2' :
+                                entry.photos.length === 3 ? 'grid-cols-2' :
+                                'grid-cols-2'
+                              }`}>
+                                {entry.photos.slice(0, 4).map((photo, photoIndex) => (
+                                  <div key={photoIndex} className={`relative group cursor-pointer ${
+                                    entry.photos!.length === 3 && photoIndex === 2 ? 'col-span-2' : ''
+                                  }`}>
+                                    <div className="w-full h-full bg-slate-600 overflow-hidden">
+                                      <img
+                                        src={photo}
+                                        alt={`Post image ${photoIndex + 1}`}
+                                        className={`w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 ${
+                                          entry.photos!.length === 1 ? 'h-32' :
+                                          entry.photos!.length === 2 ? 'h-24' :
+                                          entry.photos!.length === 3 && photoIndex === 2 ? 'h-24' : 'h-24'
+                                        }`}
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                          target.parentElement!.innerHTML = `
+                                            <div class="w-full h-full bg-slate-600 flex items-center justify-center">
+                                              <div class="text-center text-slate-400">
+                                                <span class="text-xs">Image failed to load</span>
+                                              </div>
+                                            </div>
+                                          `;
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                ))}
+                                {entry.photos.length > 4 && (
+                                  <div className="h-24 bg-slate-600 rounded flex items-center justify-center text-xs text-slate-400">
+                                    +{entry.photos.length - 4} more
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          
                           {entry.tags.length > 0 && (
                             <div className="flex items-center gap-2">
                               <span className="text-sm text-blue-300 pixelated-text">
@@ -2469,6 +2699,84 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
         );
       case "profile":
         return (
+<<<<<<< HEAD
+          <div className="max-w-2xl mx-auto space-y-6">
+            {/* Game Theme Header */}
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-cyan-400 pixelated-text mb-2 animate-pulse">
+                PLAYER PROFILE
+              </h1>
+              <div className="w-32 h-1 bg-gradient-to-r from-cyan-400 to-purple-500 mx-auto rounded-full"></div>
+            </div>
+
+            {/* Profile Card - Gaming Style */}
+            <Card className="bg-slate-900/80 border-2 border-cyan-500/50 text-white backdrop-blur-sm card-glass relative overflow-hidden">
+              {/* Animated Background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-purple-500/10 animate-pulse"></div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500"></div>
+              
+              <CardHeader className="text-center relative z-10">
+                {/* Profile Picture - Gaming Style */}
+                <div className="relative mx-auto mb-6">
+                  <div className="relative">
+                    <Avatar className="w-32 h-32 ring-4 ring-cyan-500/50 bg-slate-800 shadow-lg shadow-cyan-500/25">
+                      {profileImage ? (
+                        <img 
+                          src={profileImage} 
+                          alt="Profile" 
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                      ) : (
+                        <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-purple-600 text-white text-4xl font-bold pixelated-text">
+                          {user?.address?.slice(2, 4).toUpperCase() || 'DB'}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    
+                    {/* Upload Button Overlay - Gaming Style */}
+                    <div className="absolute -bottom-2 -right-2">
+                      <label htmlFor="profile-image-upload" className="cursor-pointer">
+                        <div className="bg-cyan-500 hover:bg-cyan-400 p-2 rounded-full shadow-lg shadow-cyan-500/50 transition-all duration-300 hover:scale-110">
+                          {isUploadingImage ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                          )}
+                        </div>
+                      </label>
+                      <input
+                        id="profile-image-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </div>
+                    
+                    {/* Remove Image Button - Gaming Style */}
+                    {profileImage && isEditingProfile && (
+                      <button
+                        onClick={removeProfileImage}
+                        className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-400 p-1 rounded-full shadow-lg shadow-red-500/50 transition-all duration-300 hover:scale-110"
+                        title="Remove profile image"
+                      >
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Player Info - Gaming Style */}
+                                 <CardTitle className="text-cyan-400 pixelated-text text-3xl mb-2 text-shadow-glow">
+                   DAILY BASE EXPLORER
+                 </CardTitle>
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-400/50 pixelated-text">
+=======
           <div className="space-y-6">
             {/* Profile Header */}
             <div className="text-center mb-6">
@@ -2493,17 +2801,33 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
                 </CardTitle>
                 <div className="flex items-center justify-center gap-2">
                   <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text">
+>>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
                     <Wallet className="w-3 h-3 mr-1" />
                     {getAddressDisplay(address)}
                   </Badge>
                   {user?.account && (
-                    <Badge className="bg-green-500/20 text-green-300 border-green-400/30 pixelated-text">
+                    <Badge className="bg-green-500/20 text-green-300 border-green-400/50 pixelated-text">
                       <Shield className="w-3 h-3 mr-1" />
-                      Base Account
+                      BASE ACCOUNT
                     </Badge>
                   )}
                 </div>
               </CardHeader>
+<<<<<<< HEAD
+              
+              <CardContent className="space-y-6 relative z-10">
+                {/* Stats Grid - Gaming Style */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-slate-800/50 border border-cyan-500/30 rounded-lg hover:bg-slate-800/70 transition-colors">
+                    <div className="text-3xl font-bold text-cyan-400 pixelated-text mb-1">{entries.length}</div>
+                    <div className="text-sm text-cyan-300 pixelated-text">TOTAL ENTRIES</div>
+                  </div>
+                  <div className="text-center p-4 bg-slate-800/50 border border-purple-500/30 rounded-lg hover:bg-slate-800/70 transition-colors">
+                    <div className="text-3xl font-bold text-purple-400 pixelated-text mb-1">
+                      {entries.length > 0 ? Math.max(...entries.map((_, i) => i + 1)) : 0}
+                    </div>
+                    <div className="text-sm text-purple-300 pixelated-text">STREAK</div>
+=======
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
                   <div>
@@ -2587,10 +2911,98 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
                     <div className="text-sm text-blue-300 pixelated-text">
                       Current Streak
                     </div>
+>>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
                   </div>
                 </div>
+
+                {/* Account Details - Gaming Style */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-slate-800/50 border border-cyan-500/30 rounded-lg hover:bg-slate-800/70 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <Wallet className="w-5 h-5 text-cyan-400" />
+                      <div>
+                        <p className="text-cyan-300 pixelated-text font-semibold">WALLET ADDRESS</p>
+                        <p className="text-slate-300 pixelated-text text-sm">{getAddressDisplay(address)}</p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={copyAddress}
+                      variant="ghost"
+                      size="sm"
+                      className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/20"
+                    >
+                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                  
+                  {baseUserId && (
+                    <div className="flex items-center justify-between p-4 bg-slate-800/50 border border-green-500/30 rounded-lg hover:bg-slate-800/70 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <Shield className="w-5 h-5 text-green-400" />
+                        <div>
+                          <p className="text-green-300 pixelated-text font-semibold">BASE ACCOUNT</p>
+                          <p className="text-slate-300 pixelated-text text-sm">{baseUserId.slice(0, 8)}...</p>
+                        </div>
+                      </div>
+                      <Badge className="bg-green-500/20 text-green-300 border-green-400/50 pixelated-text">
+                        ACTIVE
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+
+                                 {/* Action Buttons - Gaming Style */}
+                 <div className="flex gap-4 pt-4">
+                   <Button
+                     onClick={() => setIsEditingProfile(!isEditingProfile)}
+                     variant="outline"
+                     className={`flex-1 pixelated-text font-semibold transition-all duration-300 hover:scale-105 ${
+                       isEditingProfile 
+                         ? 'bg-green-500/20 border-green-500 text-green-300 hover:bg-green-500/30' 
+                         : 'bg-cyan-500/20 border-cyan-500 text-cyan-300 hover:bg-cyan-500/30'
+                     }`}
+                   >
+                     {isEditingProfile ? (
+                       <>
+                         <Check className="w-4 h-4 mr-2" />
+                         SAVE PROFILE
+                       </>
+                     ) : (
+                       <>
+                         <User className="w-4 h-4 mr-2" />
+                         EDIT PROFILE
+                       </>
+                     )}
+                   </Button>
+                   <Button
+                     onClick={() => {
+                       if (confirm('Are you sure you want to disconnect your wallet?')) {
+                         localStorage.removeItem(`dailybase-entries-${address}`)
+                         if (baseUserId) {
+                           localStorage.removeItem(`dailybase-entries-${baseUserId}`)
+                         }
+                         if (typeof window !== 'undefined' && (window as any).enhancedLogout) {
+                           (window as any).enhancedLogout()
+                         } else {
+                           window.location.reload()
+                         }
+                       }
+                     }}
+                     variant="outline"
+                     className="flex-1 bg-red-500/20 border-red-500 text-red-300 hover:bg-red-500/30 pixelated-text font-semibold transition-all duration-300 hover:scale-105"
+                   >
+                     <LogOut className="w-4 h-4 mr-2" />
+                     DISCONNECT
+                   </Button>
+                 </div>
               </CardContent>
             </Card>
+<<<<<<< HEAD
+          </div>
+        )
+
+      case 'settings':
+=======
 
             {/* Disconnect Button */}
             <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass max-w-2xl mx-auto">
@@ -2938,6 +3350,7 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
           </div>
         );
       case "settings":
+>>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
         return (
           <div className="space-y-6">
             {/* Settings Header */}

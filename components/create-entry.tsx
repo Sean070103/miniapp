@@ -15,8 +15,10 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Camera, Hash, X, Plus, Save, FileText } from "lucide-react";
+import { Camera, Hash, X, Plus, Save, FileText, Upload, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
+import { UploadButton } from "@uploadthing/react";
+import type { OurFileRouter } from "@/app/api/uploadthing/core";
 
 export function CreateEntry() {
   const [entryType, setEntryType] = useState("");
@@ -26,6 +28,7 @@ export function CreateEntry() {
   const [newTag, setNewTag] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const { user } = useAuth();
 
   const entryTypes = [
@@ -98,13 +101,6 @@ export function CreateEntry() {
     setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
-  const addPhoto = () => {
-    const newPhoto = `/placeholder.svg?height=200&width=300&text=Photo${
-      photos.length + 1
-    }`;
-    setPhotos([...photos, newPhoto]);
-  };
-
   const removePhoto = (index: number) => {
     setPhotos(photos.filter((_, i) => i !== index));
   };
@@ -164,7 +160,7 @@ export function CreateEntry() {
             <Plus className="w-6 h-6 text-white" />
           </div>
           <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-            Create New Entry potnangnananan mo
+            Create New Entry
           </h2>
         </div>
         <p className="text-blue-600 text-lg">Document your Base journey</p>
@@ -254,7 +250,7 @@ export function CreateEntry() {
                         type="button"
                         variant="destructive"
                         size="sm"
-                        className="absolute top-2 right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100"
+                        className="absolute top-2 right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => removePhoto(index)}
                       >
                         <X className="w-4 h-4" />
@@ -263,10 +259,38 @@ export function CreateEntry() {
                   ))}
                 </div>
               )}
-              <Button type="button" variant="outline" onClick={addPhoto}>
-                <Camera className="w-5 h-5 mr-2" />
-                Add Photo
-              </Button>
+              
+              {/* Upload Button */}
+              <div className="flex items-center gap-4">
+                <UploadButton<OurFileRouter, "imageUploader">
+                  endpoint="imageUploader"
+                  onUploadBegin={() => {
+                    setIsUploading(true);
+                  }}
+                  onClientUploadComplete={(res) => {
+                    setIsUploading(false);
+                    if (res && res.length > 0) {
+                      const uploadedUrl = res[0].url;
+                      setPhotos([...photos, uploadedUrl]);
+                    }
+                  }}
+                  onUploadError={(error: Error) => {
+                    setIsUploading(false);
+                    alert(`Upload failed: ${error.message}`);
+                  }}
+                  className="ut-button:bg-blue-500 ut-button:hover:bg-blue-600 ut-button:text-white ut-button:rounded-lg ut-button:px-4 ut-button:py-2 ut-button:font-medium"
+                />
+                {isUploading && (
+                  <div className="flex items-center gap-2 text-blue-600">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Uploading...</span>
+                  </div>
+                )}
+              </div>
+              
+              <p className="text-sm text-gray-600">
+                Upload images to share with your Base community. Max file size: 4MB
+              </p>
             </div>
 
             {/* Tags */}
