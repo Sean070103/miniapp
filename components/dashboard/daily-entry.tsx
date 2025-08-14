@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+<<<<<<< HEAD
 import { Save, Edit3, Info, Hash, Camera, X, Loader2, AlertCircle, Image as ImageIcon, Check } from "lucide-react";
 import { UploadButton } from "@uploadthing/react";
 import type { OurFileRouter } from "@/app/api/uploadthing/core";
@@ -16,6 +17,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import React from "react";
+=======
+import { Save, Edit3, Info, Hash } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context" // adjust path
+>>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
 
 interface Journal {
   id?: string;
@@ -46,6 +51,9 @@ export function DailyEntry({ userId, onSave, todayEntry }: DailyEntryProps) {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isPosted, setIsPosted] = useState(false);
   const [imageLoadErrors, setImageLoadErrors] = useState<Set<number>>(new Set());
+
+  const { user } = useAuth();
+  
 
   const articleTypeTags = [
     { type: "DeFi", icon: "💱", color: "from-blue-400 to-blue-600" },
@@ -84,8 +92,11 @@ export function DailyEntry({ userId, onSave, todayEntry }: DailyEntryProps) {
     setError(null);
     setSuccess(false);
 
+    if (!user) {
+      throw new Error("User not logged in");
+    }
     const journalData: Journal = {
-      baseUserId: "angelo yocor",
+      baseUserId: user.address,
       journal: content.trim(),
       tags,
       photos, // Save all photos instead of just the first one

@@ -1,52 +1,68 @@
+import prisma from '@/utils/connect'
+import { NextResponse } from 'next/server'
 
-import prisma from '../../../../utils/connect'
+export async function POST(req: Request) {
+  const body = await req.json()
+  const { walletAddress, username, email, profilePicture, bio } = body
 
-//CREATE BASE ACC( IN APP NOT WEB3)
-export async function POST(req:Request) {
- 
- const body = await req.json()
+  try {
+    // Validate required fields
+    if (!walletAddress) {
+      return NextResponse.json(
+        { error: "Wallet address is required" },
+        { status: 400 }
+      )
+    }
 
- const {
-  baseUserId,
-  bio,
-  profile,
- } = body
+    // Check if user already exists
+    const existingUser = await prisma.baseUser.findUnique({
+      where: { walletAddress },
+    })
 
- try {
-  if (!baseUserId) {
-   return new Response(
-    JSON.stringify({ error: "please input a baseId", }),
-    { status: 500, headers: { "Content-Type": "application/json" } }
-   )
+    if (existingUser) {
+      return NextResponse.json(
+        { 
+          message: "User already exists", 
+          user: {
+            id: existingUser.id,
+            walletAddress: existingUser.walletAddress,
+            username: existingUser.username
+          } 
+        },
+        { status: 200 }
+      )
+    }
+
+    // Create new user
+    const newUser = await prisma.baseUser.create({
+      data: { 
+        walletAddress,
+        username,
+        email,
+        profilePicture,
+        bio
+      },
+    })
+
+    return NextResponse.json(
+      {
+        message: "User created successfully",
+        user: {
+          id: newUser.id,
+          walletAddress: newUser.walletAddress,
+          username: newUser.username
+        }
+      },
+      { status: 201 }
+    )
+  } catch (error) {
+    console.error("Error in user creation:", error)
+    return NextResponse.json(
+      { 
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : String(error)
+      },
+      { status: 500 }
+    )
   }
-
-  const createUser = await prisma.baseUsers.create({
-
-   data: {
-     baseUserId,
-     bio,
-     profile,
-   }
-  })
-  
-
-  return new Response(JSON.stringify(createUser), {
-     status:201,
-     headers: {"Content-Type": "application/json"},
-  })
-
-  
- } catch (e) {
-  return new Response(
-   JSON.stringify({
-    error: "error at",
-    details: e
-   }),
-   {
-    status: 500,
-    headers:{"Content-Type":"application/json"},
-   }
-  )
- }
-
 }
