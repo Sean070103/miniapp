@@ -102,7 +102,42 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
      null
    );
 
+
   console.log("ito yung db comments",dbComments)
+
+  //like journal
+  const likeJournal = async (journalId: string) => {
+  if (!user?.address) {
+    throw new Error("User not authenticated");
+  }
+
+  if (!journalId) {
+    throw new Error("Missing required field: journalId");
+  }
+
+  try {
+    const response = await fetch("/api/journal/likes/post", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        journalId,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to like journal");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Like journal error:", error);
+    throw error;
+  }
+  };
+  
   // Post comment
   const postComment = async (journalId: string, comment: string) => {
     if (!user?.address) {
@@ -1144,15 +1179,35 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
                             </div>
                           </div>
                         </div>
+
+                        {/* Action Buttons */}
                         <div className="flex items-center gap-1">
+                          {/* Like Button */}
                           <Button
                             variant="ghost"
                             size="sm"
                             className="text-blue-300 hover:text-blue-200 hover:bg-blue-500/10 rounded-full p-2"
+                            onClick={async () => {
+                              try {
+                                const result = await likeJournal(entry.id);
+                                // Update likes in state
+                                setDbEntries((prev) =>
+                                  prev.map((e) =>
+                                    e.id === entry.id
+                                      ? { ...e, likes: (e.likes || 0) + 1 }
+                                      : e
+                                  )
+                                );
+                              } catch (err: any) {
+                                alert(err.message || "Failed to like journal");
+                              }
+                            }}
                           >
                             <Heart className="w-4 h-4" />
                             <span className="sr-only">Like</span>
                           </Button>
+
+                          {/* Comment Button */}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1161,6 +1216,8 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
                             <MessageSquare className="w-4 h-4" />
                             <span className="sr-only">Comment</span>
                           </Button>
+
+                          {/* Share Button */}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1172,6 +1229,7 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
                         </div>
                       </div>
                     </CardHeader>
+
                     <CardContent className="pt-0">
                       {entry.photo && (
                         <div className="mb-4 rounded-xl overflow-hidden">
@@ -1187,6 +1245,7 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
                           {entry.journal}
                         </p>
                       </div>
+
                       {entry.tags.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-4">
                           {entry.tags.map((tag, tagIndex) => (
@@ -1199,12 +1258,31 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
                           ))}
                         </div>
                       )}
+
+                      {/* Likes / Comments / Share Summary */}
                       <div className="flex items-center justify-between pt-4 border-t border-slate-600/30">
                         <div className="flex items-center gap-4 text-sm text-blue-300/70">
-                          <span className="flex items-center gap-1">
+                          <button
+                            onClick={async () => {
+                              try {
+                                const result = await likeJournal(entry.id);
+                                // Update likes in state
+                                setDbEntries((prev) =>
+                                  prev.map((e) =>
+                                    e.id === entry.id
+                                      ? { ...e, likes: (e.likes || 0) + 1 }
+                                      : e
+                                  )
+                                );
+                              } catch (err: any) {
+                                alert(err.message || "Failed to like journal");
+                              }
+                            }}
+                            className="flex items-center gap-1 hover:text-blue-200 cursor-pointer"
+                          >
                             <Heart className="w-3 h-3" />
                             {entry.likes} likes
-                          </span>
+                          </button>
 
                           <button
                             onClick={async () => {
@@ -1213,10 +1291,9 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
                                 try {
                                   await postComment(entry.id, comment);
                                   alert("Comment posted!");
-                                  // Optionally refresh comments after posting
                                   const updatedComments =
                                     await fetchJournalComments(entry.id);
-                                  // Update your state here if needed
+                                  // Update your comment state here
                                 } catch (err: any) {
                                   alert(`Error: ${err.message}`);
                                 }
@@ -1225,7 +1302,7 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
                             className="flex items-center gap-1 hover:text-blue-200 cursor-pointer"
                           >
                             <MessageSquare className="w-3 h-3" />
-                           {dbComments.length} comments
+                            {dbComments.length} comments
                           </button>
 
                           <span className="flex items-center gap-1">
@@ -1233,17 +1310,6 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
                             Share
                           </span>
                         </div>
-                        {/* <div className="text-xs text-blue-300/50">
-                          {entry.privacy === "public" ? (
-                            <span className="flex items-center gap-1">
-                              <Globe className="w-3 h-3" /> Public
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1">
-                              <Lock className="w-3 h-3" /> Private
-                            </span>
-                          )}
-                        </div> */}
                       </div>
                     </CardContent>
                   </Card>
