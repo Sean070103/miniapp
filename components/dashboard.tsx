@@ -43,6 +43,15 @@ interface Journal {
   dateCreated: Date;
 }
 
+//ito gagamtin pag sa commnets(blueprint)
+interface Comment{
+  id:String;
+  baseUserId: String;
+ journalId:   String;
+ comment:     String;
+  dateCreated: Date;
+}
+
 type SidebarItem = 'home' | 'calendar' | 'calculator' | 'stats' | 'streak' | 'profile' | 'settings' | 'base'
 
 export default function Dashboard({ address }: DashboardProps) {
@@ -50,15 +59,55 @@ export default function Dashboard({ address }: DashboardProps) {
   const [entries, setEntries] = useState<DailyEntry[]>([]);
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeSidebarItem, setActiveSidebarItem] =
-    useState<SidebarItem>("home");
+  const [activeSidebarItem, setActiveSidebarItem] =useState<SidebarItem>("home");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
+const fetchIntervalRef = useRef<NodeJS.Timeout>();
 const { user } = useAuth();
 const [dbEntries, setDbEntries] = useState<Journal[]>([]);
 
-const fetchIntervalRef = useRef<NodeJS.Timeout>();
 
+
+  //post comment
+  const postComment = async (journalId: string, comment: string) => {
+  if (!baseUserId || !journalId || !comment) {
+    throw new Error("Missing required fields: journalId, baseUserId, or comment");
+  }
+
+  try {
+    const response = await fetch("/api/comment/post", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        journalId,
+        baseUserId: user.address,
+        comment,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to post comment");
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Post comment error:", error);
+    throw error;
+  }
+};
+
+// Example usage:
+// try {
+//   const newComment = await postComment('journal123', 'user456', 'Great post!');
+//   console.log('Comment created:', newComment);
+// } catch (error) {
+//   console.error('Error posting comment:', error);
+// }
+
+
+  //fetching ng mga journal sa database
 const fetchBaseUserJournal = async () => {
   if (!user?.address) {
     throw new Error("User not authenticated or address missing");
