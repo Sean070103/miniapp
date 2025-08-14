@@ -86,7 +86,7 @@ const fetchBaseUserJournal = async () => {
   }
 };
 
-// Set up the interval
+// Set up the interval for fetchiung post journal of the user
 useEffect(() => {
   // Initial fetch
   fetchBaseUserJournal().catch(console.error);
@@ -94,7 +94,7 @@ useEffect(() => {
   // Set up periodic fetching
   fetchIntervalRef.current = setInterval(() => {
     fetchBaseUserJournal().catch(console.error);
-  }, 3000); // 3 seconds
+  }, 7000); // 7 seconds
 
   // Cleanup function to clear interval
   return () => {
