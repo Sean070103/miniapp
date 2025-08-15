@@ -393,7 +393,7 @@ body {
   }
   
   .shadow-mobile-lg {
-    @apply shadow-xl sm:shadow-2xl lg:shadow-3xl;
+    @apply shadow-xl sm:shadow-2xl lg:shadow-2xl;
   }
 
   /* Responsive borders */

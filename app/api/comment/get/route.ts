@@ -16,14 +16,6 @@ export async function POST(req: Request) {
 
     const comments = await prisma.comment.findMany({
       where: { journalId: journalId },
-      include: {
-        baseUser: {
-          select: {
-            id: true,
-            username: true
-          }
-        }
-      },
       orderBy: { dateCreated: 'desc' }
     });
 
