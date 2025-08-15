@@ -15,6 +15,20 @@ export async function POST(req: Request) {
       )
     }
 
+    // Validate that the journal exists
+    const journal = await prisma.journal.findUnique({
+      where: {
+        id: journalId,
+      },
+    });
+
+    if (!journal) {
+      return NextResponse.json(
+        { error: "Journal not found" },
+        { status: 404 }
+      )
+    }
+
     const createComment = await prisma.comment.create({
       data: {
         baseUserId,
@@ -47,12 +61,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Validate that the journal exists
+    const journal = await prisma.journal.findUnique({
+      where: {
+        id: journalId,
+      },
+    });
+
+    if (!journal) {
+      return NextResponse.json(
+        { error: "Journal not found" },
+        { status: 404 }
+      )
+    }
+
     const comments = await prisma.comment.findMany({
       where: {
         journalId: journalId,
       },
       orderBy: {
-        createdAt: 'desc',
+        dateCreated: 'desc',
       },
     });
 

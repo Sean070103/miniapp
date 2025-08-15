@@ -4,11 +4,11 @@ import { NextResponse } from 'next/server'
 // GET ALL JOURNAL
 export async function GET() {
   try {
-    const allJournal = await prisma.journal.findMany({
+    const journals = await prisma.journal.findMany({
       orderBy: { dateCreated: 'desc' }
-    });
+    })
 
-    return NextResponse.json(allJournal, { status: 200 });
+    return NextResponse.json(journals, { status: 200 });
 
   } catch (error) {
     console.error("Error at GET /Journal", error);

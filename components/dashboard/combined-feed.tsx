@@ -47,6 +47,7 @@ interface DailyEntry {
   date: string;
   content: string;
   tags: string[];
+  photos?: string[];
   timestamp: number;
 }
 
@@ -58,7 +59,7 @@ interface DashboardProps {
 interface Journal {
   id: string;
   baseUserId: string;
-  photo?: string; // Optional because it has ? in the model
+  photos: string[]; // Changed from photo to photos array
   journal: string;
   likes: number;
   tags: string[];
@@ -563,6 +564,7 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
       date: new Date().toISOString().split("T")[0],
       content: journal.journal,
       tags: journal.tags || [],
+      photos: journal.photos || [],
       timestamp: Date.now(),
     };
     saveEntry(dailyEntry);
@@ -576,10 +578,10 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
       baseUserId: baseUserId || address,
       journal: entry.content,
       tags: entry.tags,
-      photo: null,
+      photos: entry.photos || [],
       likes: 0,
       privacy: "public",
-      createdAt: new Date(entry.timestamp),
+      dateCreated: new Date(entry.timestamp),
     };
   };
 
@@ -1173,10 +1175,10 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
             </div>
           </CardHeader>
           <CardContent className="pt-0">
-                      {entry.photo && (
+                      {entry.photos && entry.photos.length > 0 && (
                         <div className="mb-4 rounded-xl overflow-hidden">
                           <img
-                            src={entry.photo}
+                            src={entry.photos[0]} // Assuming photos are an array of URLs
                             alt="Journal entry"
                             className="w-full h-auto max-h-64 object-cover"
                           />

@@ -65,7 +65,6 @@ export async function POST(req: Request) {
         data: {
           journalId,
           baseUserId,
-          dateCreated: new Date()
         }
       })
 

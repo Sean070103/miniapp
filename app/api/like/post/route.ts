@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +10,20 @@ export async function POST(request: NextRequest) {
         { error: 'Journal ID and User ID are required' },
         { status: 400 }
       );
+    }
+
+    // Validate that the journal exists
+    const journal = await prisma.journal.findUnique({
+      where: {
+        id: journalId,
+      },
+    });
+
+    if (!journal) {
+      return NextResponse.json(
+        { error: "Journal not found" },
+        { status: 404 }
+      )
     }
 
     // Check if like already exists
@@ -69,6 +81,20 @@ export async function GET(request: NextRequest) {
         { error: 'Journal ID is required' },
         { status: 400 }
       );
+    }
+
+    // Validate that the journal exists
+    const journal = await prisma.journal.findUnique({
+      where: {
+        id: journalId,
+      },
+    });
+
+    if (!journal) {
+      return NextResponse.json(
+        { error: "Journal not found" },
+        { status: 404 }
+      )
     }
 
     // Get like count for the journal
