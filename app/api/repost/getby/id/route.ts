@@ -1,39 +1,34 @@
-import prisma from '../../../../../utils/connect';
+import { prisma } from '@/lib/prisma'
+import { NextResponse } from 'next/server'
 
-
-// get post bu baseUserId
+// get reposts by baseUserId
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { baseUserId } = body;
-
-  if (!baseUserId) {
-    return new Response(JSON.stringify({ error: "Missing baseUserId" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
   try {
-   const userRepost = await prisma.repost.findMany({
-     where: { baseUserId: baseUserId },
-   });
+    const body = await req.json();
+    const { baseUserId } = body;
 
+    if (!baseUserId) {
+      return NextResponse.json(
+        { error: "Missing baseUserId" },
+        { status: 400 }
+      );
+    }
 
-    return new Response(JSON.stringify(userRepost), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    const userReposts = await prisma.repost.findMany({
+      where: { baseUserId: baseUserId },
+      include: {
+        journal: true
+      },
+      orderBy: { dateCreated: 'desc' }
     });
 
-  } catch (e) {
-    return new Response(
-      JSON.stringify({
-        error: "Error fetching base user",
-        details: e instanceof Error ? e.message : String(e),
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+    return NextResponse.json(userReposts, { status: 200 });
+
+  } catch (error) {
+    console.error("Error fetching user reposts:", error);
+    return NextResponse.json(
+      { error: "Error fetching user reposts" },
+      { status: 500 }
     );
   }
 }

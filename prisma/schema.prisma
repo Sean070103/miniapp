@@ -49,6 +49,13 @@ model Comment {
  dateCreated DateTime @default(now())
 }
 
+model Like {
+ id          String   @id @default(auto()) @map("_id") @db.ObjectId
+ journalId   String
+ userId      String
+ dateCreated DateTime @default(now())
+}
+
 model Chaincomments {
  id           String   @id @default(auto()) @map("_id") @db.ObjectId
  commentId    String

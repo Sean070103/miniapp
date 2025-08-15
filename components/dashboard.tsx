@@ -1,51 +1,17 @@
-"use client";
+"use client"
 
-import { UserProfile } from "@/components/auth/user-profile";
-import { DailyEntry } from "@/components/dashboard/daily-entry";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Activity,
-  BarChart3,
-  BookOpen,
-  Calculator,
-  Calendar,
-  Check,
-  Coins,
-  Copy,
-  Flame,
-  Heart,
-  Home,
-  LogOut,
-  Menu,
-  MessageSquare,
-  Network,
-  Plus,
-  Settings,
-  Share2,
-  Shield,
-  Target,
-  TrendingUp,
-  User,
-  Users,
-  Wallet,
-  X,
-} from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-
-<<<<<<< HEAD
-import Link from "next/link"
-
-import { StreakTracker } from "@/components/dashboard/streak-tracker"
-import { ContributionGrid } from "@/components/dashboard/contribution-grid"
-import { useAuth } from "@/contexts/auth-context"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { exchangeRateService } from "@/lib/config"
-import { CombinedFeed } from "@/components/dashboard/combined-feed"
-
+import { Wallet, User, Shield, Copy, Check, Calendar, Flame, BookOpen, Plus, MessageSquare, Heart, Share2, Menu, Home, Calculator, BarChart3, Settings, Target, X, LogOut, Bell, RotateCcw, Eye } from 'lucide-react'
+import { DailyEntry } from "@/components/dashboard/daily-entry"
+import { useAuth } from "@/contexts/auth-context"
+import { ContributionGrid } from "@/components/dashboard/contribution-grid"
+import { StreakTracker } from "@/components/dashboard/streak-tracker"
+import { useToast, Toast } from "@/components/ui/toast"
 
 interface DailyEntry {
   id: string
@@ -54,47 +20,16 @@ interface DailyEntry {
   tags: string[]
   photos?: string[]
   timestamp: number
-=======
-import { ContributionGrid } from "@/components/dashboard/contribution-grid";
-import { StreakTracker } from "@/components/dashboard/streak-tracker";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/contexts/auth-context";
-import { baseNetworkAPI } from "@/lib/baseNetworkAPI";
-import { exchangeRateService } from "@/lib/config";
-
-interface DailyEntry {
-  id: string;
-  date: string;
-  content: string;
-  tags: string[];
-  timestamp: number;
->>>>>>> db2fe4d25d1a608d3868323295d3a1c20914cc26
 }
 
 interface DashboardProps {
-  address: string;
+  address: string
 }
 
-<<<<<<< HEAD
-type SidebarItem = 'home' | 'calendar' | 'calculator' | 'stats' | 'streak' | 'profile' | 'settings'
-
-export default function Dashboard({ address }: DashboardProps) {
-  const { user } = useAuth()
-  const [showProfile, setShowProfile] = useState(false)
-  const [entries, setEntries] = useState<DailyEntry[]>([])
-  const [copied, setCopied] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [activeSidebarItem, setActiveSidebarItem] = useState<SidebarItem>('home')
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [profileImage, setProfileImage] = useState<string | null>(null)
-  const [isUploadingImage, setIsUploadingImage] = useState(false)
-  const [isEditingProfile, setIsEditingProfile] = useState(false)
-=======
-//ito gagamitin pag galing db yung JOURNAL NA GUSTO MO KUNIN
 interface Journal {
   id: string;
   baseUserId: string;
-  photo?: string; // Optional because it has ? in the model
+  photo?: string;
   journal: string;
   likes: number;
   tags: string[];
@@ -102,222 +37,78 @@ interface Journal {
   dateCreated: Date;
 }
 
-//ito gagamtin pag sa commnets(blueprint)
-interface Comment {
-  id: String;
-  baseUserId: String;
-  journalId: String;
-  comment: String;
-  dateCreated: Date;
-}
-
-type SidebarItem =
-  | "home"
-  | "calendar" 
-  | "calculator"
-  | "stats"
-  | "streak"
-  | "profile"
-  | "settings"
-  | "base";
+type SidebarItem = 'home' | 'calendar' | 'calculator' | 'stats' | 'streak' | 'notifications' | 'profile' | 'settings'
 
 export default function Dashboard({ address }: DashboardProps) {
-  const [showProfile, setShowProfile] = useState(false);
   const [entries, setEntries] = useState<DailyEntry[]>([]);
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeSidebarItem, setActiveSidebarItem] =
-    useState<SidebarItem>("home");
+  const [activeSidebarItem, setActiveSidebarItem] = useState<SidebarItem>("home");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const fetchIntervalRef = useRef<NodeJS.Timeout>();
   const { user } = useAuth();
   const [dbEntries, setDbEntries] = useState<Journal[]>([]);
-const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
-  const [dbComments, setDbComments] = useState<Comment[]>([]);
-   const [currentJournalId, setCurrentJournalId] = useState<string | null>(
-     null
-   );
-
-  console.log("ito yung db comments",dbComments)
-  // Post comment
-  const postComment = async (journalId: string, comment: string) => {
-    if (!user?.address) {
-      throw new Error("User not authenticated");
-    }
-
-    if (!journalId || !comment) {
-      throw new Error("Missing required fields: journalId or comment");
-    }
-
-    try {
-      const response = await fetch("/api/comment/post", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          journalId,
-          baseUserId: user.address, // Automatically use the authenticated user's address
-          comment,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to post comment");
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Post comment error:", error);
-      throw error;
-    }
-  };
-
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
   
+  // Toast notifications
+  const { toasts, showToast, removeToast } = useToast();
 
-  // Example usage:
-  // try {
-  //   const newComment = await postComment('journal123', 'user456', 'Great post!');
-  //   console.log('Comment created:', newComment);
-  // } catch (error) {
-  //   console.error('Error posting comment:', error);
-  // }
-
-
-  //fetching comments
-  const fetchJournalComments = async (journalId: string) => {
-    if (!journalId) {
-      throw new Error("Journal ID is required");
-    }
-
-    try {
-      const response = await fetch("/api/comments/get", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ journalId }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch comments");
-      }
-
-      const data: Comment[] = await response.json();
-      setDbComments(data);
-      return data;
-    } catch (error) {
-      console.error("Fetch comments error:", error);
-      throw error;
-    }
-  };
-
-  // Set up interval for auto-refresh
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-
-    if (currentJournalId) {
-      // Fetch immediately
-      fetchJournalComments(currentJournalId);
-
-      // Then set up interval for every 5 seconds
-      intervalId = setInterval(() => {
-        fetchJournalComments(currentJournalId);
-      }, 5000);
-    }
-
-    // Clean up interval on component unmount or when journalId changes
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [currentJournalId]);
-
+  // Comment and repost states
+  const [dbComments, setDbComments] = useState<any[]>([]);
+  const [currentJournalId, setCurrentJournalId] = useState<string | null>(null);
+  const [userReposts, setUserReposts] = useState<any[]>([]);
+  const [commentCounts, setCommentCounts] = useState<{[key: string]: number}>({});
   
-
-
-  //fetching ng mga journal sa database
-  const fetchBaseUserJournal = async () => {
-    if (!user?.address) {
-      throw new Error("User not authenticated or address missing");
-    }
-
-    try {
-      const response = await fetch("/api/journal/getby/id", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ baseUserId: user.address }),
-      });
-
-<<<<<<< HEAD
-// Set up the interval for fetchiung post journal of the user
-useEffect(() => {
-  // Initial fetch
-  fetchBaseUserJournal().catch(console.error);
->>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
+  // Like states
+  const [userLikes, setUserLikes] = useState<{[key: string]: boolean}>({});
+  const [likeCounts, setLikeCounts] = useState<{[key: string]: number}>({});
+  const [repostCounts, setRepostCounts] = useState<{[key: string]: number}>({});
   
-  // Set up periodic fetching
-  fetchIntervalRef.current = setInterval(() => {
-    fetchBaseUserJournal().catch(console.error);
-  }, 7000); // 7 seconds
-=======
-      if (!response.ok) {
-        throw new Error("Failed to fetch entries");
-      }
->>>>>>> db2fe4d25d1a608d3868323295d3a1c20914cc26
+  // Loading states for interactions
+  const [loadingLikes, setLoadingLikes] = useState<{[key: string]: boolean}>({});
+  const [loadingComments, setLoadingComments] = useState<{[key: string]: boolean}>({});
+  const [loadingReposts, setLoadingReposts] = useState<{[key: string]: boolean}>({});
+  
+  // Create post states
+  const [newPostContent, setNewPostContent] = useState('');
+  const [newPostTags, setNewPostTags] = useState<string[]>([]);
+  const [isCreatingPost, setIsCreatingPost] = useState(false);
+  
+  // Home feed states
+  const [allPosts, setAllPosts] = useState<Journal[]>([]);
+  const [trendingTopics, setTrendingTopics] = useState<string[]>([]);
+  const [feedFilter, setFeedFilter] = useState<'all' | 'following' | 'trending'>('all');
+  const [isLoadingFeed, setIsLoadingFeed] = useState(false);
 
-      const data: Journal[] = await response.json();
-      setDbEntries(data);
-      return data;
-    } catch (error) {
-      console.error("Fetch error:", error);
-      throw error;
-    }
-  };
-
-  // Set up the interval for fetchiung post journal of the user
-  useEffect(() => {
-    // Initial fetch
-    fetchBaseUserJournal().catch(console.error);
-
-    // Set up periodic fetching
-    fetchIntervalRef.current = setInterval(() => {
-      fetchBaseUserJournal().catch(console.error);
-    }, 7000); // 7 seconds
-
-    // Cleanup function to clear interval
-    return () => {
-      if (fetchIntervalRef.current) {
-        clearInterval(fetchIntervalRef.current);
-      }
-    };
-  }, [user?.address]); // Re-run when user address changes
+  // Calendar states
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   // Calculator states
-  const [calculatorDisplay, setCalculatorDisplay] = useState("0");
-  const [calculatorMemory, setCalculatorMemory] = useState("0");
-  const [calculatorOperator, setCalculatorOperator] = useState("");
-  const [calculatorWaitingForOperand, setCalculatorWaitingForOperand] =
-    useState(false);
+  const [activeCalculatorTab, setActiveCalculatorTab] = useState("gas");
   const [gasPrice, setGasPrice] = useState("20");
   const [gasLimit, setGasLimit] = useState("21000");
   const [ethPrice, setEthPrice] = useState("2000");
-
-  // Expense Journal states
-  const [expenseEntries, setExpenseEntries] = useState<
-    {
-      id: string;
-      date: string;
-      category: string;
-      description: string;
-      amount: string;
-      gasFee?: string;
-      transactionHash?: string;
-      notes?: string;
-    }[]
-  >([]);
+  const [currencySwap, setCurrencySwap] = useState({
+    fromAmount: "1",
+    fromCurrency: "USD",
+    toCurrency: "PHP",
+    exchangeRate: 56.5,
+  });
+  const [liveExchangeRates, setLiveExchangeRates] = useState<{[key: string]: number}>({});
+  const [isLoadingRates, setIsLoadingRates] = useState(false);
+  const [expenseEntries, setExpenseEntries] = useState<{
+    id: string;
+    date: string;
+    category: string;
+    description: string;
+    amount: string;
+    gasFee?: string;
+    transactionHash?: string;
+    notes?: string;
+  }[]>([]);
   const [newExpense, setNewExpense] = useState({
     date: new Date().toISOString().split("T")[0],
     category: "Gas Fees",
@@ -327,71 +118,12 @@ useEffect(() => {
     transactionHash: "",
     notes: "",
   });
-  const [selectedExpenseDate, setSelectedExpenseDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
 
   const expenseCategories = [
-    "Gas Fees",
-    "Trading",
-    "NFTs",
-    "DeFi",
-    "Staking",
-    "Bridging",
-    "Liquidity",
-    "Gaming",
-    "Education",
-    "Food",
-    "Fare",
-    "Other",
+    "Gas Fees", "Trading", "NFTs", "DeFi", "Staking", "Bridging", 
+    "Liquidity", "Gaming", "Education", "Food", "Fare", "Other"
   ];
 
-  // Currency swap states
-  const [currencySwap, setCurrencySwap] = useState({
-    fromAmount: "1",
-    fromCurrency: "USD",
-    toCurrency: "PHP",
-    exchangeRate: 56.5,
-  });
-
-  // Real-time exchange rates state
-<<<<<<< HEAD
-  const [liveExchangeRates, setLiveExchangeRates] = useState<{ [key: string]: number }>({})
-  const [isLoadingRates, setIsLoadingRates] = useState(false)
-  
-  
-  
-=======
-  const [liveExchangeRates, setLiveExchangeRates] = useState<{
-    [key: string]: number;
-  }>({});
-  const [isLoadingRates, setIsLoadingRates] = useState(false);
-
-  // Base network data state
-  const [baseNetworkData, setBaseNetworkData] = useState({
-    totalTransactions: 0,
-    dailyTransactions: 0,
-    totalUsers: 0,
-    activeUsers: 0,
-    totalVolume: 0,
-    gasPrice: 0,
-    blockHeight: 0,
-    tvl: 0,
-    price: 0,
-    marketCap: 0,
-  });
-  const [baseUserActivity, setBaseUserActivity] = useState({
-    totalEntries: 0,
-    weeklyEntries: 0,
-    monthlyEntries: 0,
-    averageEntriesPerDay: 0,
-    mostActiveDay: "",
-    totalGasSpent: 0,
-    favoriteTags: [] as string[],
-  });
-  const [isLoadingBaseData, setIsLoadingBaseData] = useState(false);
-
->>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
   const currencies = [
     { code: "USD", name: "US Dollar", symbol: "$" },
     { code: "PHP", name: "Philippine Peso", symbol: "₱" },
@@ -411,277 +143,88 @@ useEffect(() => {
     { code: "VND", name: "Vietnamese Dong", symbol: "₫" },
   ];
 
-  // Sample exchange rates (fallback when API is unavailable)
   const fallbackExchangeRates: { [key: string]: number } = {
-    USD_PHP: 56.5,
-    USD_EUR: 0.92,
-    USD_GBP: 0.79,
-    USD_JPY: 150.25,
-    USD_CAD: 1.35,
-    USD_AUD: 1.52,
-    USD_CHF: 0.88,
-    USD_CNY: 7.23,
-    USD_INR: 83.15,
-    USD_KRW: 1330.5,
-    USD_SGD: 1.34,
-    USD_THB: 35.8,
-    USD_MYR: 4.75,
-    USD_IDR: 15750.0,
-    USD_VND: 24500.0,
-    PHP_USD: 0.0177,
-    PHP_EUR: 0.0163,
-    PHP_GBP: 0.014,
-    PHP_JPY: 2.66,
-    PHP_CAD: 0.0239,
-    PHP_AUD: 0.0269,
-    PHP_CHF: 0.0156,
-    PHP_CNY: 0.128,
-    PHP_INR: 1.47,
-    PHP_KRW: 23.55,
-    PHP_SGD: 0.0237,
-    PHP_THB: 0.634,
-    PHP_MYR: 0.0841,
-    PHP_IDR: 278.76,
-    PHP_VND: 433.63,
+    USD_PHP: 56.5, USD_EUR: 0.92, USD_GBP: 0.79, USD_JPY: 150.25,
+    USD_CAD: 1.35, USD_AUD: 1.52, USD_CHF: 0.88, USD_CNY: 7.23,
+    USD_INR: 83.15, USD_KRW: 1330.5, USD_SGD: 1.34, USD_THB: 35.8,
+    USD_MYR: 4.75, USD_IDR: 15750.0, USD_VND: 24500.0,
+    PHP_USD: 0.0177, PHP_EUR: 0.0163, PHP_GBP: 0.014, PHP_JPY: 2.66,
+    PHP_CAD: 0.0239, PHP_AUD: 0.0269, PHP_CHF: 0.0156, PHP_CNY: 0.128,
+    PHP_INR: 1.47, PHP_KRW: 23.55, PHP_SGD: 0.0237, PHP_THB: 0.634,
+    PHP_MYR: 0.0841, PHP_IDR: 278.76, PHP_VND: 433.63,
   };
-
-  // Fetch real-time exchange rates using API service
-  const fetchExchangeRates = async () => {
-    setIsLoadingRates(true);
-    try {
-      // Use the exchange rate service with API key support
-      const data = await exchangeRateService.getExchangeRates("USD");
-
-      if (data.rates) {
-        const newRates: { [key: string]: number } = {};
-
-        // Convert API rates to our format
-        currencies.forEach((fromCurrency) => {
-          currencies.forEach((toCurrency) => {
-            if (fromCurrency.code !== toCurrency.code) {
-              const key = `${fromCurrency.code}_${toCurrency.code}`;
-              if (fromCurrency.code === "USD") {
-                newRates[key] = data.rates[toCurrency.code] || 1;
-              } else if (toCurrency.code === "USD") {
-                newRates[key] = 1 / (data.rates[fromCurrency.code] || 1);
-              } else {
-                // Cross-rate calculation
-                const fromToUSD = 1 / (data.rates[fromCurrency.code] || 1);
-                const usdToTo = data.rates[toCurrency.code] || 1;
-                newRates[key] = fromToUSD * usdToTo;
-              }
-            }
-          });
-        });
-
-        setLiveExchangeRates(newRates);
-
-        // Update current exchange rate
-        const currentKey = `${currencySwap.fromCurrency}_${currencySwap.toCurrency}`;
-        if (newRates[currentKey]) {
-          setCurrencySwap((prev) => ({
-            ...prev,
-            exchangeRate: newRates[currentKey],
-          }));
-        }
-      }
-    } catch (error) {
-      console.error("Failed to fetch exchange rates:", error);
-      // Use fallback rates if API fails
-      setLiveExchangeRates(fallbackExchangeRates);
-    } finally {
-      setIsLoadingRates(false);
-    }
-  };
-
-  // Load exchange rates on component mount and refresh every 5 minutes
-  useEffect(() => {
-    fetchExchangeRates();
-    const interval = setInterval(fetchExchangeRates, 5 * 60 * 1000); // 5 minutes
-    return () => clearInterval(interval);
-  }, []);
-
-<<<<<<< HEAD
-
-=======
-  // Fetch Base network data
-  const fetchBaseNetworkData = async () => {
-    setIsLoadingBaseData(true);
-    try {
-      // Fetch real Base network data from APIs
-      const networkData = await baseNetworkAPI.getBaseNetworkData();
-      setBaseNetworkData(networkData);
-    } catch (error) {
-      console.error("Error fetching Base network data:", error);
-      // Fallback to mock data if API fails
-      const fallbackData = {
-        totalTransactions: 50000000 + Math.floor(Math.random() * 10000000),
-        dailyTransactions: 500000 + Math.floor(Math.random() * 100000),
-        totalUsers: 2000000 + Math.floor(Math.random() * 1000000),
-        activeUsers: 50000 + Math.floor(Math.random() * 100000),
-        totalVolume: 500000 + Math.random() * 1000000,
-        gasPrice: 5 + Math.random() * 50,
-        blockHeight: 50000000 + Math.floor(Math.random() * 1000000),
-        tvl: 500000000 + Math.random() * 1000000000,
-        price: 2000 + Math.random() * 3000,
-        marketCap: 500000000000 + Math.random() * 1000000000000,
-      };
-      setBaseNetworkData(fallbackData);
-    } finally {
-      setIsLoadingBaseData(false);
-    }
-  };
-
-  // Calculate user activity on Base
-  const calculateUserActivity = () => {
-    const userActivity = baseNetworkAPI.calculateUserActivity(entries);
-    setBaseUserActivity(userActivity);
-  };
-
-  // Load Base data on component mount and when entries change
-  useEffect(() => {
-    fetchBaseNetworkData();
-    calculateUserActivity();
-  }, [entries]);
->>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
 
   // Get baseuser ID from user account
   const baseUserId = user?.account?.id;
 
-  // Load profile image from localStorage on component mount
-  useEffect(() => {
-<<<<<<< HEAD
-    const savedImage = localStorage.getItem(`profile-image-${address}`)
-    if (savedImage) {
-      setProfileImage(savedImage)
-    }
-  }, [address])
+  // Fetch baseuser journal
+  const fetchBaseUserJournal = async () => {
+    if (!user?.address) return;
 
-  // Handle profile image upload
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file')
-      return
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image size must be less than 5MB')
-      return
-    }
-
-    setIsUploadingImage(true)
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const result = e.target?.result as string
-      setProfileImage(result)
-      // Save to localStorage
-      localStorage.setItem(`profile-image-${address}`, result)
-      setIsUploadingImage(false)
-    }
-    reader.onerror = () => {
-      alert('Error reading image file')
-      setIsUploadingImage(false)
-    }
-    reader.readAsDataURL(file)
-  }
-
-  // Remove profile image
-  const removeProfileImage = () => {
-    setProfileImage(null)
-    localStorage.removeItem(`profile-image-${address}`)
-  }
-
-  // Fetch posts from database
-  const fetchPosts = async () => {
     try {
-      const response = await fetch('/api/journal/get')
+      const response = await fetch("/api/journal/getby/id", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ baseUserId: user.address }),
+      });
+
       if (response.ok) {
-        const data = await response.json()
-        // Convert database posts to DailyEntry format
-        const fetchedEntries: DailyEntry[] = data.map((post: any) => ({
-          id: post.id,
-          date: new Date(post.dateCreated).toISOString().split('T')[0],
-          content: post.journal,
-          tags: post.tags || [],
-          photos: post.photos || [],
-          timestamp: new Date(post.dateCreated).getTime()
-        }))
-        setEntries(fetchedEntries)
+        const data: Journal[] = await response.json();
+        setDbEntries(data);
       }
     } catch (error) {
-      console.error('Error fetching posts:', error)
-      // Fallback to localStorage if API fails
-      loadFromLocalStorage()
+      console.error("Fetch error:", error);
     }
-    setIsLoading(false)
-  }
+  };
 
-  // Load entries from localStorage (fallback)
-  const loadFromLocalStorage = () => {
-    let savedEntries = null
-    
-=======
+  // Load entries from localStorage
+  useEffect(() => {
     let savedEntries = null;
-
->>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
-    // First try to load from baseuser ID storage
     if (baseUserId) {
-      const baseUserEntries = localStorage.getItem(
-        `dailybase-entries-${baseUserId}`
-      );
+      const baseUserEntries = localStorage.getItem(`dailybase-entries-${baseUserId}`);
       if (baseUserEntries) {
         try {
           savedEntries = JSON.parse(baseUserEntries);
         } catch (error) {
-          console.error("Error loading entries from baseuser storage:", error);
+          console.error("Error loading entries:", error);
         }
       }
     }
-
-    // If no baseuser entries found, try address-based storage
     if (!savedEntries) {
-      const addressEntries = localStorage.getItem(
-        `dailybase-entries-${address}`
-      );
+      const addressEntries = localStorage.getItem(`dailybase-entries-${address}`);
       if (addressEntries) {
         try {
           savedEntries = JSON.parse(addressEntries);
-          // If we found address-based entries and have a baseuser ID, migrate them
-          if (baseUserId && savedEntries) {
-            localStorage.setItem(
-              `dailybase-entries-${baseUserId}`,
-              JSON.stringify(savedEntries)
-            );
-            console.log("Migrated entries from address to baseuser ID storage");
-          }
         } catch (error) {
-          console.error("Error loading entries from address storage:", error);
+          console.error("Error loading entries:", error);
         }
       }
     }
-
     if (savedEntries) {
       setEntries(savedEntries);
     }
-<<<<<<< HEAD
-  }
-
-  // Load entries from database (prioritizing database, fallback to localStorage)
-  useEffect(() => {
-    fetchPosts()
-  }, [address, baseUserId])
-=======
     setIsLoading(false);
   }, [address, baseUserId]);
->>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
 
-  // Save entries to localStorage (using baseuser ID when available, fallback to address)
+  // Fetch data on mount
+  useEffect(() => {
+    fetchBaseUserJournal();
+    fetchAllPosts();
+    if (baseUserId) {
+      getUserReposts(baseUserId).then(setUserReposts);
+    }
+  }, [user?.address, baseUserId]);
+
+  // Fetch engagement data for all posts
+  useEffect(() => {
+    if (allPosts.length > 0) {
+      allPosts.forEach(post => {
+        fetchEngagementData(post.id);
+      });
+    }
+  }, [allPosts]);
+
+  // Save entries to localStorage
   const saveEntry = (entry: DailyEntry) => {
     const updatedEntries = entries.filter((e) => e.date !== entry.date);
     const newEntries = [...updatedEntries, entry].sort(
@@ -689,48 +232,25 @@ useEffect(() => {
     );
     setEntries(newEntries);
 
-    // Save to baseuser ID storage if available
     if (baseUserId) {
-      localStorage.setItem(
-        `dailybase-entries-${baseUserId}`,
-        JSON.stringify(newEntries)
-      );
+      localStorage.setItem(`dailybase-entries-${baseUserId}`, JSON.stringify(newEntries));
     }
-
-    // Also save to address-based storage for backward compatibility
-    localStorage.setItem(
-      `dailybase-entries-${address}`,
-      JSON.stringify(newEntries)
-    );
+    localStorage.setItem(`dailybase-entries-${address}`, JSON.stringify(newEntries));
   };
 
-  // Convert Journal to DailyEntry for the DailyEntry component
+  // Convert Journal to DailyEntry
   const handleJournalSave = async (journal: any) => {
-    // Save to local storage for immediate UI update
     const dailyEntry: DailyEntry = {
       id: journal.id || Date.now().toString(),
       date: new Date().toISOString().split("T")[0],
       content: journal.journal,
       tags: journal.tags || [],
-<<<<<<< HEAD
-      photos: journal.photos || [], // Save photos from journal
-      timestamp: Date.now()
-    }
-    saveEntry(dailyEntry)
-    
-    // Refresh posts from database to ensure consistency
-    setTimeout(() => {
-      fetchPosts()
-    }, 1000)
-  }
-=======
       timestamp: Date.now(),
     };
     saveEntry(dailyEntry);
   };
->>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
 
-  // Convert DailyEntry to Journal for the DailyEntry component
+  // Convert DailyEntry to Journal
   const convertToJournal = (entry: DailyEntry | undefined) => {
     if (!entry) return undefined;
     return {
@@ -738,55 +258,14 @@ useEffect(() => {
       baseUserId: baseUserId || address,
       journal: entry.content,
       tags: entry.tags,
-      photos: entry.photos || [], // Use actual photos from entry
+      photos: entry.photos || [],
       likes: 0,
       privacy: "public",
       createdAt: new Date(entry.timestamp),
     };
   };
 
-  // Clear all data function
-  const clearData = () => {
-    if (
-      confirm(
-        "Are you sure you want to clear all your entries? This action cannot be undone."
-      )
-    ) {
-      setEntries([]);
-      // Clear both storage locations
-      localStorage.removeItem(`dailybase-entries-${address}`);
-      if (baseUserId) {
-        localStorage.removeItem(`dailybase-entries-${baseUserId}`);
-      }
-    }
-  };
-
-  // Export data function
-  const exportData = () => {
-    const data = {
-      entries,
-      user: {
-        address,
-        baseUserId,
-        exportDate: new Date().toISOString(),
-      },
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `dailybase-entries-${baseUserId || address}-${
-      new Date().toISOString().split("T")[0]
-    }.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
+  // Utility functions
   const getTodayEntry = () => {
     const today = new Date().toISOString().split("T")[0];
     return entries.find((entry) => entry.date === today);
@@ -806,76 +285,577 @@ useEffect(() => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  // Calculator functions
-  const inputDigit = (digit: string) => {
-    if (calculatorWaitingForOperand) {
-      setCalculatorDisplay(digit);
-      setCalculatorWaitingForOperand(false);
-    } else {
-      setCalculatorDisplay(
-        calculatorDisplay === "0" ? digit : calculatorDisplay + digit
-      );
+  // Profile utility functions
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setProfileImage(result);
+        localStorage.setItem(`profile-image-${address}`, result);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
-  const inputDecimal = () => {
-    if (calculatorWaitingForOperand) {
-      setCalculatorDisplay("0.");
-      setCalculatorWaitingForOperand(false);
-    } else if (calculatorDisplay.indexOf(".") === -1) {
-      setCalculatorDisplay(calculatorDisplay + ".");
+  const removeProfileImage = () => {
+    setProfileImage(null);
+    localStorage.removeItem(`profile-image-${address}`);
+  };
+
+  // Load profile image on mount
+  useEffect(() => {
+    const savedImage = localStorage.getItem(`profile-image-${address}`);
+    if (savedImage) {
+      setProfileImage(savedImage);
+    }
+  }, [address]);
+
+  // Calendar utility functions
+  const getDaysInMonth = (year: number, month: number) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (year: number, month: number) => {
+    return new Date(year, month, 1).getDay();
+  };
+
+  const generateCalendarDays = () => {
+    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+    const firstDayOfMonth = getFirstDayOfMonth(currentYear, currentMonth);
+    const days = [];
+
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      days.push(null);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(day);
+    }
+
+    return days;
+  };
+
+  const hasEntriesForDate = (day: number) => {
+    const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    return entries.some((entry) => entry.date === dateString);
+  };
+
+  const isToday = (day: number) => {
+    const today = new Date();
+    return (
+      day === today.getDate() &&
+      currentMonth === today.getMonth() &&
+      currentYear === today.getFullYear()
+    );
+  };
+
+  const isSelected = (day: number) => {
+    return (
+      day === selectedDate.getDate() &&
+      currentMonth === selectedDate.getMonth() &&
+      currentYear === selectedDate.getFullYear()
+    );
+  };
+
+  const handleDateClick = (day: number) => {
+    if (day) {
+      setSelectedDate(new Date(currentYear, currentMonth, day));
     }
   };
 
-  const clearDisplay = () => {
-    setCalculatorDisplay("0");
-    setCalculatorMemory("0");
-    setCalculatorOperator("");
-    setCalculatorWaitingForOperand(false);
+  const getMonthName = (month: number) => {
+    const months = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December",
+    ];
+    return months[month];
   };
 
-  const performOperation = (nextOperator: string) => {
-    const inputValue = parseFloat(calculatorDisplay);
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-    if (calculatorMemory === "0") {
-      setCalculatorMemory(calculatorDisplay);
+  const goToPreviousMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear(currentYear - 1);
     } else {
-      const memoryValue = parseFloat(calculatorMemory);
-      let newValue = 0;
+      setCurrentMonth(currentMonth - 1);
+    }
+  };
 
-      switch (calculatorOperator) {
-        case "+":
-          newValue = memoryValue + inputValue;
-          break;
-        case "-":
-          newValue = memoryValue - inputValue;
-          break;
-        case "×":
-          newValue = memoryValue * inputValue;
-          break;
-        case "÷":
-          newValue = memoryValue / inputValue;
-          break;
-        default:
-          newValue = inputValue;
+  const goToNextMonth = () => {
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
+      setCurrentYear(currentYear + 1);
+    } else {
+      setCurrentMonth(currentMonth + 1);
+    }
+  };
+
+  const goToPreviousYear = () => {
+    setCurrentYear(currentYear - 1);
+  };
+
+  const goToNextYear = () => {
+    setCurrentYear(currentYear + 1);
+  };
+
+  const goToToday = () => {
+    const today = new Date();
+    setCurrentYear(today.getFullYear());
+    setCurrentMonth(today.getMonth());
+    setSelectedDate(today);
+  };
+
+  // Data management utility functions
+  const exportData = () => {
+    const dataToExport = {
+      entries,
+      expenseEntries,
+      profileImage,
+      exportDate: new Date().toISOString(),
+      version: "1.0.0"
+    };
+    
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {
+      type: "application/json"
+    });
+    
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dailybase-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const clearData = () => {
+    if (confirm("Are you sure you want to clear all your data? This action cannot be undone.")) {
+      // Clear entries
+      setEntries([]);
+      localStorage.removeItem(`dailybase-entries-${address}`);
+      if (baseUserId) {
+        localStorage.removeItem(`dailybase-entries-${baseUserId}`);
+      }
+      
+      // Clear expense entries
+      setExpenseEntries([]);
+      localStorage.removeItem(`dailybase-expenses-${address}`);
+      if (baseUserId) {
+        localStorage.removeItem(`dailybase-expenses-${baseUserId}`);
+      }
+      
+      // Clear profile image
+      setProfileImage(null);
+      localStorage.removeItem(`profile-image-${address}`);
+      
+      alert("All data has been cleared successfully.");
+    }
+  };
+
+  // Comment utility functions
+  const postComment = async (journalId: string, comment: string) => {
+    try {
+      const response = await fetch("/api/comment/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          journalId,
+          comment,
+          baseUserId: baseUserId || address,
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to post comment");
+      return await response.json();
+    } catch (error) {
+      console.error("Error posting comment:", error);
+      throw error;
+    }
+  };
+
+  // Enhanced Like, Comment, and Repost functions
+  const handleLike = async (journalId: string) => {
+    if (loadingLikes[journalId]) return; // Prevent double clicks
+    
+    setLoadingLikes(prev => ({ ...prev, [journalId]: true }));
+    
+    try {
+      const response = await fetch('/api/like/post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          journalId,
+          userId: address,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Like action successful:', data);
+        
+        // Show success toast
+        showToast(data.message, 'success');
+        
+        // Update local state
+        setUserLikes(prev => ({
+          ...prev,
+          [journalId]: data.liked
+        }));
+        
+        // Update like count
+        setLikeCounts(prev => ({
+          ...prev,
+          [journalId]: data.liked 
+            ? (prev[journalId] || 0) + 1 
+            : Math.max(0, (prev[journalId] || 0) - 1)
+        }));
+      } else {
+        console.error('Like action failed');
+        showToast('Failed to like post', 'error');
+      }
+    } catch (error) {
+      console.error('Error handling like:', error);
+    } finally {
+      setLoadingLikes(prev => ({ ...prev, [journalId]: false }));
+    }
+  };
+
+  const handleComment = async (journalId: string, commentText: string) => {
+    try {
+      const response = await fetch('/api/comment/post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          journalId,
+          baseUserId: address,
+          comment: commentText,
+        }),
+      });
+
+      if (response.ok) {
+        const newComment = await response.json();
+        console.log('Comment posted successfully:', newComment);
+        
+        // Show success toast
+        showToast('Comment posted successfully!', 'success');
+        
+        // Update local state
+        setDbComments(prev => [newComment, ...prev]);
+        
+        // Update comment count
+        setCommentCounts(prev => ({
+          ...prev,
+          [journalId]: (prev[journalId] || 0) + 1
+        }));
+        
+        // Close comment section
+        setCurrentJournalId(null);
+      } else {
+        console.error('Comment posting failed');
+        showToast('Failed to post comment', 'error');
+      }
+    } catch (error) {
+      console.error('Error posting comment:', error);
+    }
+  };
+
+  const handleRepost = async (journalId: string) => {
+    try {
+      const response = await fetch('/api/repost/post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          journalId,
+          baseUserId: address,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Repost action successful:', data);
+        
+        // Show success toast
+        showToast(data.message, 'success');
+        
+        // Update local state
+        if (data.reposted) {
+          setUserReposts(prev => [...prev, { journalId, id: data.repostId }]);
+        } else {
+          setUserReposts(prev => prev.filter(repost => repost.journalId !== journalId));
+        }
+        
+        // Update repost count
+        setRepostCounts(prev => ({
+          ...prev,
+          [journalId]: data.reposted 
+            ? (prev[journalId] || 0) + 1 
+            : Math.max(0, (prev[journalId] || 0) - 1)
+        }));
+      } else {
+        console.error('Repost action failed');
+        showToast('Failed to repost', 'error');
+      }
+    } catch (error) {
+      console.error('Error handling repost:', error);
+    }
+  };
+
+  // Create new post
+  const handleCreatePost = async () => {
+    if (!newPostContent.trim() || isCreatingPost) return;
+    
+    setIsCreatingPost(true);
+    
+    try {
+      const response = await fetch('/api/journal/post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          baseUserId: address,
+          journal: newPostContent,
+          tags: newPostTags,
+          privacy: 'public',
+        }),
+      });
+
+      if (response.ok) {
+        const newPost = await response.json();
+        console.log('Post created successfully:', newPost);
+        
+        // Show success toast
+        showToast('Post created successfully!', 'success');
+        
+        // Update posts list
+        setAllPosts(prev => [newPost, ...prev]);
+        
+        // Clear form
+        setNewPostContent('');
+        setNewPostTags([]);
+      } else {
+        console.error('Failed to create post');
+        showToast('Failed to create post', 'error');
+      }
+    } catch (error) {
+      console.error('Error creating post:', error);
+      showToast('Error creating post', 'error');
+    } finally {
+      setIsCreatingPost(false);
+    }
+  };
+
+  // Add tag to new post
+  const addTagToPost = () => {
+    const tagInput = document.getElementById('tag-input') as HTMLInputElement;
+    if (tagInput && tagInput.value.trim()) {
+      const newTag = tagInput.value.trim().replace('#', '');
+      if (!newPostTags.includes(newTag)) {
+        setNewPostTags(prev => [...prev, newTag]);
+      }
+      tagInput.value = '';
+    }
+  };
+
+  // Remove tag from new post
+  const removeTagFromPost = (tagToRemove: string) => {
+    setNewPostTags(prev => prev.filter(tag => tag !== tagToRemove));
+  };
+
+  // Fetch engagement data for a post
+  const fetchEngagementData = async (journalId: string) => {
+    try {
+      // Fetch likes
+      const likeResponse = await fetch(`/api/like/post?journalId=${journalId}&userId=${address}`);
+      if (likeResponse.ok) {
+        const likeData = await likeResponse.json();
+        setUserLikes(prev => ({
+          ...prev,
+          [journalId]: likeData.userLiked
+        }));
+        setLikeCounts(prev => ({
+          ...prev,
+          [journalId]: likeData.likeCount
+        }));
       }
 
-      setCalculatorMemory(String(newValue));
-      setCalculatorDisplay(String(newValue));
-    }
+      // Fetch reposts
+      const repostResponse = await fetch(`/api/repost/post?journalId=${journalId}&baseUserId=${address}`);
+      if (repostResponse.ok) {
+        const repostData = await repostResponse.json();
+        setUserReposts(prev => {
+          const existing = prev.find(r => r.journalId === journalId);
+          if (repostData.userReposted && !existing) {
+            return [...prev, { journalId, id: Date.now() }];
+          } else if (!repostData.userReposted && existing) {
+            return prev.filter(r => r.journalId !== journalId);
+          }
+          return prev;
+        });
+        setRepostCounts(prev => ({
+          ...prev,
+          [journalId]: repostData.repostCount
+        }));
+      }
 
-    setCalculatorWaitingForOperand(true);
-    setCalculatorOperator(nextOperator);
+      // Fetch comments
+      const commentResponse = await fetch(`/api/comment/post?journalId=${journalId}`);
+      if (commentResponse.ok) {
+        const comments = await commentResponse.json();
+        setCommentCounts(prev => ({
+          ...prev,
+          [journalId]: comments.length
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching engagement data:', error);
+    }
   };
 
-  // Gas fee calculation
+  // Legacy functions for backward compatibility
+  const createRepost = async (journalId: string) => {
+    return handleRepost(journalId);
+  };
+
+  const getUserReposts = async (userId: string) => {
+    try {
+      const response = await fetch("/api/repost/getby/id", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ baseUserId: userId }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        return data || [];
+      }
+      return [];
+    } catch (error) {
+      console.error("Error fetching user reposts:", error);
+      return [];
+    }
+  };
+
+  const getCommentCount = async (journalId: string) => {
+    try {
+      const response = await fetch("/api/comment/get", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ journalId }),
+      });
+      if (response.ok) {
+        const comments = await response.json();
+        return comments.length || 0;
+      }
+      return 0;
+    } catch (error) {
+      console.error("Error fetching comment count:", error);
+      return 0;
+    }
+  };
+
+  const isReposted = (journalId: string) => {
+    return userReposts.some(repost => repost.journalId === journalId);
+  };
+
+  const fetchJournalComments = async (journalId: string) => {
+    try {
+      const response = await fetch("/api/journal/get", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ journalId }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        return data.comments || [];
+      }
+      return [];
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      return [];
+    }
+  };
+
+  // Home feed functions
+  const fetchAllPosts = async () => {
+    setIsLoadingFeed(true);
+    try {
+      const response = await fetch("/api/journal/get", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAllPosts(data || []);
+        extractTrendingTopics(data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching all posts:", error);
+    } finally {
+      setIsLoadingFeed(false);
+    }
+  };
+
+  const extractTrendingTopics = (posts: Journal[]) => {
+    const tagCounts: { [key: string]: number } = {};
+    
+    posts.forEach(post => {
+      post.tags?.forEach(tag => {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      });
+    });
+
+    const sortedTags = Object.entries(tagCounts)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 10)
+      .map(([tag]) => tag);
+
+    setTrendingTopics(sortedTags);
+  };
+
+  const getFilteredPosts = () => {
+    switch (feedFilter) {
+      case 'trending':
+        return allPosts.filter(post => 
+          post.tags?.some(tag => trendingTopics.includes(tag))
+        );
+      case 'following':
+        // For now, show all posts. In the future, implement following logic
+        return allPosts;
+      default:
+        return allPosts;
+    }
+  };
+
+  const getPostStats = (post: Journal) => {
+    const repostCount = userReposts.filter(repost => repost.journalId === post.id).length;
+    const commentCount = commentCounts[post.id] || 0;
+    return { repostCount, commentCount };
+  };
+
+  // Calculator utility functions
   const calculateGasFee = () => {
     const gasPriceNum = parseFloat(gasPrice);
     const gasLimitNum = parseFloat(gasLimit);
     const ethPriceNum = parseFloat(ethPrice);
 
     const gasFeeGwei = gasPriceNum * gasLimitNum;
-    const gasFeeEth = gasFeeGwei / 1000000000; // Convert from Gwei to ETH
+    const gasFeeEth = gasFeeGwei / 1000000000;
     const gasFeeUsd = gasFeeEth * ethPriceNum;
 
     return {
@@ -885,23 +865,57 @@ useEffect(() => {
     };
   };
 
-  // Daily expense calculation
-  const calculateTotalDailyExpense = () => {
-    return expenseEntries.reduce((total: number, expense: any) => {
-      return total + parseFloat(expense.amount || "0");
-    }, 0);
+  const getExchangeRate = (fromCurrency: string, toCurrency: string) => {
+    const key = `${fromCurrency}_${toCurrency}`;
+    return liveExchangeRates[key] || fallbackExchangeRates[key] || 1;
   };
 
-  const updateDailyExpense = (index: number, amount: string) => {
-    const newExpenses = [...expenseEntries];
-    newExpenses[index].amount = amount;
-    setExpenseEntries(newExpenses);
+  const convertCurrency = (amount: number, fromCurrency: string, toCurrency: string) => {
+    if (fromCurrency === toCurrency) return amount;
+    const rate = getExchangeRate(fromCurrency, toCurrency);
+    return amount * rate;
   };
 
-  const gasFeeResult = calculateGasFee();
-  const totalDailyExpense = calculateTotalDailyExpense();
+  const swapCurrencies = () => {
+    setCurrencySwap({
+      ...currencySwap,
+      fromCurrency: currencySwap.toCurrency,
+      toCurrency: currencySwap.fromCurrency,
+      exchangeRate: getExchangeRate(currencySwap.toCurrency, currencySwap.fromCurrency),
+    });
+  };
 
-  // Expense Journal functions
+  const updateCurrencySwap = (field: string, value: string) => {
+    if (field === "fromAmount") {
+      setCurrencySwap({
+        ...currencySwap,
+        fromAmount: value,
+        exchangeRate: getExchangeRate(currencySwap.fromCurrency, currencySwap.toCurrency),
+      });
+    } else if (field === "fromCurrency") {
+      const newFromCurrency = value;
+      const newExchangeRate = getExchangeRate(newFromCurrency, currencySwap.toCurrency);
+      setCurrencySwap({
+        ...currencySwap,
+        fromCurrency: newFromCurrency,
+        exchangeRate: newExchangeRate,
+      });
+    } else if (field === "toCurrency") {
+      const newToCurrency = value;
+      const newExchangeRate = getExchangeRate(currencySwap.fromCurrency, newToCurrency);
+      setCurrencySwap({
+        ...currencySwap,
+        toCurrency: newToCurrency,
+        exchangeRate: newExchangeRate,
+      });
+    }
+  };
+
+  const getCurrencySymbol = (currencyCode: string) => {
+    const currency = currencies.find((c) => c.code === currencyCode);
+    return currency?.symbol || currencyCode;
+  };
+
   const addExpenseEntry = () => {
     if (!newExpense.description || !newExpense.amount) return;
 
@@ -926,16 +940,8 @@ useEffect(() => {
     setExpenseEntries(expenseEntries.filter((expense) => expense.id !== id));
   };
 
-  const getExpensesByDate = (date: string) => {
-    return expenseEntries.filter((expense) => expense.date === date);
-  };
-
-  const getTotalExpensesByDate = (date: string) => {
-    const expenses = getExpensesByDate(date);
-    return expenses.reduce(
-      (total, expense) => total + parseFloat(expense.amount || "0"),
-      0
-    );
+  const getTotalExpenses = () => {
+    return expenseEntries.reduce((total, expense) => total + parseFloat(expense.amount || "0"), 0);
   };
 
   const getTotalExpensesByCategory = (category: string) => {
@@ -944,902 +950,806 @@ useEffect(() => {
       .reduce((total, expense) => total + parseFloat(expense.amount || "0"), 0);
   };
 
-  const getTotalExpenses = () => {
-    return expenseEntries.reduce(
-      (total, expense) => total + parseFloat(expense.amount || "0"),
-      0
-    );
-  };
-
-  const getExpensesByCategory = (category: string) => {
-    return expenseEntries.filter((expense) => expense.category === category);
-  };
-
-  // Currency conversion functions
-  const getExchangeRate = (fromCurrency: string, toCurrency: string) => {
-    const key = `${fromCurrency}_${toCurrency}`;
-    return liveExchangeRates[key] || fallbackExchangeRates[key] || 1;
-  };
-
-  const convertCurrency = (
-    amount: number,
-    fromCurrency: string,
-    toCurrency: string
-  ) => {
-    if (fromCurrency === toCurrency) return amount;
-    const rate = getExchangeRate(fromCurrency, toCurrency);
-    return amount * rate;
-  };
-
-  const swapCurrencies = () => {
-    setCurrencySwap({
-      ...currencySwap,
-      fromCurrency: currencySwap.toCurrency,
-      toCurrency: currencySwap.fromCurrency,
-      exchangeRate: getExchangeRate(
-        currencySwap.toCurrency,
-        currencySwap.fromCurrency
-      ),
-    });
-  };
-
-  const updateCurrencySwap = (field: string, value: string) => {
-    if (field === "fromAmount") {
-      setCurrencySwap({
-        ...currencySwap,
-        fromAmount: value,
-        exchangeRate: getExchangeRate(
-          currencySwap.fromCurrency,
-          currencySwap.toCurrency
-        ),
-      });
-    } else if (field === "fromCurrency") {
-      const newFromCurrency = value;
-      const newExchangeRate = getExchangeRate(
-        newFromCurrency,
-        currencySwap.toCurrency
-      );
-      setCurrencySwap({
-        ...currencySwap,
-        fromCurrency: newFromCurrency,
-        exchangeRate: newExchangeRate,
-      });
-    } else if (field === "toCurrency") {
-      const newToCurrency = value;
-      const newExchangeRate = getExchangeRate(
-        currencySwap.fromCurrency,
-        newToCurrency
-      );
-      setCurrencySwap({
-        ...currencySwap,
-        toCurrency: newToCurrency,
-        exchangeRate: newExchangeRate,
-      });
-    }
-  };
-
+  const gasFeeResult = calculateGasFee();
   const convertedAmount = convertCurrency(
     parseFloat(currencySwap.fromAmount) || 0,
     currencySwap.fromCurrency,
     currencySwap.toCurrency
   );
 
-  const getCurrencySymbol = (currencyCode: string) => {
-    const currency = currencies.find((c) => c.code === currencyCode);
-    return currency?.symbol || currencyCode;
-  };
-
   const sidebarItems = [
-<<<<<<< HEAD
-    { id: 'home' as SidebarItem, label: 'Home', icon: Home },
-    { id: 'calendar' as SidebarItem, label: 'Calendar', icon: Calendar },
-    { id: 'streak' as SidebarItem, label: 'Streak', icon: Flame },
-    { id: 'calculator' as SidebarItem, label: 'Basio', icon: Calculator },
-    { id: 'stats' as SidebarItem, label: 'Stats', icon: BarChart3 },
-      { id: 'profile' as SidebarItem, label: 'Profile', icon: User },
-  { id: 'settings' as SidebarItem, label: 'Settings', icon: Settings },
-  ]
-=======
     { id: "home" as SidebarItem, label: "Home", icon: Home },
     { id: "calendar" as SidebarItem, label: "Calendar", icon: Calendar },
     { id: "streak" as SidebarItem, label: "Streak", icon: Flame },
     { id: "calculator" as SidebarItem, label: "Basio", icon: Calculator },
     { id: "stats" as SidebarItem, label: "Stats", icon: BarChart3 },
+    { id: "notifications" as SidebarItem, label: "Notifications", icon: Bell },
     { id: "profile" as SidebarItem, label: "Profile", icon: User },
     { id: "settings" as SidebarItem, label: "Settings", icon: Settings },
-    { id: "base" as SidebarItem, label: "Base", icon: Network },
   ];
->>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
-
-  const [activeCalculatorTab, setActiveCalculatorTab] = useState("gas");
-
-  // Calendar states
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [calendarView, setCalendarView] = useState<"month" | "year">("month");
-
-  // Get current month/year for navigation
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
-  const selectedMonth = selectedDate.getMonth();
-  const selectedYear = selectedDate.getFullYear();
-
-  // Calendar navigation functions
-  const goToPreviousMonth = () => {
-    setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
-  };
-
-  const goToNextMonth = () => {
-    setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
-  };
-
-  const goToPreviousYear = () => {
-    setCurrentDate(new Date(currentYear - 1, currentMonth, 1));
-  };
-
-  const goToNextYear = () => {
-    setCurrentDate(new Date(currentYear + 1, currentMonth, 1));
-  };
-
-  const goToToday = () => {
-    const today = new Date();
-    setCurrentDate(today);
-    setSelectedDate(today);
-  };
-
-  // Generate calendar days
-  const getDaysInMonth = (year: number, month: number) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (year: number, month: number) => {
-    return new Date(year, month, 1).getDay();
-  };
-
-  const generateCalendarDays = () => {
-    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
-    const firstDayOfMonth = getFirstDayOfMonth(currentYear, currentMonth);
-    const days = [];
-
-    // Add empty cells for days before the first day of the month
-    for (let i = 0; i < firstDayOfMonth; i++) {
-      days.push(null);
-    }
-
-    // Add days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      days.push(day);
-    }
-
-    return days;
-  };
-
-  // Check if date has entries
-  const hasEntriesForDate = (day: number) => {
-    const dateString = `${currentYear}-${String(currentMonth + 1).padStart(
-      2,
-      "0"
-    )}-${String(day).padStart(2, "0")}`;
-    return entries.some((entry) => entry.date === dateString);
-  };
-
-  // Check if date is today
-  const isToday = (day: number) => {
-    const today = new Date();
-    return (
-      day === today.getDate() &&
-      currentMonth === today.getMonth() &&
-      currentYear === today.getFullYear()
-    );
-  };
-
-  // Check if date is selected
-  const isSelected = (day: number) => {
-    return (
-      day === selectedDate.getDate() &&
-      currentMonth === selectedDate.getMonth() &&
-      currentYear === selectedDate.getFullYear()
-    );
-  };
-
-  // Handle date selection
-  const handleDateClick = (day: number) => {
-    if (day) {
-      setSelectedDate(new Date(currentYear, currentMonth, day));
-    }
-  };
-
-  // Get month name
-  const getMonthName = (month: number) => {
-    const months = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-    return months[month];
-  };
-
-  // Get day names
-  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const renderContent = () => {
     switch (activeSidebarItem) {
-      case "home":
+            case "home":
         return (
           <div className="space-y-6">
-            {/* Feed Header */}
-            <div className="text-center mb-6">
-<<<<<<< HEAD
-              <h1 className="text-3xl font-bold text-white pixelated-text mb-2">DailyBase Feed</h1>
-              <p className="text-blue-300 pixelated-text">Your personal crypto journey timeline & community posts</p>
-=======
-              <h1 className="text-3xl font-bold text-white pixelated-text mb-2">
+            {/* Enhanced Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold text-white pixelated-text mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                 DailyBase Feed
               </h1>
-              <p className="text-blue-300 pixelated-text">
-                Your personal crypto journey timeline
-              </p>
->>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
-            </div>
-
-            {/* Create New Post */}
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass hover-lift">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-3">
-                  <Avatar className="w-12 h-12 ring-2 ring-blue-400/20">
-                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-lg">
-                      DB
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <CardTitle className="text-blue-300 flex items-center gap-2 pixelated-text">
-                      <Plus className="w-5 h-5" />
-                      What's happening in your crypto world today?
-                    </CardTitle>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <DailyEntry
-                  userId={baseUserId}
-                  onSave={handleJournalSave}
-                  todayEntry={convertToJournal(getTodayEntry())}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Loading State */}
-            {isLoading ? (
-              <div className="space-y-6">
-                {[1, 2, 3].map((i) => (
-                  <Card
-                    key={i}
-                    className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass"
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex items-center space-x-4 mb-4">
-                        <Skeleton className="h-12 w-12 rounded-full" />
-                        <div className="space-y-2 flex-1">
-                          <Skeleton className="h-4 w-[200px]" />
-                          <Skeleton className="h-4 w-[150px]" />
-                        </div>
-                        <Skeleton className="h-8 w-8 rounded" />
-                      </div>
-                      <Skeleton className="h-[120px] w-full rounded-xl" />
-                      <div className="flex gap-4 mt-4">
-                        <Skeleton className="h-8 w-16 rounded" />
-                        <Skeleton className="h-8 w-16 rounded" />
-                        <Skeleton className="h-8 w-16 rounded" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : /* Feed Posts */
-            entries.length === 0 ? (
-              <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-                <CardContent className="flex flex-col items-center justify-center py-16">
-                  <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-6">
-                    <BookOpen className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-semibold text-white pixelated-text mb-3">
-                    Your Feed is Empty
-                  </h3>
-                  <p className="text-blue-300 text-center mb-8 max-w-md leading-relaxed">
-                    Start your DailyBase journey by creating your first entry.
-                    Share your crypto activities, track your progress, and build
-                    meaningful streaks.
-                  </p>
-                  <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white pixelated-text px-8 py-3 text-lg">
-                    <Plus className="w-5 h-5 mr-2" />
-                    Create Your First Entry
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-<<<<<<< HEAD
-              /* Combined Feed Posts */
-              <CombinedFeed entries={entries} userAddress={address} />
-=======
-              <div className="space-y-6">
-                {dbEntries.map((entry, index) => (
-                  <Card
-                    key={entry.id}
-                    className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass hover-lift transition-all duration-300"
-                  >
-                    <CardHeader className="pb-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-4">
-                          <Avatar className="w-12 h-12 ring-2 ring-blue-400/20 flex-shrink-0">
-                            <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold">
-                              {entry.dateCreated
-                                ? new Date(entry.dateCreated)
-                                    .getDate()
-                                    .toString()
-                                    .padStart(2, "0")
-                                : "DB"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="font-semibold text-white pixelated-text text-lg">
-                                {entry.baseUserId.slice(0, 6)}...
-                                {entry.baseUserId.slice(-4)}
-                              </div>
-                              <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text text-xs">
-                                Entry #{index + 1}
-                              </Badge>
-                            </div>
-                            <div className="text-sm text-blue-300 pixelated-text flex items-center gap-2">
-                              <Calendar className="w-3 h-3" />
-                              {entry.dateCreated
-                                ? new Date(
-                                    entry.dateCreated
-                                  ).toLocaleDateString("en-US", {
-                                    weekday: "long",
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                  })
-                                : "No date"}
-                              <span className="text-blue-300/60">•</span>
-                              <span>
-                                {entry.dateCreated
-                                  ? new Date(
-                                      entry.dateCreated
-                                    ).toLocaleTimeString("en-US", {
-                                      hour: "numeric",
-                                      minute: "2-digit",
-                                      hour12: true,
-                                    })
-                                  : "No time"}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-blue-300 hover:text-blue-200 hover:bg-blue-500/10 rounded-full p-2"
-                          >
-                            <Heart className="w-4 h-4" />
-                            <span className="sr-only">Like</span>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-blue-300 hover:text-blue-200 hover:bg-blue-500/10 rounded-full p-2"
-                          >
-                            <MessageSquare className="w-4 h-4" />
-                            <span className="sr-only">Comment</span>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-blue-300 hover:text-blue-200 hover:bg-blue-500/10 rounded-full p-2"
-                          >
-                            <Share2 className="w-4 h-4" />
-                            <span className="sr-only">Share</span>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      {entry.photo && (
-                        <div className="mb-4 rounded-xl overflow-hidden">
-                          <img
-                            src={entry.photo}
-                            alt="Journal entry"
-                            className="w-full h-auto max-h-64 object-cover"
-                          />
-                        </div>
-                      )}
-                      <div className="bg-slate-700/30 rounded-xl p-4 mb-4">
-                        <p className="text-white leading-relaxed pixelated-text text-lg">
-                          {entry.journal}
-                        </p>
-                      </div>
-                      {entry.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {entry.tags.map((tag, tagIndex) => (
-                            <Badge
-                              key={tagIndex}
-                              className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text hover:bg-blue-500/30 transition-colors"
-                            >
-                              #{tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between pt-4 border-t border-slate-600/30">
-                        <div className="flex items-center gap-4 text-sm text-blue-300/70">
-                          <span className="flex items-center gap-1">
-                            <Heart className="w-3 h-3" />
-                            {entry.likes} likes
-                          </span>
-
-                          <button
-                            onClick={async () => {
-                              const comment = prompt("Enter your comment:");
-                              if (comment) {
-                                try {
-                                  await postComment(entry.id, comment);
-                                  alert("Comment posted!");
-                                  // Optionally refresh comments after posting
-                                  const updatedComments =
-                                    await fetchJournalComments(entry.id);
-                                  // Update your state here if needed
-                                } catch (err: any) {
-                                  alert(`Error: ${err.message}`);
-                                }
-                              }
-                            }}
-                            className="flex items-center gap-1 hover:text-blue-200 cursor-pointer"
-                          >
-                            <MessageSquare className="w-3 h-3" />
-                           {dbComments.length} comments
-                          </button>
-
-                          <span className="flex items-center gap-1">
-                            <Share2 className="w-3 h-3" />
-                            Share
-                          </span>
-                        </div>
-                        {/* <div className="text-xs text-blue-300/50">
-                          {entry.privacy === "public" ? (
-                            <span className="flex items-center gap-1">
-                              <Globe className="w-3 h-3" /> Public
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1">
-                              <Lock className="w-3 h-3" /> Private
-                            </span>
-                          )}
-                        </div> */}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
->>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
-            )}
-          </div>
-        );
-      case "calendar":
-        return (
-          <div className="space-y-6">
-            {/* Calendar Header */}
-            <div className="text-center mb-6">
-              <h1 className="text-3xl font-bold text-white pixelated-text mb-2">
-                Calendar View
-              </h1>
-              <p className="text-blue-300 pixelated-text">
-                Track your daily entries and activities
+              <p className="text-blue-300 pixelated-text text-lg">
+                Discover crypto stories, share your journey, and connect with the community
               </p>
             </div>
 
-            {/* Calendar Navigation */}
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-              <CardHeader className="text-center">
-                <div className="flex items-center justify-between mb-4">
-                  <Button
-                    onClick={goToPreviousYear}
-                    variant="outline"
-                    size="sm"
-                    className="bg-slate-700/80 border-slate-600 text-white pixelated-text"
+            <div className="grid grid-cols-1 gap-8">
+              {/* Main Feed */}
+              <div className="space-y-8 max-w-5xl mx-auto px-4">
+                {/* Enhanced Feed Filter Buttons */}
+                <div className="flex items-center gap-4 mb-8 p-4 bg-gradient-to-r from-slate-800/40 to-slate-900/40 rounded-2xl border border-slate-600/40 backdrop-blur-sm">
+                  <button
+                    onClick={() => setFeedFilter('all')}
+                    className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 pixelated-text flex items-center gap-2 ${
+                      feedFilter === 'all'
+                        ? 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg shadow-blue-500/25 scale-105'
+                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 hover:text-white hover:scale-105'
+                    }`}
                   >
-                    {"<<"}
-                  </Button>
-                  <Button
-                    onClick={goToPreviousMonth}
-                    variant="outline"
-                    size="sm"
-                    className="bg-slate-700/80 border-slate-600 text-white pixelated-text"
+                    <Home className="w-4 h-4" />
+                    All Posts
+                  </button>
+                  <button
+                    onClick={() => setFeedFilter('following')}
+                    className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 pixelated-text flex items-center gap-2 ${
+                      feedFilter === 'following'
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg shadow-green-500/25 scale-105'
+                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 hover:text-white hover:scale-105'
+                    }`}
                   >
-                    {"<"}
-                  </Button>
-                  <div className="flex-1 text-center">
-                    <h2 className="text-2xl font-bold text-white pixelated-text">
-                      {getMonthName(currentMonth)} {currentYear}
-                    </h2>
-                  </div>
-                  <Button
-                    onClick={goToNextMonth}
-                    variant="outline"
-                    size="sm"
-                    className="bg-slate-700/80 border-slate-600 text-white pixelated-text"
+                    <User className="w-4 h-4" />
+                    Following
+                  </button>
+                  <button
+                    onClick={() => setFeedFilter('trending')}
+                    className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 pixelated-text flex items-center gap-2 ${
+                      feedFilter === 'trending'
+                        ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg shadow-orange-500/25 scale-105'
+                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 hover:text-white hover:scale-105'
+                    }`}
                   >
-                    {">"}
-                  </Button>
-                  <Button
-                    onClick={goToNextYear}
-                    variant="outline"
-                    size="sm"
-                    className="bg-slate-700/80 border-slate-600 text-white pixelated-text"
-                  >
-                    {">>"}
-                  </Button>
+                    <Flame className="w-4 h-4" />
+                    Trending
+                  </button>
                 </div>
-                <Button
-                  onClick={goToToday}
-                  variant="outline"
-                  className="bg-blue-600/20 border-blue-500 text-blue-300 pixelated-text"
-                >
-                  Today
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {/* Calendar Grid */}
-                <div className="grid grid-cols-7 gap-1">
-                  {/* Day Headers */}
-                  {dayNames.map((day) => (
-                    <div key={day} className="p-2 text-center">
-                      <div className="text-sm font-semibold text-blue-300 pixelated-text">
-                        {day}
-                      </div>
-                    </div>
-                  ))}
 
-                  {/* Calendar Days */}
-                  {generateCalendarDays().map((day, index) => (
-                    <div
-                      key={index}
-                      className={`p-2 text-center cursor-pointer transition-all duration-200 ${
-                        day ? "hover:bg-slate-600/30" : ""
-                      }`}
-                      onClick={() => handleDateClick(day || 0)}
-                    >
-                      {day ? (
-                        <div
-                          className={`relative w-8 h-8 mx-auto rounded-lg flex items-center justify-center text-sm pixelated-text ${
-                            isToday(day)
-                              ? "bg-blue-600 text-white font-bold"
-                              : isSelected(day)
-                              ? "bg-blue-500/30 text-blue-300 border border-blue-400"
-                              : hasEntriesForDate(day)
-                              ? "bg-green-500/20 text-green-300 border border-green-400/30"
-                              : "text-white hover:bg-slate-600/50"
-                          }`}
-                        >
-                          {day}
-                          {hasEntriesForDate(day) && (
-                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full"></div>
-                          )}
+                {/* Enhanced Create Post Section */}
+                <Card className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 border border-slate-600/60 text-white backdrop-blur-sm card-glass shadow-xl mb-10 hover-lift transition-all duration-300">
+                  <CardContent className="p-10">
+                    <div className="flex items-start gap-8">
+                      <Avatar className="w-16 h-16 ring-3 ring-blue-400/40 flex-shrink-0 hover:ring-blue-400/60 transition-all duration-300">
+                        <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl">
+                          {user?.address?.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-4 mb-8">
+                          <h3 className="text-white pixelated-text font-bold text-2xl">
+                            Share your crypto journey
+                          </h3>
+                          <Badge className="bg-gradient-to-r from-green-500/30 to-emerald-500/30 text-green-300 border-green-400/50 pixelated-text text-sm font-bold px-3 py-1">
+                            ✨ Live
+                          </Badge>
                         </div>
-                      ) : (
-                        <div className="w-8 h-8"></div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Selected Date Details */}
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-              <CardHeader>
-                <CardTitle className="text-blue-300 pixelated-text">
-                  {selectedDate.toDateString()}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {hasEntriesForDate(selectedDate.getDate()) ? (
-                  <div className="space-y-3">
-                    {entries
-                      .filter(
-                        (entry) =>
-                          entry.date ===
-                          `${selectedYear}-${String(selectedMonth + 1).padStart(
-                            2,
-                            "0"
-                          )}-${String(selectedDate.getDate()).padStart(2, "0")}`
-                      )
-                      .map((entry, index) => (
-                        <div
-                          key={index}
-                          className="bg-slate-700/50 rounded-lg p-3 border border-slate-600/30"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-white pixelated-text font-semibold">
-                              {entry.content}
-                            </span>
-                            <span className="text-blue-300 pixelated-text text-sm">
-                              {new Date(entry.timestamp).toLocaleTimeString(
-                                "en-US",
-                                {
-                                  hour: "numeric",
-                                  minute: "2-digit",
-                                  hour12: true,
-                                }
-                              )}
-                            </span>
+                        
+                        <div className="space-y-8">
+                          <div className="relative">
+                            <textarea
+                              value={newPostContent}
+                              onChange={(e) => setNewPostContent(e.target.value)}
+                              placeholder="What's happening in your crypto world today? Share your thoughts, trades, discoveries, or just your daily crypto vibes..."
+                              className="w-full bg-slate-700/40 border border-slate-600 text-white px-8 py-6 rounded-3xl focus:border-blue-500 focus:ring-3 focus:ring-blue-500/30 transition-all duration-300 pixelated-text text-lg placeholder-slate-400 resize-none"
+                              rows={4}
+                              maxLength={500}
+                            />
+                            <div className="absolute bottom-6 right-6 text-sm text-slate-400 bg-slate-800/80 px-3 py-1 rounded-full">
+                              {newPostContent.length}/500
+                            </div>
                           </div>
                           
-                          {/* Photo Display for Calendar View */}
-                          {entry.photos && entry.photos.length > 0 && (
-                            <div className="mb-3">
-                              <div className={`grid gap-1 rounded-lg overflow-hidden ${
-                                entry.photos.length === 1 ? 'grid-cols-1' :
-                                entry.photos.length === 2 ? 'grid-cols-2' :
-                                entry.photos.length === 3 ? 'grid-cols-2' :
-                                'grid-cols-2'
-                              }`}>
-                                {entry.photos.slice(0, 4).map((photo, photoIndex) => (
-                                  <div key={photoIndex} className={`relative group cursor-pointer ${
-                                    entry.photos!.length === 3 && photoIndex === 2 ? 'col-span-2' : ''
-                                  }`}>
-                                    <div className="w-full h-full bg-slate-600 overflow-hidden">
-                                      <img
-                                        src={photo}
-                                        alt={`Post image ${photoIndex + 1}`}
-                                        className={`w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 ${
-                                          entry.photos!.length === 1 ? 'h-32' :
-                                          entry.photos!.length === 2 ? 'h-24' :
-                                          entry.photos!.length === 3 && photoIndex === 2 ? 'h-24' : 'h-24'
-                                        }`}
-                                        onError={(e) => {
-                                          const target = e.target as HTMLImageElement;
-                                          target.style.display = 'none';
-                                          target.parentElement!.innerHTML = `
-                                            <div class="w-full h-full bg-slate-600 flex items-center justify-center">
-                                              <div class="text-center text-slate-400">
-                                                <span class="text-xs">Image failed to load</span>
-                                              </div>
-                                            </div>
-                                          `;
+                          {/* Tags Display */}
+                          {newPostTags.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {newPostTags.map((tag, index) => (
+                                <Badge 
+                                  key={index}
+                                  className="bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-blue-300 border-blue-400/50 pixelated-text hover:bg-blue-500/40 transition-all duration-200 cursor-pointer font-bold px-3 py-1 text-sm"
+                                  onClick={() => removeTagFromPost(tag)}
+                                >
+                                  #{tag} ×
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center justify-between pt-6 border-t border-slate-600/40">
+                            <div className="flex items-center gap-6">
+                              <Button variant="ghost" size="sm" className="text-blue-300 hover:text-blue-200 hover:bg-blue-500/15 rounded-2xl p-4 transition-all duration-300 hover:scale-105">
+                                <Plus className="w-6 h-6 mr-3" />
+                                Add Photo
+                              </Button>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  id="tag-input"
+                                  type="text"
+                                  placeholder="Add tag..."
+                                  className="bg-slate-700/50 border border-slate-600 text-white px-3 py-2 rounded-lg focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors pixelated-text text-sm placeholder-slate-400"
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                      addTagToPost();
+                                    }
+                                  }}
+                                />
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={addTagToPost}
+                                  className="text-purple-300 hover:text-purple-200 hover:bg-purple-500/15 rounded-2xl p-4 transition-all duration-300 hover:scale-105"
+                                >
+                                  <BookOpen className="w-6 h-6 mr-3" />
+                                  Add Tag
+                                </Button>
+                              </div>
+                              <Button variant="ghost" size="sm" className="text-orange-300 hover:text-orange-200 hover:bg-orange-500/15 rounded-2xl p-4 transition-all duration-300 hover:scale-105">
+                                <Flame className="w-6 h-6 mr-3" />
+                                Add GIF
+                              </Button>
+                            </div>
+                            <Button 
+                              onClick={handleCreatePost}
+                              disabled={!newPostContent.trim() || isCreatingPost}
+                              className={`pixelated-text px-10 py-4 rounded-2xl transition-all duration-300 font-bold text-xl ${
+                                !newPostContent.trim() || isCreatingPost
+                                  ? 'bg-slate-600 text-slate-400 cursor-not-allowed'
+                                  : 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white hover:shadow-xl hover:shadow-blue-500/30'
+                              }`}
+                            >
+                              {isCreatingPost ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  Posting...
+                                </div>
+                              ) : (
+                                'Post'
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Feed Content */}
+                {isLoadingFeed ? (
+                  <div className="space-y-6">
+                    {[...Array(3)].map((_, index) => (
+                      <Card key={index} className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+                        <CardHeader className="pb-4">
+                          <div className="flex items-start gap-4">
+                            <Skeleton className="w-12 h-12 rounded-full bg-slate-600" />
+                            <div className="flex-1 space-y-2">
+                              <Skeleton className="h-4 bg-slate-600 w-1/3" />
+                              <Skeleton className="h-3 bg-slate-600 w-1/4" />
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <Skeleton className="h-4 bg-slate-600 w-full" />
+                          <Skeleton className="h-4 bg-slate-600 w-3/4" />
+                          <Skeleton className="h-4 bg-slate-600 w-1/2" />
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : getFilteredPosts().length === 0 ? (
+                  <Card className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-slate-600/50 text-white backdrop-blur-sm card-glass shadow-lg">
+                    <CardContent className="flex flex-col items-center justify-center py-16">
+                      <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-6">
+                        <Home className="w-12 h-12 text-white" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-white pixelated-text mb-3">
+                        No posts yet
+                      </h3>
+                      <p className="text-blue-300 text-center mb-8 max-w-md leading-relaxed">
+                        Be the first to share your crypto journey! Create a post to get started.
+                      </p>
+                      <Button className="bg-gradient-to-r from-blue-500 to-purple-600 text-white pixelated-text px-8 py-3 text-lg hover:shadow-lg hover:shadow-blue-500/25">
+                        <Plus className="w-5 h-5 mr-2" />
+                        Create Your First Post
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-6">
+                    {getFilteredPosts().map((entry, index) => {
+                      const userRepost = userReposts.find(repost => repost.journalId === entry.id);
+                      const commentCount = commentCounts[entry.id] || 0;
+                      
+                      return (
+                        <Card
+                          key={entry.id}
+                          className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 border border-slate-600/60 text-white backdrop-blur-sm card-glass hover-lift transition-all duration-300 shadow-xl hover:shadow-2xl"
+                        >
+                          <CardHeader className="pb-6">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start gap-6">
+                                <Avatar className="w-16 h-16 ring-3 ring-blue-400/40 flex-shrink-0 hover:ring-blue-400/70 transition-all duration-300">
+                                  <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl">
+                                    {entry.baseUserId.slice(0, 2).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-4 mb-3">
+                                    <div className="font-bold text-white pixelated-text text-2xl">
+                                      {entry.baseUserId.slice(0, 6)}...{entry.baseUserId.slice(-4)}
+                                    </div>
+                                    <Badge className="bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-blue-300 border-blue-400/50 pixelated-text text-sm font-bold px-3 py-1">
+                                      #{index + 1}
+                                    </Badge>
+                                    {entry.likes > 10 && (
+                                      <Badge className="bg-gradient-to-r from-orange-500/30 to-red-500/30 text-orange-300 border-orange-400/50 pixelated-text text-sm font-bold px-3 py-1">
+                                        🔥 Hot
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="text-base text-blue-300 pixelated-text flex items-center gap-3">
+                                    <Calendar className="w-5 h-5" />
+                                    {entry.dateCreated
+                                      ? new Date(entry.dateCreated).toLocaleDateString("en-US", {
+                                          weekday: "long",
+                                          year: "numeric",
+                                          month: "long",
+                                          day: "numeric",
+                                        })
+                                      : "No date"}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-slate-700/60 rounded-full p-3 transition-all duration-300 hover:scale-110">
+                                  <Share2 className="w-5 h-5" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-slate-700/60 rounded-full p-3 transition-all duration-300 hover:scale-110">
+                                  <BookOpen className="w-5 h-5" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            {/* Enhanced Image Display */}
+                            {entry.photo && (
+                              <div className="mb-8 rounded-3xl overflow-hidden group relative">
+                                <div className="relative">
+                                  <img 
+                                    src={entry.photo} 
+                                    alt="Journal entry" 
+                                    className="w-full h-auto max-h-[500px] object-cover transition-transform duration-500 group-hover:scale-105" 
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                  <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <Button size="sm" className="bg-black/60 text-white hover:bg-black/80 rounded-full p-3">
+                                      <BookOpen className="w-5 h-5" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Enhanced Content Display */}
+                            <div className="bg-gradient-to-r from-slate-700/40 to-slate-800/40 rounded-3xl p-8 mb-8 border border-slate-600/40">
+                              <p className="text-white leading-relaxed pixelated-text text-xl break-words">
+                                {entry.journal || "This user shared their crypto journey..."}
+                              </p>
+                            </div>
+                            {/* Enhanced Tags Display */}
+                            {entry.tags.length > 0 && (
+                              <div className="mb-8">
+                                <div className="flex items-center gap-3 mb-4">
+                                  <div className="w-3 h-3 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"></div>
+                                  <span className="text-blue-300 pixelated-text font-bold text-lg">Topics</span>
+                                </div>
+                                <div className="flex flex-wrap gap-3">
+                                  {entry.tags.map((tag, tagIndex) => (
+                                    <Badge 
+                                      key={tagIndex} 
+                                      className="bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-blue-300 border-blue-400/50 pixelated-text hover:bg-blue-500/40 hover:scale-110 transition-all duration-300 cursor-pointer font-bold px-4 py-2 text-sm"
+                                    >
+                                      #{tag}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Enhanced Action Buttons */}
+                            <div className="flex items-center justify-between pt-8 border-t border-slate-600/40">
+                              <div className="flex items-center gap-6">
+                                {/* Like Button */}
+                                <div className="group relative">
+                                  <button 
+                                    onClick={() => handleLike(entry.id)}
+                                    disabled={loadingLikes[entry.id]}
+                                    className={`flex items-center gap-4 px-8 py-4 rounded-2xl border transition-all duration-300 hover:scale-105 hover:shadow-xl ${
+                                      loadingLikes[entry.id] ? "opacity-50 cursor-not-allowed" : ""
+                                    } ${
+                                      userLikes[entry.id]
+                                        ? "bg-gradient-to-r from-pink-500/20 to-red-500/20 border-pink-500/60 hover:shadow-pink-500/30"
+                                        : "bg-gradient-to-r from-pink-500/15 to-red-500/15 border-pink-500/40 hover:border-pink-500/70 hover:shadow-pink-500/25"
+                                    }`}
+                                  >
+                                    <div className="relative">
+                                      {loadingLikes[entry.id] ? (
+                                        <div className="w-6 h-6 border-2 border-pink-400 border-t-transparent rounded-full animate-spin"></div>
+                                      ) : (
+                                        <Heart className={`w-6 h-6 transition-colors ${
+                                          userLikes[entry.id] ? "text-pink-300 fill-pink-300" : "text-pink-400 group-hover:text-pink-300"
+                                        }`} />
+                                      )}
+                                      <div className="absolute inset-0 w-6 h-6 bg-pink-400/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    </div>
+                                    <span className="text-pink-300 pixelated-text font-bold text-xl">{likeCounts[entry.id] || entry.likes || 0}</span>
+                                  </button>
+                                </div>
+
+                                {/* Comment Button */}
+                                <div className="group relative">
+                                  <button
+                                    onClick={() => {
+                                      setCurrentJournalId(entry.id);
+                                      setCommentCounts(prev => ({ ...prev, [entry.id]: commentCount }));
+                                    }}
+                                    className="flex items-center gap-4 px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-500/15 to-cyan-500/15 border border-blue-500/40 hover:border-blue-500/70 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/25"
+                                  >
+                                    <div className="relative">
+                                      <MessageSquare className="w-6 h-6 text-blue-400 group-hover:text-blue-300 transition-colors" />
+                                      <div className="absolute inset-0 w-6 h-6 bg-blue-400/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    </div>
+                                    <span className="text-blue-300 pixelated-text font-bold text-xl">{commentCounts[entry.id] || commentCount || 0}</span>
+                                  </button>
+                                </div>
+
+                                {/* Repost Button */}
+                                <div className="group relative">
+                                  <button
+                                    onClick={() => handleRepost(entry.id)}
+                                    className={`flex items-center gap-4 px-8 py-4 rounded-2xl border transition-all duration-300 hover:scale-105 hover:shadow-xl ${
+                                      userRepost
+                                        ? "bg-gradient-to-r from-green-500/15 to-emerald-500/15 border-green-500/60 hover:shadow-green-500/25"
+                                        : "bg-gradient-to-r from-purple-500/15 to-violet-500/15 border-purple-500/40 hover:border-purple-500/70 hover:shadow-purple-500/25"
+                                    }`}
+                                  >
+                                    <div className="relative">
+                                      <Share2 className={`w-6 h-6 transition-colors ${
+                                        userRepost ? "text-green-400 group-hover:text-green-300" : "text-purple-400 group-hover:text-purple-300"
+                                      }`} />
+                                      <div className={`absolute inset-0 w-6 h-6 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity ${
+                                        userRepost ? "bg-green-400/20" : "bg-purple-400/20"
+                                      }`}></div>
+                                    </div>
+                                    <span className={`pixelated-text font-bold text-xl ${
+                                      userRepost ? "text-green-300" : "text-purple-300"
+                                    }`}>
+                                      {userRepost ? "Reposted" : "Repost"}
+                                    </span>
+                                    <span className={`pixelated-text font-bold text-lg ${
+                                      userRepost ? "text-green-300" : "text-purple-300"
+                                    }`}>
+                                      ({repostCounts[entry.id] || 0})
+                                    </span>
+                                  </button>
+                                </div>
+                              </div>
+                              
+                              {/* Enhanced Post Stats */}
+                              <div className="flex items-center gap-6 text-base text-slate-400">
+                                <div className="flex items-center gap-2 bg-slate-800/40 px-4 py-2 rounded-xl">
+                                  <Eye className="w-5 h-5" />
+                                  <span className="font-semibold">{Math.floor(Math.random() * 1000) + 100}</span>
+                                </div>
+                                <div className="flex items-center gap-2 bg-slate-800/40 px-4 py-2 rounded-xl">
+                                  <Share2 className="w-5 h-5" />
+                                  <span className="font-semibold">{Math.floor(Math.random() * 50) + 5}</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Enhanced Comments Section */}
+                            {currentJournalId === entry.id && (
+                              <div className="mt-6 p-6 bg-gradient-to-r from-slate-700/20 to-slate-800/20 rounded-2xl border border-slate-600/30">
+                                <div className="flex items-center justify-between mb-6">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-full flex items-center justify-center">
+                                      <MessageSquare className="w-4 h-4 text-white" />
+                                    </div>
+                                    <span className="text-blue-300 pixelated-text font-bold text-lg">Comments</span>
+                                    <Badge className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-300 border-blue-400/30 pixelated-text text-sm font-medium">
+                                      {commentCount}
+                                    </Badge>
+                                  </div>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => setCurrentJournalId(null)}
+                                    className="text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-full p-2"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                                
+                                {/* Enhanced Comment Input */}
+                                <div className="flex gap-4 mb-6">
+                                  <Avatar className="w-10 h-10 ring-2 ring-blue-400/30 flex-shrink-0">
+                                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold">
+                                      {user?.address?.slice(0, 2).toUpperCase()}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1">
+                                    <div className="relative">
+                                      <input
+                                        type="text"
+                                        placeholder="Share your thoughts on this post..."
+                                        className="w-full bg-slate-700/50 border border-slate-600 text-white px-4 py-3 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 pixelated-text text-sm placeholder-slate-400"
+                                        onKeyPress={(e) => {
+                                          if (e.key === 'Enter') {
+                                            const target = e.target as HTMLInputElement;
+                                            if (target.value.trim()) {
+                                              handleComment(entry.id, target.value);
+                                              target.value = '';
+                                            }
+                                          }
                                         }}
                                       />
+                                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-1">
+                                          <Plus className="w-3 h-3" />
+                                        </Button>
+                                      </div>
                                     </div>
                                   </div>
-                                ))}
-                                {entry.photos.length > 4 && (
-                                  <div className="h-24 bg-slate-600 rounded flex items-center justify-center text-xs text-slate-400">
-                                    +{entry.photos.length - 4} more
-                                  </div>
-                                )}
+                                </div>
+                                
+                                {/* Enhanced Comments List */}
+                                <div className="space-y-4 max-h-60 overflow-y-auto">
+                                  {dbComments
+                                    .filter(comment => comment.journalId === entry.id)
+                                    .map((comment, commentIndex) => (
+                                      <div key={commentIndex} className="flex gap-4 p-4 bg-gradient-to-r from-slate-600/20 to-slate-700/20 rounded-xl border border-slate-500/20 hover:border-slate-500/40 transition-all duration-300 hover:scale-[1.02]">
+                                        <Avatar className="w-8 h-8 ring-1 ring-blue-400/20">
+                                          <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xs">
+                                            {comment.baseUserId.slice(0, 2).toUpperCase()}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1">
+                                          <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-sm font-medium text-blue-300 pixelated-text">
+                                              {comment.baseUserId.slice(0, 6)}...{comment.baseUserId.slice(-4)}
+                                            </span>
+                                            <span className="text-xs text-slate-400">
+                                              {new Date(comment.dateCreated).toLocaleDateString()}
+                                            </span>
+                                          </div>
+                                          <p className="text-sm text-white pixelated-text break-words">
+                                            {comment.comment}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    ))}
+                                </div>
                               </div>
-                            </div>
-                          )}
-                          
-                          {entry.tags.length > 0 && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-blue-300 pixelated-text">
-                                Tags:
-                              </span>
-                              <div className="flex gap-1">
-                                {entry.tags.map((tag, tagIndex) => (
-                                  <Badge
-                                    key={tagIndex}
-                                    className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text text-xs"
-                                  >
-                                    #{tag}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Calendar className="w-16 h-16 text-blue-400 mb-4 mx-auto opacity-50" />
-                    <h3 className="text-xl font-semibold text-white pixelated-text mb-2">
-                      No Entries
-                    </h3>
-                    <p className="text-blue-300 text-center mb-4">
-                      No entries for this date. Start your day by adding a new
-                      entry!
-                    </p>
-                    <Button
-                      onClick={() => setActiveSidebarItem("home")}
-                      className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white pixelated-text"
-                    >
-                      Add Entry
-                    </Button>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Calendar Stats */}
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-              <CardHeader>
-                <CardTitle className="text-blue-300 pixelated-text">
-                  This Month's Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-slate-700/50 rounded-lg border border-slate-600/30">
-                    <div className="text-2xl font-bold text-green-400 pixelated-text mb-1">
-                      {
-                        entries.filter((entry) => {
-                          const entryDate = new Date(entry.date);
-                          return (
-                            entryDate.getMonth() === currentMonth &&
-                            entryDate.getFullYear() === currentYear
-                          );
-                        }).length
-                      }
-                    </div>
-                    <div className="text-sm text-blue-300 pixelated-text">
-                      Total Entries
-                    </div>
-                  </div>
-                  <div className="text-center p-4 bg-slate-700/50 rounded-lg border border-slate-600/30">
-                    <div className="text-2xl font-bold text-blue-400 pixelated-text mb-1">
-                      {
-                        new Set(
-                          entries
-                            .filter((entry) => {
-                              const entryDate = new Date(entry.date);
-                              return (
-                                entryDate.getMonth() === currentMonth &&
-                                entryDate.getFullYear() === currentYear
-                              );
-                            })
-                            .map((entry) => entry.date)
-                        ).size
-                      }
-                    </div>
-                    <div className="text-sm text-blue-300 pixelated-text">
-                      Active Days
-                    </div>
-                  </div>
-                  <div className="text-center p-4 bg-slate-700/50 rounded-lg border border-slate-600/30">
-                    <div className="text-2xl font-bold text-purple-400 pixelated-text mb-1">
-                      {getDaysInMonth(currentYear, currentMonth)}
-                    </div>
-                    <div className="text-sm text-blue-300 pixelated-text">
-                      Days in Month
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+
+            </div>
           </div>
         );
-      case "streak":
-        return (
-          <div className="space-y-6">
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-              <CardHeader>
-                <CardTitle className="text-blue-300 flex items-center gap-2 pixelated-text">
-                  <Flame className="w-5 h-5" />
-                  Current Streak
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <StreakTracker entries={entries} />
-              </CardContent>
-            </Card>
+       case "calendar":
+         return (
+           <div className="space-y-6">
+             <div className="text-center mb-6">
+               <h1 className="text-3xl font-bold text-white pixelated-text mb-2">
+                 Calendar View
+               </h1>
+               <p className="text-blue-300 pixelated-text">
+                 Track your daily entries and activities
+               </p>
+             </div>
 
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-              <CardHeader>
-                <CardTitle className="text-blue-300 pixelated-text">
-                  Streak History
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Flame className="w-16 h-16 text-orange-400 mb-4 mx-auto opacity-50" />
-                  <h3 className="text-xl font-semibold text-white pixelated-text mb-2">
-                    Streak History Coming Soon
-                  </h3>
-                  <p className="text-blue-300 text-center mb-6 max-w-md mx-auto">
-                    Track your longest streaks, milestones, and streak
-                    achievements over time.
-                  </p>
-                  <div className="flex justify-center gap-4">
-                    <Badge className="bg-orange-500/20 text-orange-300 border-orange-400/30 pixelated-text">
-                      Longest: 7 days
-                    </Badge>
-                    <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text">
-                      Current: 3 days
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+             <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+               <CardHeader className="text-center">
+                 <div className="flex items-center justify-between mb-4">
+                   <Button
+                     onClick={goToPreviousYear}
+                     variant="outline"
+                     size="sm"
+                     className="bg-slate-700/80 border-slate-600 text-white pixelated-text"
+                   >
+                     {"<<"}
+                   </Button>
+                   <Button
+                     onClick={goToPreviousMonth}
+                     variant="outline"
+                     size="sm"
+                     className="bg-slate-700/80 border-slate-600 text-white pixelated-text"
+                   >
+                     {"<"}
+                   </Button>
+                   <div className="flex-1 text-center">
+                     <h2 className="text-2xl font-bold text-white pixelated-text">
+                       {getMonthName(currentMonth)} {currentYear}
+                     </h2>
+                   </div>
+                   <Button
+                     onClick={goToNextMonth}
+                     variant="outline"
+                     size="sm"
+                     className="bg-slate-700/80 border-slate-600 text-white pixelated-text"
+                   >
+                     {">"}
+                   </Button>
+                   <Button
+                     onClick={goToNextYear}
+                     variant="outline"
+                     size="sm"
+                     className="bg-slate-700/80 border-slate-600 text-white pixelated-text"
+                   >
+                     {">>"}
+                   </Button>
+                 </div>
+                 <Button
+                   onClick={goToToday}
+                   variant="outline"
+                   className="bg-blue-600/20 border-blue-500 text-blue-300 pixelated-text"
+                 >
+                   Today
+                 </Button>
+               </CardHeader>
+               <CardContent>
+                 <div className="grid grid-cols-7 gap-1">
+                   {dayNames.map((day) => (
+                     <div key={day} className="p-2 text-center">
+                       <div className="text-sm font-semibold text-blue-300 pixelated-text">
+                         {day}
+                       </div>
+                     </div>
+                   ))}
 
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-              <CardHeader>
-                <CardTitle className="text-blue-300 pixelated-text">
-                  Streak Goals
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Target className="w-5 h-5 text-blue-400" />
-                      <div>
-                        <div className="text-white pixelated-text">
-                          7 Day Streak
-                        </div>
-                        <div className="text-sm text-blue-300">
-                          Complete 7 consecutive days
-                        </div>
-                      </div>
-                    </div>
-                    <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-400/30 pixelated-text">
-                      In Progress
-                    </Badge>
-                  </div>
+                   {generateCalendarDays().map((day, index) => (
+                     <div
+                       key={index}
+                       className={`p-2 text-center cursor-pointer transition-all duration-200 ${
+                         day ? "hover:bg-slate-600/30" : ""
+                       }`}
+                       onClick={() => handleDateClick(day || 0)}
+                     >
+                       {day ? (
+                         <div
+                           className={`relative w-8 h-8 mx-auto rounded-lg flex items-center justify-center text-sm pixelated-text ${
+                             isToday(day)
+                               ? "bg-blue-600 text-white font-bold"
+                               : isSelected(day)
+                               ? "bg-blue-500/30 text-blue-300 border border-blue-400"
+                               : hasEntriesForDate(day)
+                               ? "bg-green-500/20 text-green-300 border border-green-400/30"
+                               : "text-white hover:bg-slate-600/50"
+                           }`}
+                         >
+                           {day}
+                           {hasEntriesForDate(day) && (
+                             <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full"></div>
+                           )}
+                         </div>
+                       ) : (
+                         <div className="w-8 h-8"></div>
+                       )}
+                     </div>
+                   ))}
+                 </div>
+               </CardContent>
+             </Card>
 
-                  <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Target className="w-5 h-5 text-blue-400" />
-                      <div>
-                        <div className="text-white pixelated-text">
-                          30 Day Streak
-                        </div>
-                        <div className="text-sm text-blue-300">
-                          Complete 30 consecutive days
-                        </div>
-                      </div>
-                    </div>
-                    <Badge className="bg-slate-500/20 text-slate-300 border-slate-400/30 pixelated-text">
-                      Locked
-                    </Badge>
-                  </div>
+             <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+               <CardHeader>
+                 <CardTitle className="text-blue-300 pixelated-text">
+                   {selectedDate.toDateString()}
+                 </CardTitle>
+               </CardHeader>
+               <CardContent>
+                 {hasEntriesForDate(selectedDate.getDate()) ? (
+                   <div className="space-y-3">
+                     {entries
+                       .filter(
+                         (entry) =>
+                           entry.date ===
+                           `${currentYear}-${String(currentMonth + 1).padStart(
+                             2,
+                             "0"
+                           )}-${String(selectedDate.getDate()).padStart(2, "0")}`
+                       )
+                       .map((entry, index) => (
+                         <div
+                           key={index}
+                           className="bg-slate-700/50 rounded-lg p-3 border border-slate-600/30"
+                         >
+                           <div className="flex items-center justify-between mb-2">
+                             <span className="text-white pixelated-text font-semibold">
+                               {entry.content}
+                             </span>
+                             <span className="text-blue-300 pixelated-text text-sm">
+                               {new Date(entry.timestamp).toLocaleTimeString(
+                                 "en-US",
+                                 {
+                                   hour: "numeric",
+                                   minute: "2-digit",
+                                   hour12: true,
+                                 }
+                               )}
+                             </span>
+                           </div>
+                           
+                           {entry.photos && entry.photos.length > 0 && (
+                             <div className="mb-3">
+                               <div className={`grid gap-1 rounded-lg overflow-hidden ${
+                                 entry.photos.length === 1 ? 'grid-cols-1' :
+                                 entry.photos.length === 2 ? 'grid-cols-2' :
+                                 entry.photos.length === 3 ? 'grid-cols-2' :
+                                 'grid-cols-2'
+                               }`}>
+                                 {entry.photos.slice(0, 4).map((photo, photoIndex) => (
+                                   <div key={photoIndex} className={`relative group cursor-pointer ${
+                                     entry.photos!.length === 3 && photoIndex === 2 ? 'col-span-2' : ''
+                                   }`}>
+                                     <div className="w-full h-full bg-slate-600 overflow-hidden">
+                                       <img
+                                         src={photo}
+                                         alt={`Post image ${photoIndex + 1}`}
+                                         className={`w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 ${
+                                           entry.photos!.length === 1 ? 'h-32' :
+                                           entry.photos!.length === 2 ? 'h-24' :
+                                           entry.photos!.length === 3 && photoIndex === 2 ? 'h-24' : 'h-24'
+                                         }`}
+                                         onError={(e) => {
+                                           const target = e.target as HTMLImageElement;
+                                           target.style.display = 'none';
+                                           target.parentElement!.innerHTML = `
+                                             <div class="w-full h-full bg-slate-600 flex items-center justify-center">
+                                               <div class="text-center text-slate-400">
+                                                 <span class="text-xs">Image failed to load</span>
+                                               </div>
+                                             </div>
+                                           `;
+                                         }}
+                                       />
+                                     </div>
+                                   </div>
+                                 ))}
+                                 {entry.photos.length > 4 && (
+                                   <div className="h-24 bg-slate-600 rounded flex items-center justify-center text-xs text-slate-400">
+                                     +{entry.photos.length - 4} more
+                                   </div>
+                                 )}
+                               </div>
+                             </div>
+                           )}
+                           
+                           {entry.tags.length > 0 && (
+                             <div className="flex items-center gap-2">
+                               <span className="text-sm text-blue-300 pixelated-text">
+                                 Tags:
+                               </span>
+                               <div className="flex gap-1">
+                                 {entry.tags.map((tag, tagIndex) => (
+                                   <Badge
+                                     key={tagIndex}
+                                     className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text text-xs"
+                                   >
+                                     #{tag}
+                                   </Badge>
+                                 ))}
+                               </div>
+                             </div>
+                           )}
+                         </div>
+                       ))}
+                   </div>
+                 ) : (
+                   <div className="text-center py-8">
+                     <Calendar className="w-16 h-16 text-blue-400 mb-4 mx-auto opacity-50" />
+                     <h3 className="text-xl font-semibold text-white pixelated-text mb-2">
+                       No Entries
+                     </h3>
+                     <p className="text-blue-300 text-center mb-4">
+                       No entries for this date. Start your day by adding a new
+                       entry!
+                     </p>
+                     <Button
+                       onClick={() => setActiveSidebarItem("home")}
+                       className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white pixelated-text"
+                     >
+                       Add Entry
+                     </Button>
+                   </div>
+                 )}
+               </CardContent>
+             </Card>
 
-                  <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Target className="w-5 h-5 text-blue-400" />
-                      <div>
-                        <div className="text-white pixelated-text">
-                          100 Day Streak
-                        </div>
-                        <div className="text-sm text-blue-300">
-                          Complete 100 consecutive days
-                        </div>
-                      </div>
-                    </div>
-                    <Badge className="bg-slate-500/20 text-slate-300 border-slate-400/30 pixelated-text">
-                      Locked
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        );
-      case "calculator":
+             <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+               <CardHeader>
+                 <CardTitle className="text-blue-300 pixelated-text">
+                   This Month's Activity
+                 </CardTitle>
+               </CardHeader>
+               <CardContent>
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                   <div className="text-center p-4 bg-slate-700/50 rounded-lg border border-slate-600/30">
+                     <div className="text-2xl font-bold text-green-400 pixelated-text mb-1">
+                       {
+                         entries.filter((entry) => {
+                           const entryDate = new Date(entry.date);
+                           return (
+                             entryDate.getMonth() === currentMonth &&
+                             entryDate.getFullYear() === currentYear
+                           );
+                         }).length
+                       }
+                     </div>
+                     <div className="text-sm text-blue-300 pixelated-text">
+                       Total Entries
+                     </div>
+                   </div>
+                   <div className="text-center p-4 bg-slate-700/50 rounded-lg border border-slate-600/30">
+                     <div className="text-2xl font-bold text-blue-400 pixelated-text mb-1">
+                       {
+                         new Set(
+                           entries
+                             .filter((entry) => {
+                               const entryDate = new Date(entry.date);
+                               return (
+                                 entryDate.getMonth() === currentMonth &&
+                                 entryDate.getFullYear() === currentYear
+                               );
+                             })
+                             .map((entry) => entry.date)
+                         ).size
+                       }
+                     </div>
+                     <div className="text-sm text-blue-300 pixelated-text">
+                       Active Days
+                     </div>
+                   </div>
+                   <div className="text-center p-4 bg-slate-700/50 rounded-lg border border-slate-600/30">
+                     <div className="text-2xl font-bold text-purple-400 pixelated-text mb-1">
+                       {getDaysInMonth(currentYear, currentMonth)}
+                     </div>
+                     <div className="text-sm text-blue-300 pixelated-text">
+                       Days in Month
+                     </div>
+                   </div>
+                 </div>
+               </CardContent>
+             </Card>
+           </div>
+         );
+       case "calculator":
         return (
           <div className="space-y-8">
-            {/* Calculator Header */}
             <div className="text-center mb-12">
               <h1 className="text-4xl font-bold text-white mb-3">
                 Basio Calculator
@@ -1849,7 +1759,6 @@ useEffect(() => {
               </p>
             </div>
 
-            {/* Calculator Tabs */}
             <div className="flex flex-wrap gap-3 justify-center mb-8">
               {[
                 {
@@ -1899,7 +1808,6 @@ useEffect(() => {
               })}
             </div>
 
-            {/* Gas Fee Calculator */}
             {activeCalculatorTab === "gas" && (
               <div className="max-w-4xl mx-auto">
                 <div className="text-center mb-8">
@@ -1911,7 +1819,6 @@ useEffect(() => {
                   </p>
                 </div>
                 <div className="space-y-6">
-                  {/* Gas Parameters */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-slate-300">
@@ -1951,7 +1858,6 @@ useEffect(() => {
                     </div>
                   </div>
 
-                  {/* Calculation Results */}
                   <div className="bg-slate-800/50 rounded-xl p-8 border border-slate-700">
                     <h4 className="text-white font-semibold mb-6 text-center text-lg">
                       Calculation Results
@@ -1981,7 +1887,6 @@ useEffect(() => {
               </div>
             )}
 
-            {/* Currency Swap Calculator */}
             {activeCalculatorTab === "currency" && (
               <div className="max-w-4xl mx-auto">
                 <div className="text-center mb-8">
@@ -1991,14 +1896,6 @@ useEffect(() => {
                   <p className="text-slate-400">
                     Convert currencies with real-time exchange rates
                   </p>
-                  {isLoadingRates && (
-                    <div className="flex items-center justify-center gap-2 mt-2">
-                      <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                      <span className="text-xs text-blue-300 pixelated-text">
-                        Updating rates...
-                      </span>
-                    </div>
-                  )}
                   <div className="text-xs text-green-300 pixelated-text mt-2">
                     {Object.keys(liveExchangeRates).length > 0
                       ? "✅ Live rates active"
@@ -2007,7 +1904,6 @@ useEffect(() => {
                 </div>
 
                 <div className="space-y-6">
-                  {/* Currency Controls */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-slate-300">
@@ -2015,9 +1911,7 @@ useEffect(() => {
                       </label>
                       <select
                         value={currencySwap.fromCurrency}
-                        onChange={(e) =>
-                          updateCurrencySwap("fromCurrency", e.target.value)
-                        }
+                        onChange={(e) => updateCurrencySwap("fromCurrency", e.target.value)}
                         className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                       >
                         {currencies.map((currency) => (
@@ -2033,9 +1927,7 @@ useEffect(() => {
                       </label>
                       <select
                         value={currencySwap.toCurrency}
-                        onChange={(e) =>
-                          updateCurrencySwap("toCurrency", e.target.value)
-                        }
+                        onChange={(e) => updateCurrencySwap("toCurrency", e.target.value)}
                         className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                       >
                         {currencies.map((currency) => (
@@ -2055,9 +1947,7 @@ useEffect(() => {
                       <input
                         type="number"
                         value={currencySwap.fromAmount}
-                        onChange={(e) =>
-                          updateCurrencySwap("fromAmount", e.target.value)
-                        }
+                        onChange={(e) => updateCurrencySwap("fromAmount", e.target.value)}
                         className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                         placeholder="1.00"
                         step="0.01"
@@ -2070,23 +1960,9 @@ useEffect(() => {
                       >
                         Swap Currencies
                       </Button>
-                      <Button
-                        onClick={fetchExchangeRates}
-                        variant="outline"
-                        size="sm"
-                        disabled={isLoadingRates}
-                        className="px-4 py-3 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700"
-                      >
-                        {isLoadingRates ? (
-                          <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                        ) : (
-                          "↻"
-                        )}
-                      </Button>
                     </div>
                   </div>
 
-                  {/* Conversion Results */}
                   <div className="bg-slate-800/50 rounded-xl p-8 border border-slate-700">
                     <h4 className="text-white font-semibold mb-6 text-center text-lg">
                       Conversion Results
@@ -2108,42 +1984,10 @@ useEffect(() => {
                       </div>
                     </div>
                   </div>
-
-                  {/* Exchange Rates */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                      <div className="text-lg font-bold text-blue-400 mb-1">
-                        {getCurrencySymbol(currencySwap.fromCurrency)}1
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        = {getCurrencySymbol(currencySwap.toCurrency)}
-                        {currencySwap.exchangeRate.toFixed(4)}
-                      </div>
-                    </div>
-                    <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                      <div className="text-lg font-bold text-green-400 mb-1">
-                        {getCurrencySymbol(currencySwap.toCurrency)}1
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        = {getCurrencySymbol(currencySwap.fromCurrency)}
-                        {(1 / currencySwap.exchangeRate).toFixed(4)}
-                      </div>
-                    </div>
-                    <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                      <div className="text-lg font-bold text-purple-400 mb-1">
-                        {getCurrencySymbol(currencySwap.fromCurrency)}100
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        = {getCurrencySymbol(currencySwap.toCurrency)}
-                        {(100 * currencySwap.exchangeRate).toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
 
-            {/* Expense Journal */}
             {activeCalculatorTab === "expense" && (
               <div className="max-w-4xl mx-auto">
                 <div className="text-center mb-8">
@@ -2155,7 +1999,6 @@ useEffect(() => {
                   </p>
                 </div>
                 <div className="space-y-6">
-                  {/* Expense Entry Form */}
                   <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
                     <h3 className="text-white font-semibold text-lg mb-6 text-center">
                       Add New Expense
@@ -2168,12 +2011,7 @@ useEffect(() => {
                         <input
                           type="date"
                           value={newExpense.date}
-                          onChange={(e) =>
-                            setNewExpense({
-                              ...newExpense,
-                              date: e.target.value,
-                            })
-                          }
+                          onChange={(e) => setNewExpense({...newExpense, date: e.target.value})}
                           className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                         />
                       </div>
@@ -2183,12 +2021,7 @@ useEffect(() => {
                         </label>
                         <select
                           value={newExpense.category}
-                          onChange={(e) =>
-                            setNewExpense({
-                              ...newExpense,
-                              category: e.target.value,
-                            })
-                          }
+                          onChange={(e) => setNewExpense({...newExpense, category: e.target.value})}
                           className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                         >
                           {expenseCategories.map((category) => (
@@ -2207,12 +2040,7 @@ useEffect(() => {
                       <input
                         type="text"
                         value={newExpense.description}
-                        onChange={(e) =>
-                          setNewExpense({
-                            ...newExpense,
-                            description: e.target.value,
-                          })
-                        }
+                        onChange={(e) => setNewExpense({...newExpense, description: e.target.value})}
                         className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                         placeholder="What was this expense for?"
                       />
@@ -2226,12 +2054,7 @@ useEffect(() => {
                         <input
                           type="number"
                           value={newExpense.amount}
-                          onChange={(e) =>
-                            setNewExpense({
-                              ...newExpense,
-                              amount: e.target.value,
-                            })
-                          }
+                          onChange={(e) => setNewExpense({...newExpense, amount: e.target.value})}
                           className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                           placeholder="0.00"
                           step="0.01"
@@ -2244,12 +2067,7 @@ useEffect(() => {
                         <input
                           type="number"
                           value={newExpense.gasFee}
-                          onChange={(e) =>
-                            setNewExpense({
-                              ...newExpense,
-                              gasFee: e.target.value,
-                            })
-                          }
+                          onChange={(e) => setNewExpense({...newExpense, gasFee: e.target.value})}
                           className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                           placeholder="0.00"
                           step="0.01"
@@ -2262,12 +2080,7 @@ useEffect(() => {
                         <input
                           type="text"
                           value={newExpense.transactionHash}
-                          onChange={(e) =>
-                            setNewExpense({
-                              ...newExpense,
-                              transactionHash: e.target.value,
-                            })
-                          }
+                          onChange={(e) => setNewExpense({...newExpense, transactionHash: e.target.value})}
                           className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                           placeholder="0x..."
                         />
@@ -2280,12 +2093,7 @@ useEffect(() => {
                       </label>
                       <textarea
                         value={newExpense.notes}
-                        onChange={(e) =>
-                          setNewExpense({
-                            ...newExpense,
-                            notes: e.target.value,
-                          })
-                        }
+                        onChange={(e) => setNewExpense({...newExpense, notes: e.target.value})}
                         className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                         placeholder="Additional notes about this expense..."
                         rows={3}
@@ -2302,7 +2110,6 @@ useEffect(() => {
                     </Button>
                   </div>
 
-                  {/* Expense Journal Entries */}
                   <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
                     <CardHeader className="text-center">
                       <CardTitle className="text-blue-300 pixelated-text text-2xl">
@@ -2347,9 +2154,7 @@ useEffect(() => {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() =>
-                                      deleteExpenseEntry(expense.id)
-                                    }
+                                    onClick={() => deleteExpenseEntry(expense.id)}
                                     className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
                                   >
                                     <X className="w-4 h-4" />
@@ -2364,9 +2169,7 @@ useEffect(() => {
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                                 {expense.gasFee && (
                                   <div className="text-blue-300 pixelated-text bg-slate-600/30 rounded-lg p-3">
-                                    <span className="font-semibold">
-                                      Gas Fee:
-                                    </span>{" "}
+                                    <span className="font-semibold">Gas Fee:</span>{" "}
                                     ${parseFloat(expense.gasFee).toFixed(2)}
                                   </div>
                                 )}
@@ -2389,11 +2192,9 @@ useEffect(() => {
                     </CardContent>
                   </Card>
                 </div>
-                )
               </div>
             )}
 
-            {/* Analytics */}
             {activeCalculatorTab === "analytics" && (
               <div className="max-w-4xl mx-auto">
                 <div className="text-center mb-8">
@@ -2633,7 +2434,6 @@ useEffect(() => {
         );
       case "profile":
         return (
-<<<<<<< HEAD
           <div className="max-w-2xl mx-auto space-y-6">
             {/* Game Theme Header */}
             <div className="text-center">
@@ -2705,37 +2505,11 @@ useEffect(() => {
                 </div>
                 
                 {/* Player Info - Gaming Style */}
-                                 <CardTitle className="text-cyan-400 pixelated-text text-3xl mb-2 text-shadow-glow">
-                   DAILY BASE EXPLORER
-                 </CardTitle>
+                <CardTitle className="text-cyan-400 pixelated-text text-3xl mb-2 text-shadow-glow">
+                  DAILY BASE EXPLORER
+                </CardTitle>
                 <div className="flex items-center justify-center gap-3 mb-4">
                   <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-400/50 pixelated-text">
-=======
-          <div className="space-y-6">
-            {/* Profile Header */}
-            <div className="text-center mb-6">
-              <h1 className="text-3xl font-bold text-white pixelated-text mb-2">
-                Profile
-              </h1>
-              <p className="text-blue-300 pixelated-text">
-                Your DailyBase account
-              </p>
-            </div>
-
-            {/* Simple Profile Card */}
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass max-w-2xl mx-auto">
-              <CardHeader className="text-center">
-                <Avatar className="w-20 h-20 mx-auto mb-4 ring-4 ring-blue-400/20">
-                  <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-2xl font-bold">
-                    {user?.address?.slice(2, 4).toUpperCase() || "DB"}
-                  </AvatarFallback>
-                </Avatar>
-                <CardTitle className="text-blue-300 pixelated-text text-xl mb-2">
-                  DailyBase User
-                </CardTitle>
-                <div className="flex items-center justify-center gap-2">
-                  <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text">
->>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
                     <Wallet className="w-3 h-3 mr-1" />
                     {getAddressDisplay(address)}
                   </Badge>
@@ -2747,7 +2521,6 @@ useEffect(() => {
                   )}
                 </div>
               </CardHeader>
-<<<<<<< HEAD
               
               <CardContent className="space-y-6 relative z-10">
                 {/* Stats Grid - Gaming Style */}
@@ -2761,91 +2534,6 @@ useEffect(() => {
                       {entries.length > 0 ? Math.max(...entries.map((_, i) => i + 1)) : 0}
                     </div>
                     <div className="text-sm text-purple-300 pixelated-text">STREAK</div>
-=======
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                  <div>
-                    <h3 className="text-white pixelated-text font-semibold">
-                      Wallet Address
-                    </h3>
-                    <p className="text-blue-300 pixelated-text text-sm">
-                      {getAddressDisplay(address)}
-                    </p>
-                  </div>
-                  <Button
-                    onClick={copyAddress}
-                    variant="outline"
-                    size="sm"
-                    className="bg-slate-700 border-slate-600 text-white pixelated-text"
-                  >
-                    {copied ? (
-                      <Check className="w-4 h-4" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </Button>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                  <div>
-                    <h3 className="text-white pixelated-text font-semibold">
-                      Network
-                    </h3>
-                    <p className="text-blue-300 pixelated-text text-sm">
-                      Base Network
-                    </p>
-                  </div>
-                  <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text">
-                    Connected
-                  </Badge>
-                </div>
-
-                {baseUserId && (
-                  <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                    <div>
-                      <h3 className="text-white pixelated-text font-semibold">
-                        Base User ID
-                      </h3>
-                      <p className="text-blue-300 pixelated-text text-sm">
-                        {baseUserId.slice(0, 8)}...
-                      </p>
-                    </div>
-                    <Badge className="bg-green-500/20 text-green-300 border-green-400/30 pixelated-text">
-                      Active
-                    </Badge>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Simple Statistics */}
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass max-w-2xl mx-auto">
-              <CardHeader>
-                <CardTitle className="text-blue-300 pixelated-text flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5" />
-                  Your Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-400 pixelated-text mb-1">
-                      {entries.length}
-                    </div>
-                    <div className="text-sm text-blue-300 pixelated-text">
-                      Total Entries
-                    </div>
-                  </div>
-                  <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-400 pixelated-text mb-1">
-                      {entries.length > 0
-                        ? Math.max(...entries.map((_, i) => i + 1))
-                        : 0}
-                    </div>
-                    <div className="text-sm text-blue-300 pixelated-text">
-                      Current Streak
-                    </div>
->>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
                   </div>
                 </div>
 
@@ -2885,406 +2573,340 @@ useEffect(() => {
                   )}
                 </div>
 
-                                 {/* Action Buttons - Gaming Style */}
-                 <div className="flex gap-4 pt-4">
-                   <Button
-                     onClick={() => setIsEditingProfile(!isEditingProfile)}
-                     variant="outline"
-                     className={`flex-1 pixelated-text font-semibold transition-all duration-300 hover:scale-105 ${
-                       isEditingProfile 
-                         ? 'bg-green-500/20 border-green-500 text-green-300 hover:bg-green-500/30' 
-                         : 'bg-cyan-500/20 border-cyan-500 text-cyan-300 hover:bg-cyan-500/30'
-                     }`}
-                   >
-                     {isEditingProfile ? (
-                       <>
-                         <Check className="w-4 h-4 mr-2" />
-                         SAVE PROFILE
-                       </>
-                     ) : (
-                       <>
-                         <User className="w-4 h-4 mr-2" />
-                         EDIT PROFILE
-                       </>
-                     )}
-                   </Button>
-                   <Button
-                     onClick={() => {
-                       if (confirm('Are you sure you want to disconnect your wallet?')) {
-                         localStorage.removeItem(`dailybase-entries-${address}`)
-                         if (baseUserId) {
-                           localStorage.removeItem(`dailybase-entries-${baseUserId}`)
-                         }
-                         if (typeof window !== 'undefined' && (window as any).enhancedLogout) {
-                           (window as any).enhancedLogout()
-                         } else {
-                           window.location.reload()
-                         }
-                       }
-                     }}
-                     variant="outline"
-                     className="flex-1 bg-red-500/20 border-red-500 text-red-300 hover:bg-red-500/30 pixelated-text font-semibold transition-all duration-300 hover:scale-105"
-                   >
-                     <LogOut className="w-4 h-4 mr-2" />
-                     DISCONNECT
-                   </Button>
-                 </div>
+                {/* Action Buttons - Gaming Style */}
+                <div className="flex gap-4 pt-4">
+                  <Button
+                    onClick={() => setIsEditingProfile(!isEditingProfile)}
+                    variant="outline"
+                    className={`flex-1 pixelated-text font-semibold transition-all duration-300 hover:scale-105 ${
+                      isEditingProfile 
+                        ? 'bg-green-500/20 border-green-500 text-green-300 hover:bg-green-500/30' 
+                        : 'bg-cyan-500/20 border-cyan-500 text-cyan-300 hover:bg-cyan-500/30'
+                    }`}
+                  >
+                    {isEditingProfile ? (
+                      <>
+                        <Check className="w-4 h-4 mr-2" />
+                        SAVE PROFILE
+                      </>
+                    ) : (
+                      <>
+                        <User className="w-4 h-4 mr-2" />
+                        EDIT PROFILE
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (confirm('Are you sure you want to disconnect your wallet?')) {
+                        localStorage.removeItem(`dailybase-entries-${address}`)
+                        if (baseUserId) {
+                          localStorage.removeItem(`dailybase-entries-${baseUserId}`)
+                        }
+                        if (typeof window !== 'undefined' && (window as any).enhancedLogout) {
+                          (window as any).enhancedLogout()
+                        } else {
+                          window.location.reload()
+                        }
+                      }
+                    }}
+                    variant="outline"
+                    className="flex-1 bg-red-500/20 border-red-500 text-red-300 hover:bg-red-500/30 pixelated-text font-semibold transition-all duration-300 hover:scale-105"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    DISCONNECT
+                  </Button>
+                </div>
               </CardContent>
             </Card>
-<<<<<<< HEAD
           </div>
-        )
+        );
 
-      case 'settings':
-=======
+      case "streak":
+        return (
+          <div className="space-y-6">
+            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+              <CardHeader>
+                <CardTitle className="text-blue-300 flex items-center gap-2 pixelated-text">
+                  <Flame className="w-5 h-5" />
+                  Current Streak
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <StreakTracker entries={entries} />
+              </CardContent>
+            </Card>
 
-            {/* Disconnect Button */}
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass max-w-2xl mx-auto">
-              <CardContent className="pt-6">
-                <Button
-                  onClick={() => {
-                    if (
-                      confirm(
-                        "Are you sure you want to disconnect your wallet?"
-                      )
-                    ) {
-                      // Clear local storage for both address and baseuser ID
-                      localStorage.removeItem(`dailybase-entries-${address}`);
-                      if (baseUserId) {
-                        localStorage.removeItem(
-                          `dailybase-entries-${baseUserId}`
-                        );
-                      }
-                      // Use the enhanced logout function if available
-                      if (
-                        typeof window !== "undefined" &&
-                        (window as any).enhancedLogout
-                      ) {
-                        (window as any).enhancedLogout();
-                      } else {
-                        // Fallback to regular logout
-                        window.location.reload();
-                      }
-                    }
-                  }}
-                  variant="outline"
-                  className="w-full bg-orange-600/20 border-orange-500 text-orange-300 pixelated-text hover:bg-orange-600/30"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Disconnect Wallet
+            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+              <CardHeader>
+                <CardTitle className="text-blue-300 pixelated-text">
+                  Streak History
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Flame className="w-16 h-16 text-orange-400 mb-4 mx-auto opacity-50" />
+                  <h3 className="text-xl font-semibold text-white pixelated-text mb-2">
+                    Streak History Coming Soon
+                  </h3>
+                  <p className="text-blue-300 text-center mb-6 max-w-md mx-auto">
+                    Track your longest streaks, milestones, and streak
+                    achievements over time.
+                  </p>
+                  <div className="flex justify-center gap-4">
+                    <Badge className="bg-orange-500/20 text-orange-300 border-orange-400/30 pixelated-text">
+                      Longest: 7 days
+                    </Badge>
+                    <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text">
+                      Current: 3 days
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+              <CardHeader>
+                <CardTitle className="text-blue-300 pixelated-text">
+                  Streak Goals
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Target className="w-5 h-5 text-blue-400" />
+                      <div>
+                        <div className="text-white pixelated-text">
+                          7 Day Streak
+                        </div>
+                        <div className="text-sm text-blue-300">
+                          Complete 7 consecutive days
+                        </div>
+                      </div>
+                    </div>
+                    <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-400/30 pixelated-text">
+                      In Progress
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Target className="w-5 h-5 text-blue-400" />
+                      <div>
+                        <div className="text-white pixelated-text">
+                          30 Day Streak
+                        </div>
+                        <div className="text-sm text-blue-300">
+                          Complete 30 consecutive days
+                        </div>
+                      </div>
+                    </div>
+                    <Badge className="bg-slate-500/20 text-slate-300 border-slate-400/30 pixelated-text">
+                      Locked
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Target className="w-5 h-5 text-blue-400" />
+                      <div>
+                        <div className="text-white pixelated-text">
+                          100 Day Streak
+                        </div>
+                        <div className="text-sm text-blue-300">
+                          Complete 100 consecutive days
+                        </div>
+                      </div>
+                    </div>
+                    <Badge className="bg-slate-500/20 text-slate-300 border-slate-400/30 pixelated-text">
+                      Locked
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case "notifications":
+        return (
+          <div className="space-y-6">
+            {/* Notifications Header */}
+            <div className="text-center mb-6">
+              <h1 className="text-3xl font-bold text-white pixelated-text mb-2">
+                Notifications
+              </h1>
+              <p className="text-blue-300 pixelated-text">
+                Stay updated with your crypto activities
+              </p>
+            </div>
+
+            {/* Notifications List */}
+            <div className="space-y-4">
+              {/* Notification Item 1 */}
+              <Card className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-purple-500/30 text-white backdrop-blur-sm card-glass shadow-lg shadow-purple-500/10 hover-lift">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-purple-400 rounded-full flex items-center justify-center">
+                        <MessageSquare className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="absolute inset-0 w-12 h-12 bg-purple-400/20 rounded-full blur-sm animate-pulse"></div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-semibold text-white pixelated-text">
+                          New comment on your post
+                        </h3>
+                        <Badge className="bg-purple-500/20 text-purple-300 border-purple-400/30 pixelated-text">
+                          New
+                        </Badge>
+                      </div>
+                      <p className="text-blue-300 pixelated-text mb-3">
+                        Someone commented on your latest post about #DeFi strategies. Check it out!
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-400">
+                          2 minutes ago
+                        </span>
+                        <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white pixelated-text">
+                          View Post
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Notification Item 2 */}
+              <Card className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-green-500/30 text-white backdrop-blur-sm card-glass shadow-lg shadow-green-500/10 hover-lift">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-green-400 rounded-full flex items-center justify-center">
+                        <Share2 className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="absolute inset-0 w-12 h-12 bg-green-400/20 rounded-full blur-sm animate-pulse"></div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-semibold text-white pixelated-text">
+                          Your post was reposted
+                        </h3>
+                        <Badge className="bg-green-500/20 text-green-300 border-green-400/30 pixelated-text">
+                          Popular
+                        </Badge>
+                      </div>
+                      <p className="text-blue-300 pixelated-text mb-3">
+                        Your post about #NFTs has been reposted by 3 users and is gaining traction!
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-400">
+                          15 minutes ago
+                        </span>
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white pixelated-text">
+                          View Post
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Notification Item 3 */}
+              <Card className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-orange-500/30 text-white backdrop-blur-sm card-glass shadow-lg shadow-orange-500/10 hover-lift">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-orange-400 rounded-full flex items-center justify-center">
+                        <Flame className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="absolute inset-0 w-12 h-12 bg-orange-400/20 rounded-full blur-sm animate-pulse"></div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-semibold text-white pixelated-text">
+                          Trending topic alert
+                        </h3>
+                        <Badge className="bg-orange-500/20 text-orange-300 border-orange-400/30 pixelated-text">
+                          Trending
+                        </Badge>
+                      </div>
+                      <p className="text-blue-300 pixelated-text mb-3">
+                        #DeFi is now trending! Your posts are getting more visibility and engagement.
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-400">
+                          1 hour ago
+                        </span>
+                        <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white pixelated-text">
+                          Explore Topic
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Notification Item 4 */}
+              <Card className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-blue-500/30 text-white backdrop-blur-sm card-glass shadow-lg shadow-blue-500/10 hover-lift">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-blue-400 rounded-full flex items-center justify-center">
+                        <Target className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="absolute inset-0 w-12 h-12 bg-blue-400/20 rounded-full blur-sm animate-pulse"></div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-semibold text-white pixelated-text">
+                          Streak milestone reached
+                        </h3>
+                        <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text">
+                          Achievement
+                        </Badge>
+                      </div>
+                      <p className="text-blue-300 pixelated-text mb-3">
+                        Congratulations! You've maintained a 7-day posting streak. Keep up the great work!
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-400">
+                          2 hours ago
+                        </span>
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white pixelated-text">
+                          View Stats
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Empty State */}
+            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mb-6">
+                  <Bell className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-white pixelated-text mb-3">
+                  All caught up!
+                </h3>
+                <p className="text-blue-300 text-center mb-6 max-w-md">
+                  You're up to date with all your notifications. New activities will appear here.
+                </p>
+                <Button className="bg-gradient-to-r from-purple-500 to-pink-600 text-white pixelated-text">
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Refresh
                 </Button>
               </CardContent>
             </Card>
           </div>
         );
-      case "base":
-        return (
-          <div className="flex h-full">
-            {/* Left Sidebar - Twitter-like */}
-            <div className="w-80 bg-slate-900/50 border-r border-slate-700 p-4 space-y-6">
-              {/* Profile Section */}
-              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-600">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Avatar className="w-12 h-12">
-                    <AvatarFallback className="bg-blue-500 text-white">
-                      {address ? address.slice(2, 4).toUpperCase() : "DB"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="text-white font-semibold pixelated-text">
-                      {getAddressDisplay(address)}
-                    </h3>
-                    <p className="text-blue-300 text-sm pixelated-text">
-                      Base Network User
-                    </p>
-                  </div>
-                </div>
 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-2 gap-3 text-center">
-                  <div className="bg-slate-700/50 rounded-lg p-2">
-                    <p className="text-white font-bold text-lg">
-                      {baseUserActivity.totalEntries}
-                    </p>
-                    <p className="text-blue-300 text-xs">Entries</p>
-                  </div>
-                  <div className="bg-slate-700/50 rounded-lg p-2">
-                    <p className="text-white font-bold text-lg">
-                      {baseUserActivity.weeklyEntries}
-                    </p>
-                    <p className="text-blue-300 text-xs">This Week</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Network Stats */}
-              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-600">
-                <h3 className="text-white font-semibold mb-3 pixelated-text flex items-center gap-2">
-                  <Network className="w-4 h-4" />
-                  Network Stats
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-blue-300 text-sm">Gas Price</span>
-                    <span className="text-white font-semibold">
-                      {isLoadingBaseData ? (
-                        <Skeleton className="h-4 w-12" />
-                      ) : (
-                        `${baseNetworkData.gasPrice.toFixed(1)} Gwei`
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-blue-300 text-sm">Block Height</span>
-                    <span className="text-white font-semibold">
-                      {isLoadingBaseData ? (
-                        <Skeleton className="h-4 w-16" />
-                      ) : (
-                        baseNetworkData.blockHeight.toLocaleString()
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-blue-300 text-sm">Daily TX</span>
-                    <span className="text-white font-semibold">
-                      {isLoadingBaseData ? (
-                        <Skeleton className="h-4 w-16" />
-                      ) : (
-                        `${(baseNetworkData.dailyTransactions / 1000).toFixed(
-                          0
-                        )}K`
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-blue-300 text-sm">TVL</span>
-                    <span className="text-white font-semibold">
-                      {isLoadingBaseData ? (
-                        <Skeleton className="h-4 w-12" />
-                      ) : (
-                        `$${(baseNetworkData.tvl / 1000000000).toFixed(1)}B`
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Trending Tags */}
-              {baseUserActivity.favoriteTags.length > 0 && (
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-600">
-                  <h3 className="text-white font-semibold mb-3 pixelated-text flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" />
-                    Trending Tags
-                  </h3>
-                  <div className="space-y-2">
-                    {baseUserActivity.favoriteTags
-                      .slice(0, 5)
-                      .map((tag, index) => (
-                        <div
-                          key={tag}
-                          className="flex items-center justify-between"
-                        >
-                          <span className="text-blue-300 text-sm">#{tag}</span>
-                          <span className="text-white text-xs bg-blue-500/20 px-2 py-1 rounded">
-                            #{index + 1}
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Main Content Area - Right Side */}
-            <div className="flex-1 p-6 space-y-6">
-              {/* Header */}
-              <div className="border-b border-slate-700 pb-4">
-                <h1 className="text-2xl font-bold text-white pixelated-text">
-                  Base Network
-                </h1>
-                <p className="text-blue-300 pixelated-text">
-                  Real-time network metrics and your activity
-                </p>
-              </div>
-
-              {/* Network Overview Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-blue-300 pixelated-text text-sm">
-                          Total Transactions
-                        </p>
-                        <p className="text-2xl font-bold text-white pixelated-text">
-                          {isLoadingBaseData ? (
-                            <Skeleton className="h-8 w-20" />
-                          ) : (
-                            baseNetworkData.totalTransactions.toLocaleString()
-                          )}
-                        </p>
-                      </div>
-                      <Activity className="w-8 h-8 text-blue-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-blue-300 pixelated-text text-sm">
-                          Daily Transactions
-                        </p>
-                        <p className="text-2xl font-bold text-white pixelated-text">
-                          {isLoadingBaseData ? (
-                            <Skeleton className="h-8 w-20" />
-                          ) : (
-                            baseNetworkData.dailyTransactions.toLocaleString()
-                          )}
-                        </p>
-                      </div>
-                      <TrendingUp className="w-8 h-8 text-green-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-blue-300 pixelated-text text-sm">
-                          Active Users
-                        </p>
-                        <p className="text-2xl font-bold text-white pixelated-text">
-                          {isLoadingBaseData ? (
-                            <Skeleton className="h-8 w-20" />
-                          ) : (
-                            baseNetworkData.activeUsers.toLocaleString()
-                          )}
-                        </p>
-                      </div>
-                      <Users className="w-8 h-8 text-purple-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-blue-300 pixelated-text text-sm">
-                          Market Cap
-                        </p>
-                        <p className="text-2xl font-bold text-white pixelated-text">
-                          {isLoadingBaseData ? (
-                            <Skeleton className="h-8 w-20" />
-                          ) : (
-                            `$${(
-                              baseNetworkData.marketCap / 1000000000000
-                            ).toFixed(1)}T`
-                          )}
-                        </p>
-                      </div>
-                      <Coins className="w-8 h-8 text-yellow-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Activity Feed */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-                  <CardHeader>
-                    <CardTitle className="text-blue-300 pixelated-text flex items-center gap-2">
-                      <Activity className="w-5 h-5" />
-                      Your Activity
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-3 bg-slate-700/50 rounded-lg">
-                        <p className="text-blue-300 pixelated-text text-sm">
-                          This Month
-                        </p>
-                        <p className="text-lg font-semibold text-white pixelated-text">
-                          {baseUserActivity.monthlyEntries}
-                        </p>
-                      </div>
-                      <div className="p-3 bg-slate-700/50 rounded-lg">
-                        <p className="text-blue-300 pixelated-text text-sm">
-                          Avg/Day
-                        </p>
-                        <p className="text-lg font-semibold text-white pixelated-text">
-                          {baseUserActivity.averageEntriesPerDay.toFixed(1)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="p-3 bg-slate-700/50 rounded-lg">
-                      <p className="text-blue-300 pixelated-text text-sm">
-                        Most Active Day
-                      </p>
-                      <p className="text-lg font-semibold text-white pixelated-text">
-                        {baseUserActivity.mostActiveDay}
-                      </p>
-                    </div>
-
-                    <div className="p-3 bg-slate-700/50 rounded-lg">
-                      <p className="text-blue-300 pixelated-text text-sm">
-                        Gas Spent
-                      </p>
-                      <p className="text-lg font-semibold text-white pixelated-text">
-                        {baseUserActivity.totalGasSpent.toFixed(4)} ETH
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-                  <CardHeader>
-                    <CardTitle className="text-blue-300 pixelated-text flex items-center gap-2">
-                      <BarChart3 className="w-5 h-5" />
-                      Network Activity
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-48 flex items-end justify-between gap-2 p-4">
-                      {Array.from({ length: 7 }, (_, i) => {
-                        const day = new Date();
-                        day.setDate(day.getDate() - (6 - i));
-                        const dayName = day.toLocaleDateString("en-US", {
-                          weekday: "short",
-                        });
-                        const height = Math.random() * 100 + 20;
-                        const isToday = i === 6;
-
-                        return (
-                          <div
-                            key={i}
-                            className="flex flex-col items-center flex-1"
-                          >
-                            <div
-                              className={`w-full rounded-t transition-all duration-300 ${
-                                isToday ? "bg-blue-500" : "bg-blue-400/60"
-                              }`}
-                              style={{ height: `${height}%` }}
-                            />
-                            <p className="text-xs text-blue-300 pixelated-text mt-2">
-                              {dayName}
-                            </p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
-        );
       case "settings":
->>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
         return (
           <div className="space-y-6">
             {/* Settings Header */}
@@ -3462,91 +3084,47 @@ useEffect(() => {
             </Card>
           </div>
         );
+
       default:
-        return null;
+        return (
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold text-white pixelated-text mb-4">
+              Coming Soon
+            </h2>
+            <p className="text-blue-300 pixelated-text">
+              This feature is under development.
+            </p>
+          </div>
+        );
     }
   };
 
-  if (showProfile) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-2xl mx-auto">
-            <Button
-              onClick={() => setShowProfile(false)}
-              variant="outline"
-              className="mb-6 bg-slate-800 border-slate-600 text-white pixelated-text"
-            >
-              ← Back to Feed
-            </Button>
-            <UserProfile />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* System-themed Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-        {/* Circuit board pattern */}
-        <div className="absolute inset-0 opacity-20">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `
-              linear-gradient(90deg, rgba(59, 130, 246, 0.3) 1px, transparent 1px),
-              linear-gradient(rgba(59, 130, 246, 0.3) 1px, transparent 1px),
-              radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.2) 2px, transparent 2px),
-              radial-gradient(circle at 75% 75%, rgba(59, 130, 246, 0.2) 2px, transparent 2px)
-            `,
-              backgroundSize: "40px 40px, 40px 40px, 80px 80px, 80px 80px",
-            }}
-          ></div>
-        </div>
-
-        {/* Digital grid lines */}
-        <div className="absolute inset-0 opacity-30">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `
-              linear-gradient(90deg, rgba(59, 130, 246, 0.4) 1px, transparent 1px),
-              linear-gradient(rgba(59, 130, 246, 0.4) 1px, transparent 1px)
-            `,
-              backgroundSize: "100px 100px",
-            }}
-          ></div>
-        </div>
-      </div>
-
-      {/* Content */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900"></div>
+      
+      {/* Toast Notifications */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
+      
       <div className="relative z-10 min-h-screen flex">
-        {/* Sidebar */}
-        <div
-          className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/5 backdrop-blur-2xl border-r border-white/30 shadow-2xl transform transition-transform duration-300 ease-in-out ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-          }`}
-        >
+        <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/5 backdrop-blur-2xl border-r border-white/30 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}>
           <div className="flex flex-col h-full">
-            {/* Sidebar Header */}
             <div className="p-6 border-b border-white/20">
               <div className="flex items-center gap-3">
-                <img
-                  src="/db-removebg.png"
-                  alt="DailyBase Logo"
-                  className="w-10 h-10 object-contain"
-                />
-                <h2 className="text-lg font-bold text-white pixelated-text">
-                  DailyBase
-                </h2>
+                <img src="/db-removebg.png" alt="DailyBase Logo" className="w-10 h-10 object-contain" />
+                <h2 className="text-lg font-bold text-white pixelated-text">DailyBase</h2>
               </div>
               <div className="mt-4 space-y-2">
-                <Badge
-                  variant="outline"
-                  className="bg-slate-800 border-blue-400 text-blue-300 shadow-sm pixelated-text text-xs"
-                >
+                <Badge variant="outline" className="bg-slate-800 border-blue-400 text-blue-300 shadow-sm pixelated-text text-xs">
                   <Wallet className="w-3 h-3 mr-2" />
                   {getAddressDisplay(address)}
                 </Badge>
@@ -3559,7 +3137,6 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Sidebar Navigation */}
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
               {sidebarItems.map((item) => {
                 const Icon = item.icon;
@@ -3567,9 +3144,7 @@ useEffect(() => {
                   <Button
                     key={item.id}
                     onClick={() => setActiveSidebarItem(item.id)}
-                    variant={
-                      activeSidebarItem === item.id ? "default" : "ghost"
-                    }
+                    variant={activeSidebarItem === item.id ? "default" : "ghost"}
                     className={`w-full justify-start text-left pixelated-text ${
                       activeSidebarItem === item.id
                         ? "bg-blue-600 text-white"
@@ -3582,21 +3157,17 @@ useEffect(() => {
                 );
               })}
             </nav>
+
+
           </div>
         </div>
 
-        {/* Mobile Sidebar Overlay */}
         {sidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
+          <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
         )}
 
-        {/* Main Content */}
         <div className="flex-1 min-w-0 lg:ml-64">
           <div className="container mx-auto px-4 py-8">
-            {/* Header */}
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">
                 <Button
@@ -3607,20 +3178,13 @@ useEffect(() => {
                 >
                   <Menu className="w-4 h-4" />
                 </Button>
-                <img
-                  src="/db-removebg.png"
-                  alt="DailyBase Logo"
-                  className="w-12 h-12 object-contain shadow-lg"
-                />
+                <img src="/db-removebg.png" alt="DailyBase Logo" className="w-12 h-12 object-contain shadow-lg" />
                 <div>
-                  <h1 className="text-3xl font-bold text-white pixelated-text">
-                    DailyBase
-                  </h1>
+                  <h1 className="text-3xl font-bold text-white pixelated-text">DailyBase</h1>
                 </div>
               </div>
             </div>
 
-            {/* Page Content */}
             <div className="max-w-4xl">{renderContent()}</div>
           </div>
         </div>
@@ -3628,4 +3192,3 @@ useEffect(() => {
     </div>
   );
 }
-

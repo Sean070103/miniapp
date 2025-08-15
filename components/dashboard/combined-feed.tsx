@@ -1,319 +1,1085 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { UserProfile } from "@/components/auth/user-profile";
+import { DailyEntry } from "@/components/dashboard/daily-entry";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
-  Heart, 
-  MessageSquare, 
-  Share2, 
-  Calendar, 
-  User,
-  Flame,
+  Activity,
+  BarChart3,
   BookOpen,
+  Calculator,
+  Calendar,
+  Check,
+  Coins,
+  Copy,
+  Flame,
+  Heart, 
+  Home,
+  LogOut,
+  Menu,
+  MessageSquare, 
+  Network,
   Plus,
-  Repeat,
-  Send,
-  MoreHorizontal,
-  ThumbsUp,
-  Reply
-} from 'lucide-react'
+  Settings,
+  Share2, 
+  Shield,
+  Target,
+  TrendingUp,
+  User,
+  Users,
+  Wallet,
+  X,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+
+import { ContributionGrid } from "@/components/dashboard/contribution-grid";
+import { StreakTracker } from "@/components/dashboard/streak-tracker";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/auth-context";
+import { baseNetworkAPI } from "@/lib/baseNetworkAPI";
+import { exchangeRateService } from "@/lib/config";
 
 interface DailyEntry {
-  id: string
-  date: string
-  content: string
-  tags: string[]
-  photos?: string[]
-  timestamp: number
+  id: string;
+  date: string;
+  content: string;
+  tags: string[];
+  timestamp: number;
 }
 
-interface PublicPost {
-  id: string
-  baseUserId: string
-  journal: string
-  photos: string[]
-  likes: number
-  tags: string[]
-  privacy: string
-  dateCreated: string
+interface DashboardProps {
+  address: string;
 }
 
-interface CombinedFeedProps {
-  entries: DailyEntry[]
-  userAddress: string
+//ito gagamitin pag galing db yung JOURNAL NA GUSTO MO KUNIN
+interface Journal {
+  id: string;
+  baseUserId: string;
+  photo?: string; // Optional because it has ? in the model
+  journal: string;
+  likes: number;
+  tags: string[];
+  privacy: string;
+  dateCreated: Date;
 }
 
+//ito gagamtin pag sa commnets(blueprint)
 interface Comment {
-  id: string
-  postId: string
-  userId: string
-  content: string
-  timestamp: number
+  id: String;
+  baseUserId: String;
+  journalId: String;
+  comment: String;
+  dateCreated: Date;
 }
 
-export function CombinedFeed({ entries, userAddress }: CombinedFeedProps) {
-  const [publicPosts, setPublicPosts] = useState<PublicPost[]>([])
-  const [isLoadingPublic, setIsLoadingPublic] = useState(true)
-  const [combinedFeed, setCombinedFeed] = useState<any[]>([])
-  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set())
-  const [repostedPosts, setRepostedPosts] = useState<Set<string>>(new Set())
-  const [comments, setComments] = useState<{ [postId: string]: Comment[] }>({})
-  const [showCommentDialog, setShowCommentDialog] = useState<string | null>(null)
-  const [newComment, setNewComment] = useState("")
-  const [showReplyDialog, setShowReplyDialog] = useState<string | null>(null)
-  const [newReply, setNewReply] = useState("")
+type SidebarItem =
+  | "home"
+  | "calendar" 
+  | "calculator"
+  | "stats"
+  | "streak"
+  | "profile"
+  | "settings"
+  | "base";
 
-  // Load public posts from database
-  const fetchPublicPosts = async () => {
+export default function Dashboard({ address }: DashboardProps) {
+  const [showProfile, setShowProfile] = useState(false);
+  const [entries, setEntries] = useState<DailyEntry[]>([]);
+  const [copied, setCopied] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeSidebarItem, setActiveSidebarItem] =
+    useState<SidebarItem>("home");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const fetchIntervalRef = useRef<NodeJS.Timeout>();
+  const { user } = useAuth();
+  const [dbEntries, setDbEntries] = useState<Journal[]>([]);
+const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
+  const [dbComments, setDbComments] = useState<Comment[]>([]);
+   const [currentJournalId, setCurrentJournalId] = useState<string | null>(
+     null
+   );
+
+  console.log("ito yung db comments",dbComments)
+  // Post comment
+  const postComment = async (journalId: string, comment: string) => {
+    if (!user?.address) {
+      throw new Error("User not authenticated");
+    }
+
+    if (!journalId || !comment) {
+      throw new Error("Missing required fields: journalId or comment");
+    }
+
     try {
-      const response = await fetch('/api/journal/get')
-      if (response.ok) {
-        const data = await response.json()
-        console.log('All posts from API:', data.length)
-        
-        // Filter to only show public posts from other users
-        const otherUsersPublicPosts = data.filter((post: any) => {
-          const isPublic = post.privacy === 'public'
-          const isOtherUser = post.baseUserId !== userAddress
-          const shouldInclude = isPublic && isOtherUser
-          
-          if (!shouldInclude) {
-            console.log('Filtered out post:', {
-              id: post.id,
-              privacy: post.privacy,
-              baseUserId: post.baseUserId,
-              userAddress: userAddress,
-              isPublic,
-              isOtherUser
-            })
-          }
-          
-          return shouldInclude
-        })
-        
-        console.log('Filtered public posts from other users:', otherUsersPublicPosts.length)
-        setPublicPosts(otherUsersPublicPosts)
+      const response = await fetch("/api/comment/post", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          journalId,
+          baseUserId: user.address, // Automatically use the authenticated user's address
+          comment,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to post comment");
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Post comment error:", error);
+      throw error;
+    }
+  };
+
+  
+
+  // Example usage:
+  // try {
+  //   const newComment = await postComment('journal123', 'user456', 'Great post!');
+  //   console.log('Comment created:', newComment);
+  // } catch (error) {
+  //   console.error('Error posting comment:', error);
+  // }
+
+
+  //fetching comments
+  const fetchJournalComments = async (journalId: string) => {
+    if (!journalId) {
+      throw new Error("Journal ID is required");
+    }
+
+    try {
+      const response = await fetch("/api/comments/get", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ journalId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch comments");
+      }
+
+      const data: Comment[] = await response.json();
+      setDbComments(data);
+      return data;
+    } catch (error) {
+      console.error("Fetch comments error:", error);
+      throw error;
+    }
+  };
+
+  // Set up interval for auto-refresh
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (currentJournalId) {
+      // Fetch immediately
+      fetchJournalComments(currentJournalId);
+
+      // Then set up interval for every 5 seconds
+      intervalId = setInterval(() => {
+        fetchJournalComments(currentJournalId);
+      }, 5000);
+    }
+
+    // Clean up interval on component unmount or when journalId changes
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [currentJournalId]);
+
+  
+
+
+  //fetching ng mga journal sa database
+  const fetchBaseUserJournal = async () => {
+    if (!user?.address) {
+      throw new Error("User not authenticated or address missing");
+    }
+
+    try {
+      const response = await fetch("/api/journal/getby/id", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ baseUserId: user.address }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch entries");
+      }
+
+      const data: Journal[] = await response.json();
+      setDbEntries(data);
+      return data;
+    } catch (error) {
+      console.error("Fetch error:", error);
+      throw error;
+    }
+  };
+
+  // Set up the interval for fetchiung post journal of the user
+  useEffect(() => {
+    // Initial fetch
+    fetchBaseUserJournal().catch(console.error);
+
+    // Set up periodic fetching
+    fetchIntervalRef.current = setInterval(() => {
+      fetchBaseUserJournal().catch(console.error);
+    }, 7000); // 7 seconds
+
+    // Cleanup function to clear interval
+    return () => {
+      if (fetchIntervalRef.current) {
+        clearInterval(fetchIntervalRef.current);
+      }
+    };
+  }, [user?.address]); // Re-run when user address changes
+
+  // Calculator states
+  const [calculatorDisplay, setCalculatorDisplay] = useState("0");
+  const [calculatorMemory, setCalculatorMemory] = useState("0");
+  const [calculatorOperator, setCalculatorOperator] = useState("");
+  const [calculatorWaitingForOperand, setCalculatorWaitingForOperand] =
+    useState(false);
+  const [gasPrice, setGasPrice] = useState("20");
+  const [gasLimit, setGasLimit] = useState("21000");
+  const [ethPrice, setEthPrice] = useState("2000");
+
+  // Expense Journal states
+  const [expenseEntries, setExpenseEntries] = useState<
+    {
+      id: string;
+      date: string;
+      category: string;
+      description: string;
+      amount: string;
+      gasFee?: string;
+      transactionHash?: string;
+      notes?: string;
+    }[]
+  >([]);
+  const [newExpense, setNewExpense] = useState({
+    date: new Date().toISOString().split("T")[0],
+    category: "Gas Fees",
+    description: "",
+    amount: "",
+    gasFee: "",
+    transactionHash: "",
+    notes: "",
+  });
+  const [selectedExpenseDate, setSelectedExpenseDate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
+
+  const expenseCategories = [
+    "Gas Fees",
+    "Trading",
+    "NFTs",
+    "DeFi",
+    "Staking",
+    "Bridging",
+    "Liquidity",
+    "Gaming",
+    "Education",
+    "Food",
+    "Fare",
+    "Other",
+  ];
+
+  // Currency swap states
+  const [currencySwap, setCurrencySwap] = useState({
+    fromAmount: "1",
+    fromCurrency: "USD",
+    toCurrency: "PHP",
+    exchangeRate: 56.5,
+  });
+
+  // Real-time exchange rates state
+  const [liveExchangeRates, setLiveExchangeRates] = useState<{
+    [key: string]: number;
+  }>({});
+  const [isLoadingRates, setIsLoadingRates] = useState(false);
+
+  // Base network data state
+  const [baseNetworkData, setBaseNetworkData] = useState({
+    totalTransactions: 0,
+    dailyTransactions: 0,
+    totalUsers: 0,
+    activeUsers: 0,
+    totalVolume: 0,
+    gasPrice: 0,
+    blockHeight: 0,
+    tvl: 0,
+    price: 0,
+    marketCap: 0,
+  });
+  const [baseUserActivity, setBaseUserActivity] = useState({
+    totalEntries: 0,
+    weeklyEntries: 0,
+    monthlyEntries: 0,
+    averageEntriesPerDay: 0,
+    mostActiveDay: "",
+    totalGasSpent: 0,
+    favoriteTags: [] as string[],
+  });
+  const [isLoadingBaseData, setIsLoadingBaseData] = useState(false);
+
+  const currencies = [
+    { code: "USD", name: "US Dollar", symbol: "$" },
+    { code: "PHP", name: "Philippine Peso", symbol: "₱" },
+    { code: "EUR", name: "Euro", symbol: "€" },
+    { code: "GBP", name: "British Pound", symbol: "£" },
+    { code: "JPY", name: "Japanese Yen", symbol: "¥" },
+    { code: "CAD", name: "Canadian Dollar", symbol: "C$" },
+    { code: "AUD", name: "Australian Dollar", symbol: "A$" },
+    { code: "CHF", name: "Swiss Franc", symbol: "CHF" },
+    { code: "CNY", name: "Chinese Yuan", symbol: "¥" },
+    { code: "INR", name: "Indian Rupee", symbol: "₹" },
+    { code: "KRW", name: "South Korean Won", symbol: "₩" },
+    { code: "SGD", name: "Singapore Dollar", symbol: "S$" },
+    { code: "THB", name: "Thai Baht", symbol: "฿" },
+    { code: "MYR", name: "Malaysian Ringgit", symbol: "RM" },
+    { code: "IDR", name: "Indonesian Rupiah", symbol: "Rp" },
+    { code: "VND", name: "Vietnamese Dong", symbol: "₫" },
+  ];
+
+  // Sample exchange rates (fallback when API is unavailable)
+  const fallbackExchangeRates: { [key: string]: number } = {
+    USD_PHP: 56.5,
+    USD_EUR: 0.92,
+    USD_GBP: 0.79,
+    USD_JPY: 150.25,
+    USD_CAD: 1.35,
+    USD_AUD: 1.52,
+    USD_CHF: 0.88,
+    USD_CNY: 7.23,
+    USD_INR: 83.15,
+    USD_KRW: 1330.5,
+    USD_SGD: 1.34,
+    USD_THB: 35.8,
+    USD_MYR: 4.75,
+    USD_IDR: 15750.0,
+    USD_VND: 24500.0,
+    PHP_USD: 0.0177,
+    PHP_EUR: 0.0163,
+    PHP_GBP: 0.014,
+    PHP_JPY: 2.66,
+    PHP_CAD: 0.0239,
+    PHP_AUD: 0.0269,
+    PHP_CHF: 0.0156,
+    PHP_CNY: 0.128,
+    PHP_INR: 1.47,
+    PHP_KRW: 23.55,
+    PHP_SGD: 0.0237,
+    PHP_THB: 0.634,
+    PHP_MYR: 0.0841,
+    PHP_IDR: 278.76,
+    PHP_VND: 433.63,
+  };
+
+  // Fetch real-time exchange rates using API service
+  const fetchExchangeRates = async () => {
+    setIsLoadingRates(true);
+    try {
+      // Use the exchange rate service with API key support
+      const data = await exchangeRateService.getExchangeRates("USD");
+
+      if (data.rates) {
+        const newRates: { [key: string]: number } = {};
+
+        // Convert API rates to our format
+        currencies.forEach((fromCurrency) => {
+          currencies.forEach((toCurrency) => {
+            if (fromCurrency.code !== toCurrency.code) {
+              const key = `${fromCurrency.code}_${toCurrency.code}`;
+              if (fromCurrency.code === "USD") {
+                newRates[key] = data.rates[toCurrency.code] || 1;
+              } else if (toCurrency.code === "USD") {
+                newRates[key] = 1 / (data.rates[fromCurrency.code] || 1);
+              } else {
+                // Cross-rate calculation
+                const fromToUSD = 1 / (data.rates[fromCurrency.code] || 1);
+                const usdToTo = data.rates[toCurrency.code] || 1;
+                newRates[key] = fromToUSD * usdToTo;
+              }
+            }
+          });
+        });
+
+        setLiveExchangeRates(newRates);
+
+        // Update current exchange rate
+        const currentKey = `${currencySwap.fromCurrency}_${currencySwap.toCurrency}`;
+        if (newRates[currentKey]) {
+          setCurrencySwap((prev) => ({
+            ...prev,
+            exchangeRate: newRates[currentKey],
+          }));
+        }
       }
     } catch (error) {
-      console.error('Error fetching public posts:', error)
+      console.error("Failed to fetch exchange rates:", error);
+      // Use fallback rates if API fails
+      setLiveExchangeRates(fallbackExchangeRates);
     } finally {
-      setIsLoadingPublic(false)
+      setIsLoadingRates(false);
     }
-  }
+  };
 
+  // Load exchange rates on component mount and refresh every 5 minutes
   useEffect(() => {
-    fetchPublicPosts()
-  }, [userAddress])
+    fetchExchangeRates();
+    const interval = setInterval(fetchExchangeRates, 5 * 60 * 1000); // 5 minutes
+    return () => clearInterval(interval);
+  }, []);
 
-  // Refresh public posts when entries change (new post created)
+  // Fetch Base network data
+  const fetchBaseNetworkData = async () => {
+    setIsLoadingBaseData(true);
+    try {
+      // Fetch real Base network data from APIs
+      const networkData = await baseNetworkAPI.getBaseNetworkData();
+      setBaseNetworkData(networkData);
+    } catch (error) {
+      console.error("Error fetching Base network data:", error);
+      // Fallback to mock data if API fails
+      const fallbackData = {
+        totalTransactions: 50000000 + Math.floor(Math.random() * 10000000),
+        dailyTransactions: 500000 + Math.floor(Math.random() * 100000),
+        totalUsers: 2000000 + Math.floor(Math.random() * 1000000),
+        activeUsers: 50000 + Math.floor(Math.random() * 100000),
+        totalVolume: 500000 + Math.random() * 1000000,
+        gasPrice: 5 + Math.random() * 50,
+        blockHeight: 50000000 + Math.floor(Math.random() * 1000000),
+        tvl: 500000000 + Math.random() * 1000000000,
+        price: 2000 + Math.random() * 3000,
+        marketCap: 500000000000 + Math.random() * 1000000000000,
+      };
+      setBaseNetworkData(fallbackData);
+    } finally {
+      setIsLoadingBaseData(false);
+    }
+  };
+
+  // Calculate user activity on Base
+  const calculateUserActivity = () => {
+    const userActivity = baseNetworkAPI.calculateUserActivity(entries);
+    setBaseUserActivity(userActivity);
+  };
+
+  // Load Base data on component mount and when entries change
   useEffect(() => {
-    if (entries.length > 0) {
-      fetchPublicPosts()
-    }
-  }, [entries.length])
+    fetchBaseNetworkData();
+    calculateUserActivity();
+  }, [entries]);
 
-  // Combine and sort posts
+  // Get baseuser ID from user account
+  const baseUserId = user?.account?.id;
+
+  // Load entries from localStorage (prioritizing baseuser ID, fallback to address)
   useEffect(() => {
-    const userPosts = entries.map(entry => ({
-      ...entry,
-      type: 'user',
-      isOwnPost: true,
-      displayName: 'DailyBase',
-      userAddress: userAddress
-    }))
+    let savedEntries = null;
 
-    const communityPosts = publicPosts.map(post => ({
-      id: post.id,
-      date: new Date(post.dateCreated).toISOString().split('T')[0],
-      content: post.journal,
-      tags: post.tags || [],
-      photos: post.photos || [],
-      timestamp: new Date(post.dateCreated).getTime(),
-      type: 'community',
-      isOwnPost: false,
-      displayName: getUserDisplay(post.baseUserId),
-      userAddress: post.baseUserId,
-      likes: post.likes
-    }))
-
-    // Combine and sort by timestamp (newest first)
-    const combined = [...userPosts, ...communityPosts].sort((a, b) => b.timestamp - a.timestamp)
-    
-    // Remove duplicates based on content and timestamp (within 1 minute)
-    const uniquePosts = combined.filter((post, index, array) => {
-      // Check if this post has a duplicate with same content and similar timestamp
-      const duplicateIndex = array.findIndex((otherPost, otherIndex) => {
-        if (index === otherIndex) return false
-        
-        // Check if content is the same
-        const sameContent = post.content === otherPost.content
-        
-        // Check if timestamps are within 1 minute of each other
-        const timeDiff = Math.abs(post.timestamp - otherPost.timestamp)
-        const withinOneMinute = timeDiff <= 60000 // 60 seconds in milliseconds
-        
-        // Check if photos are the same (if both have photos)
-        const samePhotos = post.photos && otherPost.photos && 
-          post.photos.length === otherPost.photos.length &&
-          post.photos.every((photo: string, i: number) => photo === otherPost.photos![i])
-        
-        return sameContent && withinOneMinute && (samePhotos || (!post.photos && !otherPost.photos))
-      })
-      
-      // Keep the first occurrence (user post takes priority)
-      return duplicateIndex === -1 || duplicateIndex > index
-    })
-    
-    setCombinedFeed(uniquePosts)
-  }, [entries, publicPosts, userAddress])
-
-  // Get user display name from address
-  const getUserDisplay = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`
-  }
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
-    
-    if (diffInHours < 1) return "Just now"
-    if (diffInHours < 24) return `${diffInHours}h ago`
-    if (diffInHours < 48) return "Yesterday"
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  }
-
-  // Handle like
-  const handleLike = (postId: string) => {
-    setLikedPosts(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(postId)) {
-        newSet.delete(postId)
-      } else {
-        newSet.add(postId)
+    // First try to load from baseuser ID storage
+    if (baseUserId) {
+      const baseUserEntries = localStorage.getItem(
+        `dailybase-entries-${baseUserId}`
+      );
+      if (baseUserEntries) {
+        try {
+          savedEntries = JSON.parse(baseUserEntries);
+        } catch (error) {
+          console.error("Error loading entries from baseuser storage:", error);
+        }
       }
-      return newSet
-    })
-  }
-
-  // Handle repost
-  const handleRepost = (postId: string) => {
-    setRepostedPosts(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(postId)) {
-        newSet.delete(postId)
-      } else {
-        newSet.add(postId)
-      }
-      return newSet
-    })
-  }
-
-  // Handle comment
-  const handleComment = (postId: string) => {
-    if (newComment.trim()) {
-      const comment: Comment = {
-        id: Date.now().toString(),
-        postId,
-        userId: userAddress,
-        content: newComment.trim(),
-        timestamp: Date.now()
-      }
-      
-      setComments(prev => ({
-        ...prev,
-        [postId]: [...(prev[postId] || []), comment]
-      }))
-      
-      setNewComment("")
-      setShowCommentDialog(null)
     }
-  }
 
-  // Handle reply
-  const handleReply = (postId: string) => {
-    if (newReply.trim()) {
-      const reply: Comment = {
-        id: Date.now().toString(),
-        postId,
-        userId: userAddress,
-        content: newReply.trim(),
-        timestamp: Date.now()
+    // If no baseuser entries found, try address-based storage
+    if (!savedEntries) {
+      const addressEntries = localStorage.getItem(
+        `dailybase-entries-${address}`
+      );
+      if (addressEntries) {
+        try {
+          savedEntries = JSON.parse(addressEntries);
+          // If we found address-based entries and have a baseuser ID, migrate them
+          if (baseUserId && savedEntries) {
+            localStorage.setItem(
+              `dailybase-entries-${baseUserId}`,
+              JSON.stringify(savedEntries)
+            );
+            console.log("Migrated entries from address to baseuser ID storage");
+          }
+        } catch (error) {
+          console.error("Error loading entries from address storage:", error);
+        }
       }
-      
-      setComments(prev => ({
-        ...prev,
-        [postId]: [...(prev[postId] || []), reply]
-      }))
-      
-      setNewReply("")
-      setShowReplyDialog(null)
     }
-  }
 
-  // Image component with fallback
-  const ImageWithFallback = ({ src, alt, className }: { src: string; alt: string; className: string }) => {
-    const [hasError, setHasError] = useState(false)
+    if (savedEntries) {
+      setEntries(savedEntries);
+    }
+    setIsLoading(false);
+  }, [address, baseUserId]);
 
-    if (hasError) {
-      return (
-        <div className={`${className} bg-slate-600 flex items-center justify-center`}>
-          <div className="text-center text-slate-400">
-            <span className="text-xs">Image failed to load</span>
-          </div>
-        </div>
+  // Save entries to localStorage (using baseuser ID when available, fallback to address)
+  const saveEntry = (entry: DailyEntry) => {
+    const updatedEntries = entries.filter((e) => e.date !== entry.date);
+    const newEntries = [...updatedEntries, entry].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    setEntries(newEntries);
+
+    // Save to baseuser ID storage if available
+    if (baseUserId) {
+      localStorage.setItem(
+        `dailybase-entries-${baseUserId}`,
+        JSON.stringify(newEntries)
+      );
+    }
+
+    // Also save to address-based storage for backward compatibility
+    localStorage.setItem(
+      `dailybase-entries-${address}`,
+      JSON.stringify(newEntries)
+    );
+  };
+
+  // Convert Journal to DailyEntry for the DailyEntry component
+  const handleJournalSave = (journal: any) => {
+    const dailyEntry: DailyEntry = {
+      id: journal.id || Date.now().toString(),
+      date: new Date().toISOString().split("T")[0],
+      content: journal.journal,
+      tags: journal.tags || [],
+      timestamp: Date.now(),
+    };
+    saveEntry(dailyEntry);
+  };
+
+  // Convert DailyEntry to Journal for the DailyEntry component
+  const convertToJournal = (entry: DailyEntry | undefined) => {
+    if (!entry) return undefined;
+    return {
+      id: entry.id,
+      baseUserId: baseUserId || address,
+      journal: entry.content,
+      tags: entry.tags,
+      photo: null,
+      likes: 0,
+      privacy: "public",
+      createdAt: new Date(entry.timestamp),
+    };
+  };
+
+  // Clear all data function
+  const clearData = () => {
+    if (
+      confirm(
+        "Are you sure you want to clear all your entries? This action cannot be undone."
       )
+    ) {
+      setEntries([]);
+      // Clear both storage locations
+      localStorage.removeItem(`dailybase-entries-${address}`);
+      if (baseUserId) {
+        localStorage.removeItem(`dailybase-entries-${baseUserId}`);
+      }
+    }
+  };
+
+  // Export data function
+  const exportData = () => {
+    const data = {
+      entries,
+      user: {
+        address,
+        baseUserId,
+        exportDate: new Date().toISOString(),
+      },
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dailybase-entries-${baseUserId || address}-${
+      new Date().toISOString().split("T")[0]
+    }.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const getTodayEntry = () => {
+    const today = new Date().toISOString().split("T")[0];
+    return entries.find((entry) => entry.date === today);
+  };
+
+  const copyAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy address:", error);
+    }
+  };
+
+  const getAddressDisplay = (address: string) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  // Calculator functions
+  const inputDigit = (digit: string) => {
+    if (calculatorWaitingForOperand) {
+      setCalculatorDisplay(digit);
+      setCalculatorWaitingForOperand(false);
+      } else {
+      setCalculatorDisplay(
+        calculatorDisplay === "0" ? digit : calculatorDisplay + digit
+      );
+    }
+  };
+
+  const inputDecimal = () => {
+    if (calculatorWaitingForOperand) {
+      setCalculatorDisplay("0.");
+      setCalculatorWaitingForOperand(false);
+    } else if (calculatorDisplay.indexOf(".") === -1) {
+      setCalculatorDisplay(calculatorDisplay + ".");
+    }
+  };
+
+  const clearDisplay = () => {
+    setCalculatorDisplay("0");
+    setCalculatorMemory("0");
+    setCalculatorOperator("");
+    setCalculatorWaitingForOperand(false);
+  };
+
+  const performOperation = (nextOperator: string) => {
+    const inputValue = parseFloat(calculatorDisplay);
+
+    if (calculatorMemory === "0") {
+      setCalculatorMemory(calculatorDisplay);
+      } else {
+      const memoryValue = parseFloat(calculatorMemory);
+      let newValue = 0;
+
+      switch (calculatorOperator) {
+        case "+":
+          newValue = memoryValue + inputValue;
+          break;
+        case "-":
+          newValue = memoryValue - inputValue;
+          break;
+        case "×":
+          newValue = memoryValue * inputValue;
+          break;
+        case "÷":
+          newValue = memoryValue / inputValue;
+          break;
+        default:
+          newValue = inputValue;
+      }
+
+      setCalculatorMemory(String(newValue));
+      setCalculatorDisplay(String(newValue));
     }
 
-    return (
-      <img
-        src={src}
-        alt={alt}
-        className={className}
-        onError={() => setHasError(true)}
-        style={{ objectFit: 'cover' }}
-      />
-    )
-  }
+    setCalculatorWaitingForOperand(true);
+    setCalculatorOperator(nextOperator);
+  };
 
-  if (isLoadingPublic) {
+  // Gas fee calculation
+  const calculateGasFee = () => {
+    const gasPriceNum = parseFloat(gasPrice);
+    const gasLimitNum = parseFloat(gasLimit);
+    const ethPriceNum = parseFloat(ethPrice);
+
+    const gasFeeGwei = gasPriceNum * gasLimitNum;
+    const gasFeeEth = gasFeeGwei / 1000000000; // Convert from Gwei to ETH
+    const gasFeeUsd = gasFeeEth * ethPriceNum;
+
+    return {
+      gwei: gasFeeGwei.toFixed(0),
+      eth: gasFeeEth.toFixed(6),
+      usd: gasFeeUsd.toFixed(2),
+    };
+  };
+
+  // Daily expense calculation
+  const calculateTotalDailyExpense = () => {
+    return expenseEntries.reduce((total: number, expense: any) => {
+      return total + parseFloat(expense.amount || "0");
+    }, 0);
+  };
+
+  const updateDailyExpense = (index: number, amount: string) => {
+    const newExpenses = [...expenseEntries];
+    newExpenses[index].amount = amount;
+    setExpenseEntries(newExpenses);
+  };
+
+  const gasFeeResult = calculateGasFee();
+  const totalDailyExpense = calculateTotalDailyExpense();
+
+  // Expense Journal functions
+  const addExpenseEntry = () => {
+    if (!newExpense.description || !newExpense.amount) return;
+
+    const expense = {
+        id: Date.now().toString(),
+      ...newExpense,
+    };
+
+    setExpenseEntries([expense, ...expenseEntries]);
+    setNewExpense({
+      date: new Date().toISOString().split("T")[0],
+      category: "Gas Fees",
+      description: "",
+      amount: "",
+      gasFee: "",
+      transactionHash: "",
+      notes: "",
+    });
+  };
+
+  const deleteExpenseEntry = (id: string) => {
+    setExpenseEntries(expenseEntries.filter((expense) => expense.id !== id));
+  };
+
+  const getExpensesByDate = (date: string) => {
+    return expenseEntries.filter((expense) => expense.date === date);
+  };
+
+  const getTotalExpensesByDate = (date: string) => {
+    const expenses = getExpensesByDate(date);
+    return expenses.reduce(
+      (total, expense) => total + parseFloat(expense.amount || "0"),
+      0
+    );
+  };
+
+  const getTotalExpensesByCategory = (category: string) => {
+    return expenseEntries
+      .filter((expense) => expense.category === category)
+      .reduce((total, expense) => total + parseFloat(expense.amount || "0"), 0);
+  };
+
+  const getTotalExpenses = () => {
+    return expenseEntries.reduce(
+      (total, expense) => total + parseFloat(expense.amount || "0"),
+      0
+    );
+  };
+
+  const getExpensesByCategory = (category: string) => {
+    return expenseEntries.filter((expense) => expense.category === category);
+  };
+
+  // Currency conversion functions
+  const getExchangeRate = (fromCurrency: string, toCurrency: string) => {
+    const key = `${fromCurrency}_${toCurrency}`;
+    return liveExchangeRates[key] || fallbackExchangeRates[key] || 1;
+  };
+
+  const convertCurrency = (
+    amount: number,
+    fromCurrency: string,
+    toCurrency: string
+  ) => {
+    if (fromCurrency === toCurrency) return amount;
+    const rate = getExchangeRate(fromCurrency, toCurrency);
+    return amount * rate;
+  };
+
+  const swapCurrencies = () => {
+    setCurrencySwap({
+      ...currencySwap,
+      fromCurrency: currencySwap.toCurrency,
+      toCurrency: currencySwap.fromCurrency,
+      exchangeRate: getExchangeRate(
+        currencySwap.toCurrency,
+        currencySwap.fromCurrency
+      ),
+    });
+  };
+
+  const updateCurrencySwap = (field: string, value: string) => {
+    if (field === "fromAmount") {
+      setCurrencySwap({
+        ...currencySwap,
+        fromAmount: value,
+        exchangeRate: getExchangeRate(
+          currencySwap.fromCurrency,
+          currencySwap.toCurrency
+        ),
+      });
+    } else if (field === "fromCurrency") {
+      const newFromCurrency = value;
+      const newExchangeRate = getExchangeRate(
+        newFromCurrency,
+        currencySwap.toCurrency
+      );
+      setCurrencySwap({
+        ...currencySwap,
+        fromCurrency: newFromCurrency,
+        exchangeRate: newExchangeRate,
+      });
+    } else if (field === "toCurrency") {
+      const newToCurrency = value;
+      const newExchangeRate = getExchangeRate(
+        currencySwap.fromCurrency,
+        newToCurrency
+      );
+      setCurrencySwap({
+        ...currencySwap,
+        toCurrency: newToCurrency,
+        exchangeRate: newExchangeRate,
+      });
+    }
+  };
+
+  const convertedAmount = convertCurrency(
+    parseFloat(currencySwap.fromAmount) || 0,
+    currencySwap.fromCurrency,
+    currencySwap.toCurrency
+  );
+
+  const getCurrencySymbol = (currencyCode: string) => {
+    const currency = currencies.find((c) => c.code === currencyCode);
+    return currency?.symbol || currencyCode;
+  };
+
+  const sidebarItems = [
+    { id: "home" as SidebarItem, label: "Home", icon: Home },
+    { id: "calendar" as SidebarItem, label: "Calendar", icon: Calendar },
+    { id: "streak" as SidebarItem, label: "Streak", icon: Flame },
+    { id: "calculator" as SidebarItem, label: "Basio", icon: Calculator },
+    { id: "stats" as SidebarItem, label: "Stats", icon: BarChart3 },
+    { id: "profile" as SidebarItem, label: "Profile", icon: User },
+    { id: "settings" as SidebarItem, label: "Settings", icon: Settings },
+    { id: "base" as SidebarItem, label: "Base", icon: Network },
+  ];
+
+  const [activeCalculatorTab, setActiveCalculatorTab] = useState("gas");
+
+  // Calendar states
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [calendarView, setCalendarView] = useState<"month" | "year">("month");
+
+  // Get current month/year for navigation
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+  const selectedMonth = selectedDate.getMonth();
+  const selectedYear = selectedDate.getFullYear();
+
+  // Calendar navigation functions
+  const goToPreviousMonth = () => {
+    setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
+  };
+
+  const goToNextMonth = () => {
+    setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
+  };
+
+  const goToPreviousYear = () => {
+    setCurrentDate(new Date(currentYear - 1, currentMonth, 1));
+  };
+
+  const goToNextYear = () => {
+    setCurrentDate(new Date(currentYear + 1, currentMonth, 1));
+  };
+
+  const goToToday = () => {
+    const today = new Date();
+    setCurrentDate(today);
+    setSelectedDate(today);
+  };
+
+  // Generate calendar days
+  const getDaysInMonth = (year: number, month: number) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (year: number, month: number) => {
+    return new Date(year, month, 1).getDay();
+  };
+
+  const generateCalendarDays = () => {
+    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+    const firstDayOfMonth = getFirstDayOfMonth(currentYear, currentMonth);
+    const days = [];
+
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      days.push(null);
+    }
+
+    // Add days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(day);
+    }
+
+    return days;
+  };
+
+  // Check if date has entries
+  const hasEntriesForDate = (day: number) => {
+    const dateString = `${currentYear}-${String(currentMonth + 1).padStart(
+      2,
+      "0"
+    )}-${String(day).padStart(2, "0")}`;
+    return entries.some((entry) => entry.date === dateString);
+  };
+
+  // Check if date is today
+  const isToday = (day: number) => {
+    const today = new Date();
+      return (
+      day === today.getDate() &&
+      currentMonth === today.getMonth() &&
+      currentYear === today.getFullYear()
+    );
+  };
+
+  // Check if date is selected
+  const isSelected = (day: number) => {
     return (
+      day === selectedDate.getDate() &&
+      currentMonth === selectedDate.getMonth() &&
+      currentYear === selectedDate.getFullYear()
+    );
+  };
+
+  // Handle date selection
+  const handleDateClick = (day: number) => {
+    if (day) {
+      setSelectedDate(new Date(currentYear, currentMonth, day));
+    }
+  };
+
+  // Get month name
+  const getMonthName = (month: number) => {
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    return months[month];
+  };
+
+  // Get day names
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  const renderContent = () => {
+    switch (activeSidebarItem) {
+      case "home":
+    return (
+          <div className="space-y-6">
+            {/* Feed Header */}
+            <div className="text-center mb-6">
+              <h1 className="text-3xl font-bold text-white pixelated-text mb-2">
+                DailyBase Feed
+              </h1>
+              <p className="text-blue-300 pixelated-text">
+                Your personal crypto journey timeline
+              </p>
+            </div>
+
+            {/* Create New Post */}
+            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass hover-lift">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-12 h-12 ring-2 ring-blue-400/20">
+                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-lg">
+                      DB
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <CardTitle className="text-blue-300 flex items-center gap-2 pixelated-text">
+                      <Plus className="w-5 h-5" />
+                      What's happening in your crypto world today?
+                    </CardTitle>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <DailyEntry
+                  userId={baseUserId}
+                  onSave={handleJournalSave}
+                  todayEntry={convertToJournal(getTodayEntry())}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Loading State */}
+            {isLoading ? (
       <div className="space-y-6">
         {[1, 2, 3].map((i) => (
-          <Card key={i} className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+                  <Card
+                    key={i}
+                    className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass"
+                  >
             <CardContent className="p-6">
               <div className="flex items-center space-x-4 mb-4">
-                <div className="w-12 h-12 bg-slate-600 rounded-full animate-pulse" />
+                        <Skeleton className="h-12 w-12 rounded-full" />
                 <div className="space-y-2 flex-1">
-                  <div className="h-4 bg-slate-600 rounded animate-pulse w-[200px]" />
-                  <div className="h-4 bg-slate-600 rounded animate-pulse w-[150px]" />
+                          <Skeleton className="h-4 w-[200px]" />
+                          <Skeleton className="h-4 w-[150px]" />
                 </div>
+                        <Skeleton className="h-8 w-8 rounded" />
               </div>
-              <div className="h-[120px] bg-slate-600 rounded-xl animate-pulse" />
+                      <Skeleton className="h-[120px] w-full rounded-xl" />
+                      <div className="flex gap-4 mt-4">
+                        <Skeleton className="h-8 w-16 rounded" />
+                        <Skeleton className="h-8 w-16 rounded" />
+                        <Skeleton className="h-8 w-16 rounded" />
+                      </div>
             </CardContent>
           </Card>
         ))}
       </div>
-    )
-  }
-
-  if (combinedFeed.length === 0) {
-    return (
+            ) : /* Feed Posts */
+            entries.length === 0 ? (
       <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
         <CardContent className="flex flex-col items-center justify-center py-16">
           <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-6">
             <BookOpen className="w-10 h-10 text-white" />
           </div>
-          <h3 className="text-2xl font-semibold text-white pixelated-text mb-3">Your Feed is Empty</h3>
+                  <h3 className="text-2xl font-semibold text-white pixelated-text mb-3">
+                    Your Feed is Empty
+                  </h3>
           <p className="text-blue-300 text-center mb-8 max-w-md leading-relaxed">
-            Start your DailyBase journey by creating your first entry. Share your crypto activities, track your progress, and build meaningful streaks.
+                    Start your DailyBase journey by creating your first entry.
+                    Share your crypto activities, track your progress, and build
+                    meaningful streaks.
           </p>
           <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white pixelated-text px-8 py-3 text-lg">
             <Plus className="w-5 h-5 mr-2" />
@@ -321,216 +1087,324 @@ export function CombinedFeed({ entries, userAddress }: CombinedFeedProps) {
           </Button>
         </CardContent>
       </Card>
-    )
-  }
-
-  return (
+            ) : (
     <div className="space-y-6">
-      {combinedFeed.map((post, index) => (
-        <Card key={post.id} className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass hover-lift transition-all duration-300">
+                {dbEntries.map((entry, index) => (
+                  <Card
+                    key={entry.id}
+                    className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass hover-lift transition-all duration-300"
+                  >
           <CardHeader className="pb-4">
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-4">
                 <Avatar className="w-12 h-12 ring-2 ring-blue-400/20 flex-shrink-0">
-                  <AvatarFallback className={`font-semibold ${
-                    post.isOwnPost 
-                      ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
-                      : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
-                  }`}>
-                    {post.isOwnPost ? 'DB' : post.displayName.slice(0, 2).toUpperCase()}
+                            <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold">
+                              {entry.dateCreated
+                                ? new Date(entry.dateCreated)
+                                    .getDate()
+                                    .toString()
+                                    .padStart(2, "0")
+                                : "DB"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <div className="font-semibold text-white pixelated-text text-lg">
-                      {post.displayName}
+                                {entry.baseUserId.slice(0, 6)}...
+                                {entry.baseUserId.slice(-4)}
                     </div>
-                    {post.isOwnPost ? (
                       <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text text-xs">
-                        You
+                                Entry #{index + 1}
                       </Badge>
-                    ) : (
-                      <Badge className="bg-green-500/20 text-green-300 border-green-400/30 pixelated-text text-xs">
-                        <User className="w-3 h-3 mr-1" />
-                        Community
-                      </Badge>
-                    )}
                   </div>
                   <div className="text-sm text-blue-300 pixelated-text flex items-center gap-2">
                     <Calendar className="w-3 h-3" />
-                    {formatDate(post.date)}
+                              {entry.dateCreated
+                                ? new Date(
+                                    entry.dateCreated
+                                  ).toLocaleDateString("en-US", {
+                                    weekday: "long",
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                  })
+                                : "No date"}
                     <span className="text-blue-300/60">•</span>
-                    <span>{new Date(post.timestamp).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      hour12: true
-                    })}</span>
+                              <span>
+                                {entry.dateCreated
+                                  ? new Date(
+                                      entry.dateCreated
+                                    ).toLocaleTimeString("en-US", {
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                      hour12: true,
+                                    })
+                                  : "No time"}
+                              </span>
                   </div>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white">
-                <MoreHorizontal className="w-4 h-4" />
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-blue-300 hover:text-blue-200 hover:bg-blue-500/10 rounded-full p-2"
+                          >
+                            <Heart className="w-4 h-4" />
+                            <span className="sr-only">Like</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-blue-300 hover:text-blue-200 hover:bg-blue-500/10 rounded-full p-2"
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                            <span className="sr-only">Comment</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-blue-300 hover:text-blue-200 hover:bg-blue-500/10 rounded-full p-2"
+                          >
+                            <Share2 className="w-4 h-4" />
+                            <span className="sr-only">Share</span>
               </Button>
+                        </div>
             </div>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="bg-slate-700/30 rounded-xl p-4 mb-4">
-              <p className="text-white leading-relaxed pixelated-text text-lg">{post.content}</p>
-            </div>
-            
-            {/* Photo Display - X Style */}
-            {post.photos && post.photos.length > 0 && (
-              <div className="mb-4">
-                <div className={`grid gap-1 rounded-xl overflow-hidden ${
-                  post.photos.length === 1 ? 'grid-cols-1' :
-                  post.photos.length === 2 ? 'grid-cols-2' :
-                  post.photos.length === 3 ? 'grid-cols-2' :
-                  'grid-cols-2'
-                }`}>
-                  {post.photos.map((photo: string, photoIndex: number) => (
-                    <div key={photoIndex} className={`relative group cursor-pointer ${
-                      post.photos!.length === 3 && photoIndex === 2 ? 'col-span-2' : ''
-                    }`}>
-                      <div className="w-full h-full bg-slate-600 overflow-hidden">
-                        <ImageWithFallback
-                          src={photo}
-                          alt={`Post image ${photoIndex + 1}`}
-                          className={`w-full h-full transition-transform duration-200 group-hover:scale-105 ${
-                            post.photos!.length === 1 ? 'max-h-96' :
-                            post.photos!.length === 2 ? 'h-48' :
-                            post.photos!.length === 3 && photoIndex === 2 ? 'h-48' : 'h-48'
-                          }`}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      {entry.photo && (
+                        <div className="mb-4 rounded-xl overflow-hidden">
+                          <img
+                            src={entry.photo}
+                            alt="Journal entry"
+                            className="w-full h-auto max-h-64 object-cover"
+                          />
               </div>
             )}
-            
-            {post.tags && post.tags.length > 0 && (
+                      <div className="bg-slate-700/30 rounded-xl p-4 mb-4">
+                        <p className="text-white leading-relaxed pixelated-text text-lg">
+                          {entry.journal}
+                        </p>
+                      </div>
+                      {entry.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-4">
-                {post.tags.map((tag: string, tagIndex: number) => (
-                  <Badge key={tagIndex} className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text hover:bg-blue-500/30 transition-colors">
+                          {entry.tags.map((tag, tagIndex) => (
+                            <Badge
+                              key={tagIndex}
+                              className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text hover:bg-blue-500/30 transition-colors"
+                            >
                     #{tag}
                   </Badge>
                 ))}
               </div>
             )}
-
-            {/* Comments Section */}
-            {comments[post.id] && comments[post.id].length > 0 && (
-              <div className="mb-4 space-y-3">
-                <div className="border-t border-slate-600/30 pt-3">
-                  <h4 className="text-sm font-semibold text-blue-300 mb-2 pixelated-text">Comments</h4>
-                  {comments[post.id].map((comment) => (
-                    <div key={comment.id} className="flex gap-3 p-3 bg-slate-700/30 rounded-lg mb-2">
-                      <Avatar className="w-8 h-8">
-                        <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xs">
-                          {getUserDisplay(comment.userId).slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-semibold text-white pixelated-text">
-                            {getUserDisplay(comment.userId)}
+                      <div className="flex items-center justify-between pt-4 border-t border-slate-600/30">
+                        <div className="flex items-center gap-4 text-sm text-blue-300/70">
+                          <span className="flex items-center gap-1">
+                            <Heart className="w-3 h-3" />
+                            {entry.likes} likes
                           </span>
-                          <span className="text-xs text-blue-300/60">
-                            {formatDate(new Date(comment.timestamp).toISOString())}
+
+                          <button
+                            onClick={async () => {
+                              const comment = prompt("Enter your comment:");
+                              if (comment) {
+                                try {
+                                  await postComment(entry.id, comment);
+                                  alert("Comment posted!");
+                                  // Optionally refresh comments after posting
+                                  const updatedComments =
+                                    await fetchJournalComments(entry.id);
+                                  // Update your state here if needed
+                                } catch (err: any) {
+                                  alert(`Error: ${err.message}`);
+                                }
+                              }
+                            }}
+                            className="flex items-center gap-1 hover:text-blue-200 cursor-pointer"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                           {dbComments.length} comments
+                          </button>
+
+                          <span className="flex items-center gap-1">
+                            <Share2 className="w-3 h-3" />
+                            Share
                           </span>
                         </div>
-                        <p className="text-sm text-white pixelated-text">{comment.content}</p>
                       </div>
-                    </div>
+                    </CardContent>
+                  </Card>
                   ))}
-                </div>
               </div>
             )}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
-            {/* Post Actions */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-600/30">
-              <div className="flex items-center gap-6">
+  if (showProfile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto">
                 <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => handleLike(post.id)}
-                  className={`transition-colors ${
-                    likedPosts.has(post.id) 
-                      ? 'text-red-400 hover:text-red-300 hover:bg-red-500/10' 
-                      : 'text-slate-400 hover:text-red-400 hover:bg-red-500/10'
-                  }`}
-                >
-                  <Heart className={`w-4 h-4 mr-2 ${likedPosts.has(post.id) ? 'fill-current' : ''}`} />
-                  {(post.likes || 0) + (likedPosts.has(post.id) ? 1 : 0)} likes
+              onClick={() => setShowProfile(false)}
+              variant="outline"
+              className="mb-6 bg-slate-800 border-slate-600 text-white pixelated-text"
+            >
+              ← Back to Feed
                 </Button>
+            <UserProfile />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-                <Dialog open={showCommentDialog === post.id} onOpenChange={(open) => setShowCommentDialog(open ? post.id : null)}>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-slate-400 hover:text-blue-400 hover:bg-blue-500/10">
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      {comments[post.id]?.length || 0} comments
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="bg-slate-800 border-slate-600 text-white">
-                    <DialogHeader>
-                      <DialogTitle className="text-blue-300 pixelated-text">Add a Comment</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <Textarea
-                        placeholder="Write your comment..."
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        className="bg-slate-700 border-slate-600 text-white pixelated-text"
-                        rows={3}
-                      />
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowCommentDialog(null)}
-                          className="bg-slate-700 border-slate-600 text-white pixelated-text"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          onClick={() => handleComment(post.id)}
-                          disabled={!newComment.trim()}
-                          className="bg-blue-600 hover:bg-blue-700 text-white pixelated-text"
-                        >
-                          <Send className="w-4 h-4 mr-2" />
-                          Comment
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+  return (
+    <div className="min-h-screen relative overflow-hidden">
+      {/* System-themed Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        {/* Circuit board pattern */}
+        <div className="absolute inset-0 opacity-20">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `
+              linear-gradient(90deg, rgba(59, 130, 246, 0.3) 1px, transparent 1px),
+              linear-gradient(rgba(59, 130, 246, 0.3) 1px, transparent 1px),
+              radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.2) 2px, transparent 2px),
+              radial-gradient(circle at 75% 75%, rgba(59, 130, 246, 0.2) 2px, transparent 2px)
+            `,
+              backgroundSize: "40px 40px, 40px 40px, 80px 80px, 80px 80px",
+            }}
+          ></div>
+        </div>
 
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => handleRepost(post.id)}
-                  className={`transition-colors ${
-                    repostedPosts.has(post.id) 
-                      ? 'text-green-400 hover:text-green-300 hover:bg-green-500/10' 
-                      : 'text-slate-400 hover:text-green-400 hover:bg-green-500/10'
-                  }`}
-                >
-                  <Repeat className={`w-4 h-4 mr-2 ${repostedPosts.has(post.id) ? 'fill-current' : ''}`} />
-                  {repostedPosts.has(post.id) ? 'Reposted' : 'Repost'}
-                </Button>
+        {/* Digital grid lines */}
+        <div className="absolute inset-0 opacity-30">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `
+              linear-gradient(90deg, rgba(59, 130, 246, 0.4) 1px, transparent 1px),
+              linear-gradient(rgba(59, 130, 246, 0.4) 1px, transparent 1px)
+            `,
+              backgroundSize: "100px 100px",
+            }}
+          ></div>
+        </div>
+      </div>
 
-                <Button variant="ghost" size="sm" className="text-slate-400 hover:text-green-400 hover:bg-green-500/10">
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share
-                </Button>
+      {/* Content */}
+      <div className="relative z-10 min-h-screen flex">
+        {/* Sidebar */}
+        <div
+          className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/5 backdrop-blur-2xl border-r border-white/30 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          }`}
+        >
+          <div className="flex flex-col h-full">
+            {/* Sidebar Header */}
+            <div className="p-6 border-b border-white/20">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/db-removebg.png"
+                  alt="DailyBase Logo"
+                  className="w-10 h-10 object-contain"
+                />
+                <h2 className="text-lg font-bold text-white pixelated-text">
+                  DailyBase
+                </h2>
               </div>
-              <div className="text-xs text-blue-300/50">
-                {post.isOwnPost ? `Entry #${entries.length - index}` : 'Community Post'}
+              <div className="mt-4 space-y-2">
+                <Badge
+                          variant="outline"
+                  className="bg-slate-800 border-blue-400 text-blue-300 shadow-sm pixelated-text text-xs"
+                >
+                  <Wallet className="w-3 h-3 mr-2" />
+                  {getAddressDisplay(address)}
+                </Badge>
+                {user?.account && (
+                  <Badge className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0 pixelated-text text-xs">
+                    <Shield className="w-3 h-3 mr-2" />
+                    Base Account
+                  </Badge>
+                )}
               </div>
             </div>
-          </CardContent>
-        </Card>
-      ))}
+
+            {/* Sidebar Navigation */}
+            <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+              {sidebarItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                        <Button
+                    key={item.id}
+                    onClick={() => setActiveSidebarItem(item.id)}
+                    variant={
+                      activeSidebarItem === item.id ? "default" : "ghost"
+                    }
+                    className={`w-full justify-start text-left pixelated-text ${
+                      activeSidebarItem === item.id
+                        ? "bg-blue-600 text-white"
+                        : "text-blue-300 hover:text-white hover:bg-slate-800"
+                    }`}
+                  >
+                    <Icon className="w-5 h-5 mr-3" />
+                    {item.label}
+                        </Button>
+                );
+              })}
+            </nav>
+                      </div>
+                    </div>
+
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Main Content */}
+        <div className="flex-1 min-w-0 lg:ml-64">
+          <div className="container mx-auto px-4 py-8">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4">
+                <Button 
+                  onClick={() => setSidebarOpen(true)}
+                  variant="outline"
+                  size="sm" 
+                  className="lg:hidden bg-slate-800 border-slate-600 text-white"
+                >
+                  <Menu className="w-4 h-4" />
+                </Button>
+                <img
+                  src="/db-removebg.png"
+                  alt="DailyBase Logo"
+                  className="w-12 h-12 object-contain shadow-lg"
+                />
+                <div>
+                  <h1 className="text-3xl font-bold text-white pixelated-text">
+                    DailyBase
+                  </h1>
+                </div>
+              </div>
+            </div>
+
+            {/* Page Content */}
+            <div className="max-w-4xl">{renderContent()}</div>
+              </div>
+              </div>
+            </div>
     </div>
-  )
+  );
 }
         

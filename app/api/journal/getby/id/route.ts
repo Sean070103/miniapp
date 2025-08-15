@@ -1,45 +1,32 @@
-import prisma from '../../../../../utils/connect';
+import { prisma } from '@/lib/prisma'
+import { NextResponse } from 'next/server'
 
 
-// get post bu baseUserId
+// get post by baseUserId
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { baseUserId } = body;
-
-  if (!baseUserId) {
-    return new Response(JSON.stringify({ error: "Missing baseUserId" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
   try {
+    const body = await req.json();
+    const { baseUserId } = body;
+
+    if (!baseUserId) {
+      return NextResponse.json(
+        { error: "Missing baseUserId" },
+        { status: 400 }
+      );
+    }
+
     const baseUserJournal = await prisma.journal.findMany({
       where: { baseUserId: baseUserId },
+      orderBy: { dateCreated: 'desc' }
     });
 
-    // if (!baseUserJournal) {
-    //   return new Response(JSON.stringify({ error: "Base user not found" }), {
-    //     status: 404,
-    //     headers: { "Content-Type": "application/json" },
-    //   });
-    // }
+    return NextResponse.json(baseUserJournal, { status: 200 });
 
-    return new Response(JSON.stringify(baseUserJournal), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-
-  } catch (e) {
-    return new Response(
-      JSON.stringify({
-        error: "Error fetching base user",
-        details: e instanceof Error ? e.message : String(e),
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+  } catch (error) {
+    console.error("Error fetching base user journal:", error);
+    return NextResponse.json(
+      { error: "Error fetching base user journal" },
+      { status: 500 }
     );
   }
 }

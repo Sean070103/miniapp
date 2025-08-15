@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-<<<<<<< HEAD
 import { Save, Edit3, Info, Hash, Camera, X, Loader2, AlertCircle, Image as ImageIcon, Check } from "lucide-react";
 import { UploadButton } from "@uploadthing/react";
 import type { OurFileRouter } from "@/app/api/uploadthing/core";
@@ -17,10 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import React from "react";
-=======
-import { Save, Edit3, Info, Hash } from "lucide-react";
-import { useAuth } from "@/contexts/auth-context" // adjust path
->>>>>>> 28bd1d750aae7f6de9743e2c163f1c535058d95c
+import { useAuth } from "@/contexts/auth-context";
 
 interface Journal {
   id?: string;
