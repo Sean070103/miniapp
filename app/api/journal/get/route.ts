@@ -33,12 +33,7 @@ export async function POST(req: Request) {
     }
 
     const journal = await prisma.journal.findUnique({
-      where: { id: journalId },
-      include: {
-        comments: {
-          orderBy: { createdAt: 'desc' }
-        }
-      }
+      where: { id: journalId }
     });
 
     if (!journal) {
@@ -48,9 +43,15 @@ export async function POST(req: Request) {
       );
     }
 
+    // Fetch comments separately
+    const comments = await prisma.comment.findMany({
+      where: { journalId: journalId },
+      orderBy: { dateCreated: 'desc' }
+    });
+
     return NextResponse.json({ 
       journal,
-      comments: journal.comments || []
+      comments: comments
     }, { status: 200 });
 
   } catch (error) {

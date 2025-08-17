@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { baseUserId, journal, photo, tags, privacy } = body
+    const { baseUserId, journal, photos, tags, privacy } = body
 
     // Validate required fields
     if (!baseUserId || !journal) {
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       data: {
         baseUserId,
         journal,
-        photo: photo || null,
+        photos: Array.isArray(photos) ? photos : [],
         tags: tags || [],
         privacy: privacy || 'public',
         likes: 0,
@@ -123,7 +123,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { journal, photo, tags, privacy } = body
+    const { journal, photos, tags, privacy } = body
 
     // Check if journal exists
     const existingJournal = await prisma.journal.findUnique({
@@ -150,7 +150,7 @@ export async function PUT(request: NextRequest) {
       where: { id },
       data: {
         journal: journal !== undefined ? journal : existingJournal.journal,
-        photo: photo !== undefined ? photo : existingJournal.photo,
+        photos: photos !== undefined ? (Array.isArray(photos) ? photos : []) : existingJournal.photos,
         tags: tags !== undefined ? tags : existingJournal.tags,
         privacy: privacy !== undefined ? privacy : existingJournal.privacy
       }
