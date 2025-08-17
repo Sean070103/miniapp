@@ -31,8 +31,7 @@ export async function GET() {
     return NextResponse.json(
       { 
         success: false, 
-        error: 'Database connection failed',
-        details: error.message 
+        error: 'Database connection failed', 
       },
       { status: 500 }
     )

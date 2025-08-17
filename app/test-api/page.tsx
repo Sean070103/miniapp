@@ -1,278 +1,286 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { apiClient } from '@/lib/apiClient'
+import { apiClient } from "@/lib/apiClient";
+import { useState } from "react";
 
 export default function TestAPIPage() {
-  const [results, setResults] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const addResult = (test: string, result: any) => {
-    setResults(prev => [...prev, { test, result, timestamp: new Date().toISOString() }])
-  }
+    setResults((prev) => [
+      ...prev,
+      { test, result, timestamp: new Date().toISOString() },
+    ]);
+  };
 
-  const clearResults = () => setResults([])
+  const clearResults = () => setResults([]);
 
   const testBaseUser = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       // Test creating a user
       const createResult = await apiClient.baseUser.create({
         walletAddress: `0x${Math.random().toString(36).substring(2, 15)}`,
         username: `testuser_${Date.now()}`,
-        bio: 'Test user created via API'
-      })
-      addResult('Create BaseUser', createResult)
+        bio: "Test user created via API",
+      });
+      addResult("Create BaseUser", createResult);
 
       if (createResult.success) {
-        const userId = createResult.data.id
-        
+        const userId = createResult.data.id;
+
         // Test getting user by ID
-        const getResult = await apiClient.baseUser.getById(userId)
-        addResult('Get BaseUser by ID', getResult)
+        const getResult = await apiClient.baseUser.getById(userId);
+        addResult("Get BaseUser by ID", getResult);
 
         // Test updating user
         const updateResult = await apiClient.baseUser.update(userId, {
-          bio: 'Updated bio via API test'
-        })
-        addResult('Update BaseUser', updateResult)
+          bio: "Updated bio via API test",
+        });
+        addResult("Update BaseUser", updateResult);
 
         // Test getting all users
-        const getAllResult = await apiClient.baseUser.getAll()
-        addResult('Get All BaseUsers', getAllResult)
+        const getAllResult = await apiClient.baseUser.getAll();
+        addResult("Get All BaseUsers", getAllResult);
       }
     } catch (error) {
-      addResult('BaseUser Test Error', { error: error.message })
+        addResult("BaseUser Test Error", { error: (error as Error).message });
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   const testJournal = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       // First create a user to use
       const userResult = await apiClient.baseUser.create({
         walletAddress: `0x${Math.random().toString(36).substring(2, 15)}`,
-        username: `journaluser_${Date.now()}`
-      })
+        username: `journaluser_${Date.now()}`,
+      });
 
       if (userResult.success) {
-        const userId = userResult.data.id
+        const userId = userResult.data.id;
 
         // Test creating a journal
         const createResult = await apiClient.journal.create({
           baseUserId: userId,
-          journal: 'This is a test journal entry created via API',
-          tags: ['test', 'api'],
-          privacy: 'public'
-        })
-        addResult('Create Journal', createResult)
+          journal: "This is a test journal entry created via API",
+          tags: ["test", "api"],
+          privacy: "public",
+        });
+        addResult("Create Journal", createResult);
 
         if (createResult.success) {
-          const journalId = createResult.data.id
+          const journalId = createResult.data.id;
 
           // Test getting journal by ID
-          const getResult = await apiClient.journal.getById(journalId)
-          addResult('Get Journal by ID', getResult)
+          const getResult = await apiClient.journal.getById(journalId);
+          addResult("Get Journal by ID", getResult);
 
           // Test updating journal
           const updateResult = await apiClient.journal.update(journalId, {
-            journal: 'Updated journal content via API test',
-            tags: ['test', 'api', 'updated']
-          })
-          addResult('Update Journal', updateResult)
+            journal: "Updated journal content via API test",
+            tags: ["test", "api", "updated"],
+          });
+          addResult("Update Journal", updateResult);
 
           // Test getting all journals
-          const getAllResult = await apiClient.journal.getAll()
-          addResult('Get All Journals', getAllResult)
+          const getAllResult = await apiClient.journal.getAll();
+          addResult("Get All Journals", getAllResult);
         }
       }
     } catch (error) {
-      addResult('Journal Test Error', { error: error.message })
+      addResult("Journal Test Error", { error: (error as Error).message });
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   const testComment = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       // Create user and journal first
       const userResult = await apiClient.baseUser.create({
         walletAddress: `0x${Math.random().toString(36).substring(2, 15)}`,
-        username: `commentuser_${Date.now()}`
-      })
+        username: `commentuser_${Date.now()}`,
+      });
 
       if (userResult.success) {
-        const userId = userResult.data.id
+        const userId = userResult.data.id;
 
         const journalResult = await apiClient.journal.create({
           baseUserId: userId,
-          journal: 'Test journal for comments'
-        })
+          journal: "Test journal for comments",
+        });
 
         if (journalResult.success) {
-          const journalId = journalResult.data.id
+          const journalId = journalResult.data.id;
 
           // Test creating a comment
           const createResult = await apiClient.comment.create({
             baseUserId: userId,
             journalId: journalId,
-            comment: 'This is a test comment created via API'
-          })
-          addResult('Create Comment', createResult)
+            comment: "This is a test comment created via API",
+          });
+          addResult("Create Comment", createResult);
 
           if (createResult.success) {
-            const commentId = createResult.data.id
+            const commentId = createResult.data.id;
 
             // Test getting comment by ID
-            const getResult = await apiClient.comment.getById(commentId)
-            addResult('Get Comment by ID', getResult)
+            const getResult = await apiClient.comment.getById(commentId);
+            addResult("Get Comment by ID", getResult);
 
             // Test updating comment
             const updateResult = await apiClient.comment.update(commentId, {
-              comment: 'Updated comment via API test'
-            })
-            addResult('Update Comment', updateResult)
+              comment: "Updated comment via API test",
+            });
+            addResult("Update Comment", updateResult);
 
             // Test getting all comments
-            const getAllResult = await apiClient.comment.getAll()
-            addResult('Get All Comments', getAllResult)
+            const getAllResult = await apiClient.comment.getAll();
+            addResult("Get All Comments", getAllResult);
           }
         }
       }
     } catch (error) {
-      addResult('Comment Test Error', { error: error.message })
+      addResult("Comment Test Error", { error: (error as Error).message });
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   const testRepost = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       // Create user and journal first
       const userResult = await apiClient.baseUser.create({
         walletAddress: `0x${Math.random().toString(36).substring(2, 15)}`,
-        username: `repostuser_${Date.now()}`
-      })
+        username: `repostuser_${Date.now()}`,
+      });
 
       if (userResult.success) {
-        const userId = userResult.data.id
+        const userId = userResult.data.id;
 
         const journalResult = await apiClient.journal.create({
           baseUserId: userId,
-          journal: 'Test journal for reposts'
-        })
+          journal: "Test journal for reposts",
+        });
 
         if (journalResult.success) {
-          const journalId = journalResult.data.id
+          const journalId = journalResult.data.id;
 
           // Test creating a repost
           const createResult = await apiClient.repost.create({
             baseUserId: userId,
-            journalId: journalId
-          })
-          addResult('Create Repost', createResult)
+            journalId: journalId,
+          });
+          addResult("Create Repost", createResult);
 
           if (createResult.success) {
-            const repostId = createResult.data.id
+            const repostId = createResult.data.id;
 
             // Test getting repost by ID
-            const getResult = await apiClient.repost.getById(repostId)
-            addResult('Get Repost by ID', getResult)
+            const getResult = await apiClient.repost.getById(repostId);
+            addResult("Get Repost by ID", getResult);
 
             // Test getting all reposts
-            const getAllResult = await apiClient.repost.getAll()
-            addResult('Get All Reposts', getAllResult)
+            const getAllResult = await apiClient.repost.getAll();
+            addResult("Get All Reposts", getAllResult);
           }
         }
       }
     } catch (error) {
-      addResult('Repost Test Error', { error: error.message })
+      addResult("Repost Test Error", { error: (error as Error).message });
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   const testChainComment = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       // Create user, journal, and comment first
       const userResult = await apiClient.baseUser.create({
         walletAddress: `0x${Math.random().toString(36).substring(2, 15)}`,
-        username: `chainuser_${Date.now()}`
-      })
+        username: `chainuser_${Date.now()}`,
+      });
 
       if (userResult.success) {
-        const userId = userResult.data.id
+        const userId = userResult.data.id;
 
         const journalResult = await apiClient.journal.create({
           baseUserId: userId,
-          journal: 'Test journal for chain comments'
-        })
+          journal: "Test journal for chain comments",
+        });
 
         if (journalResult.success) {
-          const journalId = journalResult.data.id
+          const journalId = journalResult.data.id;
 
           const commentResult = await apiClient.comment.create({
             baseUserId: userId,
             journalId: journalId,
-            comment: 'Test comment for chain comments'
-          })
+            comment: "Test comment for chain comments",
+          });
 
           if (commentResult.success) {
-            const commentId = commentResult.data.id
+            const commentId = commentResult.data.id;
 
             // Test creating a chain comment
             const createResult = await apiClient.chainComment.create({
               baseUserId: userId,
               commentId: commentId,
-              chainComment: 'This is a test chain comment created via API'
-            })
-            addResult('Create ChainComment', createResult)
+              chainComment: "This is a test chain comment created via API",
+            });
+            addResult("Create ChainComment", createResult);
 
             if (createResult.success) {
-              const chainCommentId = createResult.data.id
+              const chainCommentId = createResult.data.id;
 
               // Test getting chain comment by ID
-              const getResult = await apiClient.chainComment.getById(chainCommentId)
-              addResult('Get ChainComment by ID', getResult)
+              const getResult = await apiClient.chainComment.getById(
+                chainCommentId
+              );
+              addResult("Get ChainComment by ID", getResult);
 
               // Test updating chain comment
-              const updateResult = await apiClient.chainComment.update(chainCommentId, {
-                chainComment: 'Updated chain comment via API test'
-              })
-              addResult('Update ChainComment', updateResult)
+              const updateResult = await apiClient.chainComment.update(
+                chainCommentId,
+                {
+                  chainComment: "Updated chain comment via API test",
+                }
+              );
+              addResult("Update ChainComment", updateResult);
 
               // Test getting all chain comments
-              const getAllResult = await apiClient.chainComment.getAll()
-              addResult('Get All ChainComments', getAllResult)
+              const getAllResult = await apiClient.chainComment.getAll();
+              addResult("Get All ChainComments", getAllResult);
             }
           }
         }
       }
     } catch (error) {
-      addResult('ChainComment Test Error', { error: error.message })
+      addResult("ChainComment Test Error", { error: (error as Error).message });
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   const runAllTests = async () => {
-    setLoading(true)
-    clearResults()
-    
-    await testBaseUser()
-    await testJournal()
-    await testComment()
-    await testRepost()
-    await testChainComment()
-    
-    setLoading(false)
-  }
+    setLoading(true);
+    clearResults();
+
+    await testBaseUser();
+    await testJournal();
+    await testComment();
+    await testRepost();
+    await testChainComment();
+
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">API Testing Dashboard</h1>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <button
             onClick={testBaseUser}
@@ -281,7 +289,7 @@ export default function TestAPIPage() {
           >
             Test BaseUser API
           </button>
-          
+
           <button
             onClick={testJournal}
             disabled={loading}
@@ -289,7 +297,7 @@ export default function TestAPIPage() {
           >
             Test Journal API
           </button>
-          
+
           <button
             onClick={testComment}
             disabled={loading}
@@ -297,7 +305,7 @@ export default function TestAPIPage() {
           >
             Test Comment API
           </button>
-          
+
           <button
             onClick={testRepost}
             disabled={loading}
@@ -305,7 +313,7 @@ export default function TestAPIPage() {
           >
             Test Repost API
           </button>
-          
+
           <button
             onClick={testChainComment}
             disabled={loading}
@@ -313,7 +321,7 @@ export default function TestAPIPage() {
           >
             Test ChainComment API
           </button>
-          
+
           <button
             onClick={runAllTests}
             disabled={loading}
@@ -342,10 +350,15 @@ export default function TestAPIPage() {
 
         <div className="space-y-4 max-h-96 overflow-y-auto">
           {results.map((result, index) => (
-            <div key={index} className="bg-gray-800 p-4 rounded border border-gray-700">
+            <div
+              key={index}
+              className="bg-gray-800 p-4 rounded border border-gray-700"
+            >
               <div className="flex justify-between items-start mb-2">
                 <h3 className="font-semibold text-blue-400">{result.test}</h3>
-                <span className="text-xs text-gray-400">{result.timestamp}</span>
+                <span className="text-xs text-gray-400">
+                  {result.timestamp}
+                </span>
               </div>
               <pre className="text-sm bg-gray-900 p-3 rounded overflow-x-auto">
                 {JSON.stringify(result.result, null, 2)}
@@ -361,5 +374,5 @@ export default function TestAPIPage() {
         )}
       </div>
     </div>
-  )
+  );
 }
