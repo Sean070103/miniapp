@@ -579,6 +579,7 @@ export default function Dashboard({ address }: DashboardProps) {
   };
 
   const handleComment = async (journalId: string, commentText: string) => {
+     console.log("inside comment function")
     try {
       const response = await fetch('/api/comment/post', {
         method: 'POST',
@@ -1612,6 +1613,7 @@ export default function Dashboard({ address }: DashboardProps) {
                                         const target = e.target as HTMLInputElement;
                                         if (target.value.trim()) {
                                           handleComment(entry.id, target.value);
+                                          console.log("inside comment inputs ui")
                                           target.value = '';
                                         }
                                       }

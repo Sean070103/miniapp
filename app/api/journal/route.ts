@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       data: {
         baseUserId,
         journal,
-        photo: photo || null,
+        photos: photo || null,
         tags: tags || [],
         privacy: privacy || 'public',
         likes: 0,
@@ -150,7 +150,7 @@ export async function PUT(request: NextRequest) {
       where: { id },
       data: {
         journal: journal !== undefined ? journal : existingJournal.journal,
-        photo: photo !== undefined ? photo : existingJournal.photo,
+        photos: photo !== undefined ? photo : existingJournal.photos,
         tags: tags !== undefined ? tags : existingJournal.tags,
         privacy: privacy !== undefined ? privacy : existingJournal.privacy
       }

@@ -62,13 +62,13 @@ export function ProfilePage({ address, entries, onBack }: ProfilePageProps) {
   
   // Profile form state
   const [profileForm, setProfileForm] = useState({
-    displayName: user?.displayName || 'DailyBase User',
-    bio: user?.bio || 'Crypto enthusiast and DailyBase user',
-    email: user?.email || '',
-    website: user?.website || '',
-    location: user?.location || '',
-    timezone: user?.timezone || 'UTC'
-  })
+    displayName: user?.address || "DailyBase User",//address nalang wala naman kasi yang mga yan sa inteface sa context ng user
+    bio:"Crypto enthusiast and DailyBase user",
+    email:  "",
+    website:  "",
+    location:  "",
+    timezone:  "UTC",
+  });
   
   // Preferences state
   const [preferences, setPreferences] = useState({
@@ -102,12 +102,12 @@ export function ProfilePage({ address, entries, onBack }: ProfilePageProps) {
 
   const cancelEdit = () => {
     setProfileForm({
-      displayName: user?.displayName || 'DailyBase User',
-      bio: user?.bio || 'Crypto enthusiast and DailyBase user',
-      email: user?.email || '',
-      website: user?.website || '',
-      location: user?.location || '',
-      timezone: user?.timezone || 'UTC'
+      displayName: user?.address || 'DailyBase User', //same den dito
+      bio: 'Crypto enthusiast and DailyBase user',
+      email: '',
+      website: '',
+      location:'',
+      timezone: 'UTC'
     })
     setIsEditing(false)
   }

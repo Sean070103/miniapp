@@ -34,11 +34,6 @@ export async function POST(req: Request) {
 
     const journal = await prisma.journal.findUnique({
       where: { id: journalId },
-      include: {
-        comments: {
-          orderBy: { createdAt: 'desc' }
-        }
-      }
     });
 
     if (!journal) {
@@ -50,7 +45,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ 
       journal,
-      comments: journal.comments || []
     }, { status: 200 });
 
   } catch (error) {

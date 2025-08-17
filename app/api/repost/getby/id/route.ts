@@ -16,9 +16,6 @@ export async function POST(req: Request) {
 
     const userReposts = await prisma.repost.findMany({
       where: { baseUserId: baseUserId },
-      include: {
-        journal: true
-      },
       orderBy: { dateCreated: 'desc' }
     });
 

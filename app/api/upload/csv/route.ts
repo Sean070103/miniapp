@@ -117,7 +117,7 @@ async function uploadJournals(records: any[]) {
           baseUserId: record.baseUserId,
           journal: record.journal,
           privacy: record.privacy || 'public',
-          photo: record.photo || null,
+          photos: record.photo || null,
           likes: parseInt(record.likes) || 0,
           tags: record.tags ? record.tags.split(',').map((tag: string) => tag.trim()) : []
         }
