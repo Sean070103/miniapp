@@ -15,6 +15,9 @@ export function WalletSync() {
 
   // Sync wallet connection state with auth context
   useEffect(() => {
+    // Only run on client side and after hydration
+    if (typeof window === 'undefined') return
+    
     // Only update if values actually changed
     if (isConnected && address && (prevAddress.current !== address || prevIsConnected.current !== isConnected)) {
       const newUser = {
@@ -35,11 +38,12 @@ export function WalletSync() {
 
   // Set up enhanced logout function
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      (window as any).enhancedLogout = () => {
-        disconnect()
-        logout()
-      }
+    // Only run on client side
+    if (typeof window === 'undefined') return
+    
+    (window as any).enhancedLogout = () => {
+      disconnect()
+      logout()
     }
   }, [disconnect, logout])
 

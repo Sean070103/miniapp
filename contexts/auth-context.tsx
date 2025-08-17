@@ -11,6 +11,7 @@ interface User {
 interface AuthContextType {
   user: User | null
   isLoading: boolean
+  isHydrated: boolean
   login: () => Promise<void>
   logout: () => void
   createAccount: () => Promise<void>
@@ -26,18 +27,23 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isHydrated, setIsHydrated] = useState(false)
 
   // Check for existing session on mount
   useEffect(() => {
-    const savedUser = localStorage.getItem('cryptojournal-user')
-    if (savedUser) {
-      try {
-        const parsedUser = JSON.parse(savedUser)
-        setUser(parsedUser)
-      } catch (error) {
-        console.error('Error parsing saved user:', error)
-        localStorage.removeItem('cryptojournal-user')
+    // Only run on client side
+    if (typeof window !== 'undefined') {
+      const savedUser = localStorage.getItem('cryptojournal-user')
+      if (savedUser) {
+        try {
+          const parsedUser = JSON.parse(savedUser)
+          setUser(parsedUser)
+        } catch (error) {
+          console.error('Error parsing saved user:', error)
+          localStorage.removeItem('cryptojournal-user')
+        }
       }
+      setIsHydrated(true)
     }
   }, [])
 
@@ -115,6 +121,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const value: AuthContextType = {
     user,
     isLoading,
+    isHydrated,
     login,
     logout,
     createAccount,

@@ -229,7 +229,7 @@ export function ResponsiveSidebar({
   }
 
   return (
-    <div className={cn("hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:z-50", className)}>
+    <div className={cn("hidden lg:flex lg:flex-col lg:w-64 xl:w-72 lg:fixed lg:inset-y-0 lg:z-50", className)}>
       <SidebarContent />
     </div>
   )

@@ -19,6 +19,9 @@ import { ImageUpload, useImageUpload } from "@/components/ui/image-upload"
 import { UserProfile } from "@/components/ui/user-profile"
 import { AchievementBadge, ACHIEVEMENTS } from "@/components/ui/achievement-badge"
 import { ResponsiveSidebar, ResponsiveHeader, ResponsiveContainer, ResponsiveGrid, ResponsiveCard, ResponsiveText, useResponsive } from "@/components/ui/responsive-layout"
+import { UserRegistrationModal } from "@/components/auth/user-registration-modal"
+import { ProfileManagement } from "@/components/auth/profile-management"
+import { UserSearch } from "@/components/ui/user-search"
 
 interface DailyEntry {
   id: string
@@ -80,6 +83,7 @@ export default function Dashboard({ address }: DashboardProps) {
   // Create post states
   const [newPostContent, setNewPostContent] = useState('');
   const [newPostTags, setNewPostTags] = useState<string[]>([]);
+  const [newPostPrivacy, setNewPostPrivacy] = useState<'public' | 'private'>('public');
   const [isCreatingPost, setIsCreatingPost] = useState(false);
   
   // Image upload
@@ -101,14 +105,18 @@ export default function Dashboard({ address }: DashboardProps) {
     posts: 0,
     followers: 0,
     following: 0,
-    likes: 0,
-    comments: 0,
-    reposts: 0,
+    totalLikes: 0,
+    totalComments: 0,
+    totalReposts: 0,
     streak: 0,
     level: 1,
-    xp: 0,
-    nextLevelXp: 100
+    experience: 0
   });
+  
+  // User authentication and profile states
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   
   // Home feed states
   const [allPosts, setAllPosts] = useState<Journal[]>([]);
@@ -269,6 +277,23 @@ export default function Dashboard({ address }: DashboardProps) {
       reposts: Object.values(repostCounts).reduce((sum, count) => sum + count, 0),
     }));
   }, [allPosts, likeCounts, commentCounts, repostCounts]);
+
+  // Load comments for all posts when they change
+  useEffect(() => {
+    console.log('Loading comments for posts:', allPosts.length);
+    if (allPosts.length > 0) {
+      allPosts.forEach(post => {
+        console.log('Fetching comments for post:', post.id);
+        fetchJournalComments(post.id).then(comments => {
+          console.log('Fetched comments for post', post.id, ':', comments);
+          setDbComments(prev => {
+            const existingComments = prev.filter(c => c.journalId !== post.id);
+            return [...existingComments, ...comments];
+          });
+        });
+      });
+    }
+  }, [allPosts]);
 
   // Save entries to localStorage
   const saveEntry = (entry: DailyEntry) => {
@@ -522,9 +547,24 @@ export default function Dashboard({ address }: DashboardProps) {
         }),
       });
       if (!response.ok) throw new Error("Failed to post comment");
-      return await response.json();
+      const newComment = await response.json();
+      
+      // Add to local comments state
+      setDbComments(prev => [newComment, ...prev]);
+      
+      // Update comment count
+      setCommentCounts(prev => ({
+        ...prev,
+        [journalId]: (prev[journalId] || 0) + 1
+      }));
+      
+      // Show success toast
+      showToast('Comment posted successfully!', 'success');
+      
+      return newComment;
     } catch (error) {
       console.error("Error posting comment:", error);
+      showToast('Failed to post comment', 'error');
       throw error;
     }
   };
@@ -552,7 +592,12 @@ export default function Dashboard({ address }: DashboardProps) {
         console.log('Like action successful:', data);
         
         // Show success toast
-        showToast(data.message, 'success');
+        showToast(data.liked ? 'Post liked!' : 'Post unliked!', 'success');
+        
+        // Create notification for like
+        if (data.liked) {
+          createNotification('like', journalId, 'liked your post');
+        }
         
         // Update local state
         setUserLikes(prev => ({
@@ -573,64 +618,54 @@ export default function Dashboard({ address }: DashboardProps) {
       }
     } catch (error) {
       console.error('Error handling like:', error);
+      showToast('Error liking post', 'error');
     } finally {
       setLoadingLikes(prev => ({ ...prev, [journalId]: false }));
     }
   };
 
   const handleComment = async (journalId: string, commentText: string) => {
-     console.log("inside comment function")
     try {
-      const response = await fetch('/api/comment/post', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          journalId,
-          baseUserId: address,
-          comment: commentText,
-        }),
-      });
-
-      if (response.ok) {
-        const newComment = await response.json();
-        console.log('Comment posted successfully:', newComment);
-        
-        // Show success toast
-        showToast('Comment posted successfully!', 'success');
-        
-        // Update local state
-        setDbComments(prev => [newComment, ...prev]);
-        
-        // Update comment count
-        setCommentCounts(prev => ({
-          ...prev,
-          [journalId]: (prev[journalId] || 0) + 1
-        }));
-        
-        // Close comment section
-        setCurrentJournalId(null);
-      } else {
-        console.error('Comment posting failed');
-        showToast('Failed to post comment', 'error');
-      }
+      const newComment = await postComment(journalId, commentText);
+      
+      // Create notification for comment
+      createNotification('comment', journalId, `commented: "${commentText.substring(0, 50)}${commentText.length > 50 ? '...' : ''}"`);
+      
+      // Close comment section
+      setCurrentJournalId(null);
+      
+      return newComment;
     } catch (error) {
       console.error('Error posting comment:', error);
     }
   };
 
   const handleRepost = async (journalId: string) => {
+    if (loadingReposts[journalId]) return; // Prevent double clicks
+    
+    if (!address) {
+      console.error('No wallet address available for repost');
+      showToast('Please connect your wallet to repost', 'error');
+      return;
+    }
+    
+    console.log('Attempting repost for journalId:', journalId, 'address:', address);
+    
+    setLoadingReposts(prev => ({ ...prev, [journalId]: true }));
+    
     try {
+      const requestBody = {
+        journalId,
+        baseUserId: address,
+      };
+      console.log('Repost request body:', requestBody);
+      
       const response = await fetch('/api/repost/post', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          journalId,
-          baseUserId: address,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
@@ -638,7 +673,12 @@ export default function Dashboard({ address }: DashboardProps) {
         console.log('Repost action successful:', data);
         
         // Show success toast
-        showToast(data.message, 'success');
+        showToast(data.reposted ? 'Post reposted!' : 'Repost removed!', 'success');
+        
+        // Create notification for repost
+        if (data.reposted) {
+          createNotification('repost', journalId, 'reposted your post');
+        }
         
         // Update local state
         if (data.reposted) {
@@ -655,11 +695,22 @@ export default function Dashboard({ address }: DashboardProps) {
             : Math.max(0, (prev[journalId] || 0) - 1)
         }));
       } else {
-        console.error('Repost action failed');
+        const errorData = await response.text();
+        console.error('Repost action failed:', response.status, errorData);
         showToast('Failed to repost', 'error');
       }
     } catch (error) {
       console.error('Error handling repost:', error);
+      if (error instanceof Event) {
+        console.error('Caught an Event object:', error.type, error.target);
+      } else if (error instanceof Error) {
+        console.error('Caught an Error object:', error.message, error.stack);
+      } else {
+        console.error('Caught an unknown error type:', typeof error, error);
+      }
+      showToast('Error reposting', 'error');
+    } finally {
+      setLoadingReposts(prev => ({ ...prev, [journalId]: false }));
     }
   };
 
@@ -695,7 +746,7 @@ export default function Dashboard({ address }: DashboardProps) {
           journal: newPostContent,
           tags: newPostTags,
           photos: imageBase64s, // Send base64 images
-          privacy: 'public',
+          privacy: newPostPrivacy,
         }),
       });
 
@@ -775,13 +826,23 @@ export default function Dashboard({ address }: DashboardProps) {
       }
 
       // Fetch comments
-      const commentResponse = await fetch(`/api/comment/post?journalId=${journalId}`);
+      const commentResponse = await fetch("/api/comment/get", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ journalId }),
+      });
       if (commentResponse.ok) {
         const comments = await commentResponse.json();
+        console.log('Engagement data - comments for', journalId, ':', comments);
         setCommentCounts(prev => ({
           ...prev,
           [journalId]: comments.length
         }));
+        // Also update the dbComments state with the fetched comments
+        setDbComments(prev => {
+          const existingComments = prev.filter(c => c.journalId !== journalId);
+          return [...existingComments, ...comments];
+        });
       }
     } catch (error) {
       console.error('Error fetching engagement data:', error);
@@ -835,14 +896,14 @@ export default function Dashboard({ address }: DashboardProps) {
 
   const fetchJournalComments = async (journalId: string) => {
     try {
-      const response = await fetch("/api/journal/get", {
+      const response = await fetch("/api/comment/get", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ journalId }),
       });
       if (response.ok) {
-        const data = await response.json();
-        return data.comments || [];
+        const comments = await response.json();
+        return comments || [];
       }
       return [];
     } catch (error) {
@@ -1029,6 +1090,66 @@ export default function Dashboard({ address }: DashboardProps) {
     { id: 'settings' as SidebarItem, label: 'Settings', icon: Settings },
   ];
 
+  // Notification states
+  const [notifications, setNotifications] = useState<{
+    id: string;
+    type: 'like' | 'comment' | 'repost';
+    userId: string;
+    journalId: string;
+    content: string;
+    timestamp: Date;
+    read: boolean;
+  }[]>([]);
+
+  // Notification functions
+  const createNotification = (type: 'like' | 'comment' | 'repost', journalId: string, content: string) => {
+    const notification = {
+      id: Date.now().toString(),
+      type,
+      userId: address,
+      journalId,
+      content,
+      timestamp: new Date(),
+      read: false
+    };
+    
+    setNotifications(prev => [notification, ...prev]);
+    
+    // Store in localStorage for persistence
+    const storedNotifications = JSON.parse(localStorage.getItem('dailybase-notifications') || '[]');
+    storedNotifications.unshift(notification);
+    localStorage.setItem('dailybase-notifications', JSON.stringify(storedNotifications.slice(0, 50))); // Keep last 50
+  };
+
+  const markNotificationAsRead = (notificationId: string) => {
+    setNotifications(prev => 
+      prev.map(notif => 
+        notif.id === notificationId ? { ...notif, read: true } : notif
+      )
+    );
+  };
+
+  const clearAllNotifications = () => {
+    setNotifications([]);
+    localStorage.removeItem('dailybase-notifications');
+  };
+
+  // Load notifications from localStorage
+  useEffect(() => {
+    const storedNotifications = localStorage.getItem('dailybase-notifications');
+    if (storedNotifications) {
+      try {
+        const parsed = JSON.parse(storedNotifications);
+        setNotifications(parsed.map((n: any) => ({
+          ...n,
+          timestamp: new Date(n.timestamp)
+        })));
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+      }
+    }
+  }, []);
+
   const renderContent = () => {
     switch (activeSidebarItem) {
       case "home":
@@ -1062,7 +1183,7 @@ export default function Dashboard({ address }: DashboardProps) {
             </div>
 
             {/* Create Post */}
-            <ResponsiveCard className="mb-8">
+            <ResponsiveCard className="mb-6">
               <div className="flex items-start gap-4">
                 <Avatar className="w-10 h-10 sm:w-12 sm:h-12 ring-2 ring-blue-400/20 flex-shrink-0">
                   <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm">
@@ -1071,7 +1192,7 @@ export default function Dashboard({ address }: DashboardProps) {
                 </Avatar>
                 <div className="flex-1 space-y-4">
                   <div>
-                    <ResponsiveText variant="h4" className="text-blue-300 mb-2">
+                    <ResponsiveText variant="h4" className="text-blue-300 mb-3">
                       What's happening in your crypto world today?
                     </ResponsiveText>
                     <textarea
@@ -1079,7 +1200,7 @@ export default function Dashboard({ address }: DashboardProps) {
                       onChange={(e) => setNewPostContent(e.target.value)}
                       placeholder="Share your thoughts, trades, or insights..."
                       className="w-full p-4 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 resize-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 pixelated-text"
-                      rows={4}
+                      rows={3}
                       maxLength={500}
                     />
                     <div className="flex items-center justify-between mt-2">
@@ -1096,6 +1217,18 @@ export default function Dashboard({ address }: DashboardProps) {
                           <Plus className="w-4 h-4 mr-1" />
                           {images.length > 0 ? `${images.length} Image${images.length > 1 ? 's' : ''}` : 'Add Photo'}
                         </Button>
+                        
+                        {/* Privacy Selector */}
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={newPostPrivacy}
+                            onChange={(e) => setNewPostPrivacy(e.target.value as 'public' | 'private')}
+                            className="bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+                          >
+                            <option value="public">🌍 Public</option>
+                            <option value="private">🔒 Private</option>
+                          </select>
+                        </div>
                         <input
                           id="image-upload"
                           type="file"
@@ -1108,57 +1241,6 @@ export default function Dashboard({ address }: DashboardProps) {
                           className="hidden"
                         />
                       </div>
-                    </div>
-                    
-                    {/* Drag and Drop Area */}
-                    <div
-                      className={`mt-4 p-6 border-2 border-dashed rounded-xl text-center transition-all duration-300 ${
-                        images.length > 0 
-                          ? 'border-blue-400/50 bg-blue-500/5' 
-                          : 'border-slate-600 hover:border-blue-400/50 hover:bg-blue-500/5'
-                      }`}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.currentTarget.classList.add('border-blue-400', 'bg-blue-500/10');
-                      }}
-                      onDragLeave={(e) => {
-                        e.preventDefault();
-                        e.currentTarget.classList.remove('border-blue-400', 'bg-blue-500/10');
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.currentTarget.classList.remove('border-blue-400', 'bg-blue-500/10');
-                        const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
-                        if (files.length > 0) {
-                          handleImagesSelected(files);
-                        }
-                      }}
-                    >
-                      {images.length === 0 ? (
-                        <div className="space-y-2">
-                          <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto">
-                            <Plus className="w-6 h-6 text-blue-400" />
-                          </div>
-                          <p className="text-blue-300 pixelated-text font-medium">
-                            Drag and drop images here
-                          </p>
-                          <p className="text-slate-400 text-sm">
-                            or click the "Add Photo" button above
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
-                            <Check className="w-6 h-6 text-green-400" />
-                          </div>
-                          <p className="text-green-300 pixelated-text font-medium">
-                            {images.length} image{images.length > 1 ? 's' : ''} ready to upload
-                          </p>
-                          <p className="text-slate-400 text-sm">
-                            Drag more images here to add them
-                          </p>
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -1347,30 +1429,30 @@ export default function Dashboard({ address }: DashboardProps) {
                       key={entry.id}
                       className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 border border-slate-600/60 text-white backdrop-blur-sm card-glass hover-lift transition-all duration-300 shadow-xl hover:shadow-2xl"
                     >
-                      <CardHeader className="pb-6">
+                      <CardHeader className="pb-4">
                         <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-6">
-                            <Avatar className="w-16 h-16 ring-3 ring-blue-400/40 flex-shrink-0 hover:ring-blue-400/70 transition-all duration-300">
-                              <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl">
+                          <div className="flex items-start gap-4">
+                            <Avatar className="w-12 h-12 ring-2 ring-blue-400/30 flex-shrink-0">
+                              <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold">
                                 {entry.baseUserId.slice(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-4 mb-3">
-                                <div className="font-bold text-white pixelated-text text-2xl">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-3 mb-1">
+                                <div className="font-semibold text-white pixelated-text text-lg truncate">
                                   {entry.baseUserId.slice(0, 6)}...{entry.baseUserId.slice(-4)}
                                 </div>
-                                <Badge className="bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-blue-300 border-blue-400/50 pixelated-text text-sm font-bold px-3 py-1">
+                                <Badge className="bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-blue-300 border-blue-400/50 pixelated-text text-xs font-medium px-2 py-1 flex-shrink-0">
                                   #{index + 1}
                                 </Badge>
                                 {entry.likes > 10 && (
-                                  <Badge className="bg-gradient-to-r from-orange-500/30 to-red-500/30 text-orange-300 border-orange-400/50 pixelated-text text-sm font-bold px-3 py-1">
+                                  <Badge className="bg-gradient-to-r from-orange-500/30 to-red-500/30 text-orange-300 border-orange-400/50 pixelated-text text-xs font-medium px-2 py-1 flex-shrink-0">
                                     🔥 Hot
                                   </Badge>
                                 )}
                               </div>
-                              <div className="text-base text-blue-300 pixelated-text flex items-center gap-3">
-                                <Calendar className="w-5 h-5" />
+                              <div className="text-sm text-blue-300 pixelated-text flex items-center gap-2">
+                                <Calendar className="w-4 h-4" />
                                 {entry.dateCreated
                                   ? new Date(entry.dateCreated).toLocaleDateString("en-US", {
                                       weekday: "long",
@@ -1382,12 +1464,12 @@ export default function Dashboard({ address }: DashboardProps) {
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-slate-700/60 rounded-full p-3 transition-all duration-300 hover:scale-110">
-                              <Share2 className="w-5 h-5" />
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-slate-700/60 rounded-full p-2 transition-all duration-300 hover:scale-110">
+                              <Share2 className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-slate-700/60 rounded-full p-3 transition-all duration-300 hover:scale-110">
-                              <BookOpen className="w-5 h-5" />
+                            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-slate-700/60 rounded-full p-2 transition-all duration-300 hover:scale-110">
+                              <BookOpen className="w-4 h-4" />
                             </Button>
                           </div>
                         </div>
@@ -1395,13 +1477,13 @@ export default function Dashboard({ address }: DashboardProps) {
                       <CardContent className="pt-0">
                         {/* Enhanced Image Display */}
                         {entry.photos && entry.photos.length > 0 && (
-                          <div className="mb-8 rounded-3xl overflow-hidden group relative">
+                          <div className="mb-6 rounded-2xl overflow-hidden group relative">
                             <div className="relative">
                               {entry.photos.length === 1 ? (
                                 <img 
                                   src={entry.photos[0]} 
                                   alt="Journal entry" 
-                                  className="w-full h-auto max-h-[500px] object-cover transition-transform duration-500 group-hover:scale-105" 
+                                  className="w-full h-auto max-h-[400px] object-cover transition-transform duration-500 group-hover:scale-105" 
                                 />
                               ) : (
                                 <div className={`grid gap-2 ${
@@ -1419,8 +1501,8 @@ export default function Dashboard({ address }: DashboardProps) {
                                           alt={`Post image ${photoIndex + 1}`}
                                           className={`w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 ${
                                             entry.photos!.length === 1 ? 'h-64' :
-                                            entry.photos!.length === 2 ? 'h-48' :
-                                            entry.photos!.length === 3 && photoIndex === 2 ? 'h-48' : 'h-48'
+                                            entry.photos!.length === 2 ? 'h-40' :
+                                            entry.photos!.length === 3 && photoIndex === 2 ? 'h-40' : 'h-40'
                                           }`}
                                           onError={(e) => {
                                             const target = e.target as HTMLImageElement;
@@ -1438,16 +1520,16 @@ export default function Dashboard({ address }: DashboardProps) {
                                     </div>
                                   ))}
                                   {entry.photos.length > 4 && (
-                                    <div className="h-48 bg-slate-600 rounded-xl flex items-center justify-center text-xs text-slate-400">
+                                    <div className="h-40 bg-slate-600 rounded-xl flex items-center justify-center text-xs text-slate-400">
                                       +{entry.photos.length - 4} more
                                     </div>
                                   )}
                                 </div>
                               )}
                               <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                              <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <Button size="sm" className="bg-black/60 text-white hover:bg-black/80 rounded-full p-3">
-                                  <BookOpen className="w-5 h-5" />
+                              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <Button size="sm" className="bg-black/60 text-white hover:bg-black/80 rounded-full p-2">
+                                  <BookOpen className="w-4 h-4" />
                                 </Button>
                               </div>
                             </div>
@@ -1455,8 +1537,8 @@ export default function Dashboard({ address }: DashboardProps) {
                         )}
                         
                         {/* Enhanced Content Display */}
-                        <div className="bg-gradient-to-r from-slate-700/40 to-slate-800/40 rounded-3xl p-8 mb-8 border border-slate-600/40">
-                          <p className="text-white leading-relaxed pixelated-text text-xl break-words">
+                        <div className="bg-gradient-to-r from-slate-700/40 to-slate-800/40 rounded-2xl p-6 mb-6 border border-slate-600/40">
+                          <p className="text-white leading-relaxed pixelated-text text-lg break-words">
                             {entry.journal || "This user shared their crypto journey..."}
                           </p>
                         </div>
@@ -1481,14 +1563,14 @@ export default function Dashboard({ address }: DashboardProps) {
                         )}
                         
                         {/* Enhanced Action Buttons */}
-                        <div className="flex items-center justify-between pt-8 border-t border-slate-600/40">
-                          <div className="flex items-center gap-6">
+                        <div className="flex items-center justify-between pt-6 border-t border-slate-600/40">
+                          <div className="flex items-center gap-4">
                             {/* Like Button */}
                             <div className="group relative">
                               <button 
                                 onClick={() => handleLike(entry.id)}
                                 disabled={loadingLikes[entry.id]}
-                                className={`flex items-center gap-4 px-8 py-4 rounded-2xl border transition-all duration-300 hover:scale-105 hover:shadow-xl ${
+                                className={`flex items-center gap-3 px-6 py-3 rounded-xl border transition-all duration-300 hover:scale-105 hover:shadow-xl ${
                                   loadingLikes[entry.id] ? "opacity-50 cursor-not-allowed" : ""
                                 } ${
                                   userLikes[entry.id]
@@ -1498,15 +1580,15 @@ export default function Dashboard({ address }: DashboardProps) {
                               >
                                 <div className="relative">
                                   {loadingLikes[entry.id] ? (
-                                    <div className="w-6 h-6 border-2 border-pink-400 border-t-transparent rounded-full animate-spin"></div>
+                                    <div className="w-5 h-5 border-2 border-pink-400 border-t-transparent rounded-full animate-spin"></div>
                                   ) : (
-                                    <Heart className={`w-6 h-6 transition-colors ${
+                                    <Heart className={`w-5 h-5 transition-colors ${
                                       userLikes[entry.id] ? "text-pink-300 fill-pink-300" : "text-pink-400 group-hover:text-pink-300"
                                     }`} />
                                   )}
-                                  <div className="absolute inset-0 w-6 h-6 bg-pink-400/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                  <div className="absolute inset-0 w-5 h-5 bg-pink-400/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 </div>
-                                <span className="text-pink-300 pixelated-text font-bold text-xl">{likeCounts[entry.id] || entry.likes || 0}</span>
+                                <span className="text-pink-300 pixelated-text font-semibold text-lg">{likeCounts[entry.id] || entry.likes || 0}</span>
                               </button>
                             </div>
 
@@ -1517,13 +1599,13 @@ export default function Dashboard({ address }: DashboardProps) {
                                   setCurrentJournalId(entry.id);
                                   setCommentCounts(prev => ({ ...prev, [entry.id]: commentCount }));
                                 }}
-                                className="flex items-center gap-4 px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-500/15 to-cyan-500/15 border border-blue-500/40 hover:border-blue-500/70 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/25"
+                                className="flex items-center gap-3 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500/15 to-cyan-500/15 border border-blue-500/40 hover:border-blue-500/70 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/25"
                               >
                                 <div className="relative">
-                                  <MessageSquare className="w-6 h-6 text-blue-400 group-hover:text-blue-300 transition-colors" />
-                                  <div className="absolute inset-0 w-6 h-6 bg-blue-400/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                  <MessageSquare className="w-5 h-5 text-blue-400 group-hover:text-blue-300 transition-colors" />
+                                  <div className="absolute inset-0 w-5 h-5 bg-blue-400/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 </div>
-                                <span className="text-blue-300 pixelated-text font-bold text-xl">{commentCounts[entry.id] || commentCount || 0}</span>
+                                <span className="text-blue-300 pixelated-text font-semibold text-lg">{commentCounts[entry.id] || commentCount || 0}</span>
                               </button>
                             </div>
 
@@ -1531,26 +1613,26 @@ export default function Dashboard({ address }: DashboardProps) {
                             <div className="group relative">
                               <button
                                 onClick={() => handleRepost(entry.id)}
-                                className={`flex items-center gap-4 px-8 py-4 rounded-2xl border transition-all duration-300 hover:scale-105 hover:shadow-xl ${
+                                className={`flex items-center gap-3 px-6 py-3 rounded-xl border transition-all duration-300 hover:scale-105 hover:shadow-xl ${
                                   userRepost
                                     ? "bg-gradient-to-r from-green-500/15 to-emerald-500/15 border-green-500/60 hover:shadow-green-500/25"
                                     : "bg-gradient-to-r from-purple-500/15 to-violet-500/15 border-purple-500/40 hover:border-purple-500/70 hover:shadow-purple-500/25"
                                 }`}
                               >
                                 <div className="relative">
-                                  <Share2 className={`w-6 h-6 transition-colors ${
+                                  <Share2 className={`w-5 h-5 transition-colors ${
                                     userRepost ? "text-green-400 group-hover:text-green-300" : "text-purple-400 group-hover:text-purple-300"
                                   }`} />
-                                  <div className={`absolute inset-0 w-6 h-6 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity ${
+                                  <div className={`absolute inset-0 w-5 h-5 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity ${
                                     userRepost ? "bg-green-400/20" : "bg-purple-400/20"
                                   }`}></div>
                                 </div>
-                                <span className={`pixelated-text font-bold text-xl ${
+                                <span className={`pixelated-text font-semibold text-lg ${
                                   userRepost ? "text-green-300" : "text-purple-300"
                                 }`}>
                                   {userRepost ? "Reposted" : "Repost"}
                                 </span>
-                                <span className={`pixelated-text font-bold text-lg ${
+                                <span className={`pixelated-text font-medium text-base ${
                                   userRepost ? "text-green-300" : "text-purple-300"
                                 }`}>
                                   ({repostCounts[entry.id] || 0})
@@ -1559,17 +1641,7 @@ export default function Dashboard({ address }: DashboardProps) {
                             </div>
                           </div>
                           
-                          {/* Enhanced Post Stats */}
-                          <div className="flex items-center gap-6 text-base text-slate-400">
-                            <div className="flex items-center gap-2 bg-slate-800/40 px-4 py-2 rounded-xl">
-                              <Eye className="w-5 h-5" />
-                              <span className="font-semibold">{Math.floor(Math.random() * 1000) + 100}</span>
-                            </div>
-                            <div className="flex items-center gap-2 bg-slate-800/40 px-4 py-2 rounded-xl">
-                              <Share2 className="w-5 h-5" />
-                              <span className="font-semibold">{Math.floor(Math.random() * 50) + 5}</span>
-                            </div>
-                          </div>
+
                         </div>
                         
                         {/* Enhanced Comments Section */}
@@ -1582,7 +1654,7 @@ export default function Dashboard({ address }: DashboardProps) {
                                 </div>
                                 <span className="text-blue-300 pixelated-text font-bold text-lg">Comments</span>
                                 <Badge className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-300 border-blue-400/30 pixelated-text text-sm font-medium">
-                                  {commentCount}
+                                  {commentCounts[entry.id] || 0}
                                 </Badge>
                               </div>
                               <Button 
@@ -1613,14 +1685,23 @@ export default function Dashboard({ address }: DashboardProps) {
                                         const target = e.target as HTMLInputElement;
                                         if (target.value.trim()) {
                                           handleComment(entry.id, target.value);
-                                          console.log("inside comment inputs ui")
                                           target.value = '';
                                         }
                                       }
                                     }}
                                   />
                                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-1">
+                                    <Button 
+                                      size="sm" 
+                                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-1"
+                                      onClick={(e) => {
+                                        const input = e.currentTarget.parentElement?.previousElementSibling as HTMLInputElement;
+                                        if (input && input.value.trim()) {
+                                          handleComment(entry.id, input.value);
+                                          input.value = '';
+                                        }
+                                      }}
+                                    >
                                       <Plus className="w-3 h-3" />
                                     </Button>
                                   </div>
@@ -1629,11 +1710,11 @@ export default function Dashboard({ address }: DashboardProps) {
                             </div>
                             
                             {/* Enhanced Comments List */}
-                            <div className="space-y-4 max-h-60 overflow-y-auto">
+                            <div className="space-y-4">
                               {dbComments
                                 .filter(comment => comment.journalId === entry.id)
                                 .map((comment, commentIndex) => (
-                                  <div key={commentIndex} className="flex gap-4 p-4 bg-gradient-to-r from-slate-600/20 to-slate-700/20 rounded-xl border border-slate-500/20 hover:border-slate-500/40 transition-all duration-300 hover:scale-[1.02]">
+                                  <div key={comment.id || commentIndex} className="flex gap-4 p-4 bg-gradient-to-r from-slate-600/20 to-slate-700/20 rounded-xl border border-slate-500/20 hover:border-slate-500/40 transition-all duration-300 hover:scale-[1.02]">
                                     <Avatar className="w-8 h-8 ring-1 ring-blue-400/20">
                                       <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xs">
                                         {comment.baseUserId.slice(0, 2).toUpperCase()}
@@ -1654,6 +1735,12 @@ export default function Dashboard({ address }: DashboardProps) {
                                     </div>
                                   </div>
                                 ))}
+                              {dbComments.filter(comment => comment.journalId === entry.id).length === 0 && (
+                                <div className="text-center py-8">
+                                  <MessageSquare className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                                  <p className="text-slate-400 text-sm">No comments yet. Be the first to comment!</p>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
@@ -2639,7 +2726,17 @@ export default function Dashboard({ address }: DashboardProps) {
        );
      case "profile":
        return (
-         <div className="max-w-2xl mx-auto space-y-6">
+         <div className="max-w-4xl mx-auto space-y-6">
+           {/* User Search Section */}
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+             <UserSearch 
+               onUserSelect={(user) => {
+                 setSelectedUser(user);
+                 setActiveSidebarItem('home');
+               }}
+               placeholder="Search for users..."
+             />
+           </div>
            {/* Game Theme Header */}
            <div className="text-center">
              <h1 className="text-4xl font-bold text-cyan-400 pixelated-text mb-2 animate-pulse">
@@ -2979,7 +3076,18 @@ export default function Dashboard({ address }: DashboardProps) {
                joinedDate: new Date(),
                isVerified: false
              }}
-             stats={userStats}
+             stats={{
+               posts: userStats.posts,
+               followers: userStats.followers,
+               following: userStats.following,
+               likes: userStats.totalLikes,
+               comments: userStats.totalComments,
+               reposts: userStats.totalReposts,
+               streak: userStats.streak,
+               level: userStats.level,
+               xp: userStats.experience,
+               nextLevelXp: 100
+             }}
              achievements={userAchievements}
              isOwnProfile={true}
              onEdit={() => {
@@ -3267,7 +3375,7 @@ export default function Dashboard({ address }: DashboardProps) {
      />
 
      {/* Main Content Area */}
-     <div className="lg:pl-64">
+     <div className="lg:pl-72 xl:pl-80">
        {/* Responsive Header */}
        <ResponsiveHeader
          title="DailyBase"
@@ -3277,13 +3385,20 @@ export default function Dashboard({ address }: DashboardProps) {
        />
 
        {/* Content Container */}
-       <ResponsiveContainer maxWidth="xl" className="py-4 sm:py-6 lg:py-8">
+       <ResponsiveContainer maxWidth="full" className="py-4 sm:py-6 lg:py-8">
          {/* Page Content */}
-         <div className="space-y-6">
+         <div className="max-w-4xl mx-auto space-y-6">
            {renderContent()}
          </div>
        </ResponsiveContainer>
      </div>
+     
+     {/* User Registration Modal */}
+     <UserRegistrationModal
+       isOpen={showRegistrationModal}
+       onClose={() => setShowRegistrationModal(false)}
+       walletAddress={address}
+     />
    </div>
  );
 }

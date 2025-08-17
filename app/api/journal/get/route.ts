@@ -33,11 +33,7 @@ export async function POST(req: Request) {
     }
 
     const journal = await prisma.journal.findUnique({
-<<<<<<< HEAD
       where: { id: journalId }
-=======
-      where: { id: journalId },
->>>>>>> e872be97757440d14dc31091e4478d9d999e29d5
     });
 
     if (!journal) {
@@ -55,10 +51,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ 
       journal,
-<<<<<<< HEAD
       comments: comments
-=======
->>>>>>> e872be97757440d14dc31091e4478d9d999e29d5
     }, { status: 200 });
 
   } catch (error) {

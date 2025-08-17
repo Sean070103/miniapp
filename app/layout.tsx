@@ -4,6 +4,7 @@ import { WalletProvider } from '@/components/providers/wallet-provider'
 import { AuthProvider } from '@/contexts/auth-context'
 import { WalletSync } from '@/components/providers/wallet-sync'
 import { MiniKitContextProvider } from '@/components/providers/MiniKitProvider'
+import { HydrationProvider } from '@/components/providers/hydration-provider'
 
 export async function generateMetadata(): Promise<Metadata> {
   const URL = process.env.NEXT_PUBLIC_URL || 'https://your-domain.com';
@@ -47,15 +48,17 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P:wght@400&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-serif">
-        <MiniKitContextProvider>
-          <WalletProvider>
-            <AuthProvider>
-              <WalletSync />
-              {children}
-            </AuthProvider>
-          </WalletProvider>
-        </MiniKitContextProvider>
+      <body className="font-serif" suppressHydrationWarning={true}>
+        <HydrationProvider>
+          <MiniKitContextProvider>
+            <WalletProvider>
+              <AuthProvider>
+                <WalletSync />
+                {children}
+              </AuthProvider>
+            </WalletProvider>
+          </MiniKitContextProvider>
+        </HydrationProvider>
       </body>
     </html>
   )

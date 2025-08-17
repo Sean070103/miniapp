@@ -83,11 +83,7 @@ export async function POST(request: NextRequest) {
       data: {
         baseUserId,
         journal,
-<<<<<<< HEAD
         photos: Array.isArray(photos) ? photos : [],
-=======
-        photos: photo || null,
->>>>>>> e872be97757440d14dc31091e4478d9d999e29d5
         tags: tags || [],
         privacy: privacy || 'public',
         likes: 0,
@@ -154,11 +150,7 @@ export async function PUT(request: NextRequest) {
       where: { id },
       data: {
         journal: journal !== undefined ? journal : existingJournal.journal,
-<<<<<<< HEAD
         photos: photos !== undefined ? (Array.isArray(photos) ? photos : []) : existingJournal.photos,
-=======
-        photos: photo !== undefined ? photo : existingJournal.photos,
->>>>>>> e872be97757440d14dc31091e4478d9d999e29d5
         tags: tags !== undefined ? tags : existingJournal.tags,
         privacy: privacy !== undefined ? privacy : existingJournal.privacy
       }

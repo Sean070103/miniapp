@@ -8,22 +8,12 @@ export async function POST(req: Request) {
     const body = await req.json()
     const { journalId, baseUserId } = body
 
+    console.log('Repost POST request:', { journalId, baseUserId })
+
     if (!baseUserId || !journalId) {
       return NextResponse.json(
         { error: "Missing required fields: journalId and baseUserId" },
         { status: 400 }
-      )
-    }
-
-    // Check if user exists
-    const user = await prisma.baseUser.findUnique({
-      where: { id: baseUserId }
-    })
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
       )
     }
 
@@ -32,9 +22,11 @@ export async function POST(req: Request) {
       where: { id: journalId }
     })
 
+    console.log('Journal lookup result:', journal ? 'Found' : 'Not found')
+
     if (!journal) {
       return NextResponse.json(
-        { error: "Journal not found" },
+        { error: "Journal not found", journalId },
         { status: 404 }
       )
     }
@@ -77,8 +69,12 @@ export async function POST(req: Request) {
 
   } catch (error) {
     console.error("Error handling repost:", error)
+    console.error("Error details:", {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    })
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error", details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
