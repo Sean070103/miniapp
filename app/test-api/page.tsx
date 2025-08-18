@@ -277,15 +277,17 @@ export default function TestAPIPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
+    <div className="min-h-screen bg-gray-900 text-white container-mobile py-responsive-lg">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">API Testing Dashboard</h1>
+        <h1 className="text-responsive-2xl sm:text-responsive-3xl lg:text-responsive-4xl font-bold space-responsive-lg">
+          API Testing Dashboard
+        </h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div className="grid-responsive-1 sm:grid-responsive-2 lg:grid-responsive-3 gap-responsive-sm space-responsive-lg">
           <button
             onClick={testBaseUser}
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-4 py-2 rounded"
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 p-responsive-sm rounded-responsive-md touch-friendly text-responsive-sm transition-responsive"
           >
             Test BaseUser API
           </button>
@@ -293,7 +295,7 @@ export default function TestAPIPage() {
           <button
             onClick={testJournal}
             disabled={loading}
-            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-4 py-2 rounded"
+            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 p-responsive-sm rounded-responsive-md touch-friendly text-responsive-sm transition-responsive"
           >
             Test Journal API
           </button>
@@ -301,7 +303,7 @@ export default function TestAPIPage() {
           <button
             onClick={testComment}
             disabled={loading}
-            className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 px-4 py-2 rounded"
+            className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 p-responsive-sm rounded-responsive-md touch-friendly text-responsive-sm transition-responsive"
           >
             Test Comment API
           </button>
@@ -309,7 +311,7 @@ export default function TestAPIPage() {
           <button
             onClick={testRepost}
             disabled={loading}
-            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 px-4 py-2 rounded"
+            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 p-responsive-sm rounded-responsive-md touch-friendly text-responsive-sm transition-responsive"
           >
             Test Repost API
           </button>
@@ -317,7 +319,7 @@ export default function TestAPIPage() {
           <button
             onClick={testChainComment}
             disabled={loading}
-            className="bg-pink-600 hover:bg-pink-700 disabled:bg-gray-600 px-4 py-2 rounded"
+            className="bg-pink-600 hover:bg-pink-700 disabled:bg-gray-600 p-responsive-sm rounded-responsive-md touch-friendly text-responsive-sm transition-responsive"
           >
             Test ChainComment API
           </button>
@@ -325,42 +327,42 @@ export default function TestAPIPage() {
           <button
             onClick={runAllTests}
             disabled={loading}
-            className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 px-4 py-2 rounded"
+            className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 p-responsive-sm rounded-responsive-md touch-friendly text-responsive-sm transition-responsive"
           >
             Run All Tests
           </button>
         </div>
 
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Test Results</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-responsive-sm space-responsive-lg">
+          <h2 className="text-responsive-xl font-semibold">Test Results</h2>
           <button
             onClick={clearResults}
-            className="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm"
+            className="bg-gray-600 hover:bg-gray-700 p-responsive-sm rounded-responsive-sm text-responsive-sm touch-friendly w-full sm:w-auto transition-responsive"
           >
             Clear Results
           </button>
         </div>
 
         {loading && (
-          <div className="text-center py-4">
+          <div className="text-center py-responsive-lg">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-            <p className="mt-2">Running tests...</p>
+            <p className="mt-2 text-responsive-base">Running tests...</p>
           </div>
         )}
 
-        <div className="space-y-4 max-h-96 overflow-y-auto">
+        <div className="space-responsive-sm max-h-96 overflow-y-auto">
           {results.map((result, index) => (
             <div
               key={index}
-              className="bg-gray-800 p-4 rounded border border-gray-700"
+              className="bg-gray-800 p-responsive-sm rounded-responsive-md border border-gray-700"
             >
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-semibold text-blue-400">{result.test}</h3>
-                <span className="text-xs text-gray-400">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-responsive-xs space-responsive-sm">
+                <h3 className="font-semibold text-blue-400 text-responsive-base">{result.test}</h3>
+                <span className="text-responsive-xs text-gray-400">
                   {result.timestamp}
                 </span>
               </div>
-              <pre className="text-sm bg-gray-900 p-3 rounded overflow-x-auto">
+              <pre className="text-responsive-xs bg-gray-900 p-responsive-sm rounded-responsive-sm overflow-x-auto">
                 {JSON.stringify(result.result, null, 2)}
               </pre>
             </div>
@@ -368,8 +370,8 @@ export default function TestAPIPage() {
         </div>
 
         {results.length === 0 && !loading && (
-          <div className="text-center py-8 text-gray-400">
-            No test results yet. Click a test button to start testing the APIs.
+          <div className="text-center py-responsive-lg text-gray-400">
+            <p className="text-responsive-base">No test results yet. Click a test button to start testing the APIs.</p>
           </div>
         )}
       </div>

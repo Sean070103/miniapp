@@ -7,12 +7,12 @@ interface HeroContentProps {
 
 export function HeroContent({ onConnect, title = "Daily Base" }: HeroContentProps) {
   return (
-    <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-3 sm:px-6 lg:px-8">
-      <div className="text-center space-y-3 sm:space-y-6 lg:space-y-8">
+    <div className="relative z-10 min-h-screen flex flex-col items-center justify-center container-mobile">
+      <div className="text-center space-responsive-md pixel-font">
         <h1 
-          className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white animate-fade-in-up pixelated-text"
+          className="text-responsive-2xl sm:text-responsive-3xl md:text-responsive-4xl lg:text-responsive-5xl font-bold text-white animate-fade-in-up"
           style={{ 
-            fontFamily: "'Jersey 10', monospace",
+            fontFamily: "'Press Start 2P', monospace",
             color: 'white',
             textShadow: '2px 2px 4px rgba(0,0,0,0.4)',
             lineHeight: '1.2'

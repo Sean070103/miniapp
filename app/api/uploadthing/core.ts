@@ -21,7 +21,16 @@ export const ourFileRouter = {
       // This code runs on your server before upload
       // For now, we'll allow all uploads without authentication
       // You can add proper auth here later if needed
-      return { userId: "anonymous" };
+      
+      // Handle localhost development
+      const origin = req.headers.get('origin');
+      const isLocalhost = origin?.includes('localhost') || origin?.includes('127.0.0.1');
+      
+      if (isLocalhost) {
+        console.log('Localhost upload detected, allowing...');
+      }
+      
+      return { userId: "anonymous", isLocalhost };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This code RUNS ON YOUR SERVER after upload

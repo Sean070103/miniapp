@@ -1190,13 +1190,13 @@ export default function Dashboard({ address }: DashboardProps) {
     switch (activeSidebarItem) {
       case "home":
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 glass-strong bg-slate-900/40 rounded-2xl p-4 sm:p-6">
             {/* Header */}
             <div className="text-center mb-6">
-              <ResponsiveText variant="h1" className="text-white mb-2">
+              <ResponsiveText size="2xl" className="text-white mb-2 font-bold">
                 DailyBase Feed
               </ResponsiveText>
-              <ResponsiveText variant="body" className="text-blue-300">
+              <ResponsiveText size="base" className="text-blue-300">
                 Your personal crypto journey timeline
               </ResponsiveText>
             </div>
@@ -1231,7 +1231,7 @@ export default function Dashboard({ address }: DashboardProps) {
                 </Avatar>
                 <div className="flex-1 space-y-4">
                   <div>
-                    <ResponsiveText variant="h4" className="text-blue-300 mb-3">
+                    <ResponsiveText size="lg" className="text-blue-300 mb-3 font-semibold">
                       What's happening in your crypto world today?
                     </ResponsiveText>
                     <textarea
@@ -1286,7 +1286,7 @@ export default function Dashboard({ address }: DashboardProps) {
                   {/* Image Preview */}
                   {images.length > 0 && (
                     <div className="space-y-2">
-                      <ResponsiveText variant="body" className="text-blue-300">
+                      <ResponsiveText size="base" className="text-blue-300">
                         Selected Images ({images.length}):
                       </ResponsiveText>
                       <div className="flex flex-wrap gap-2">
@@ -1335,7 +1335,7 @@ export default function Dashboard({ address }: DashboardProps) {
                   {/* Tags Display */}
                   {newPostTags.length > 0 && (
                     <div className="space-y-2">
-                      <ResponsiveText variant="body" className="text-blue-300">
+                      <ResponsiveText size="base" className="text-blue-300">
                         Tags:
                       </ResponsiveText>
                       <div className="flex flex-wrap gap-2">
@@ -3399,34 +3399,37 @@ export default function Dashboard({ address }: DashboardProps) {
 
  return (
    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-           {/* Toast Notifications */}
-      {toasts.map((toast) => (
-        <div
-          key={toast.id}
-          className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
-            toast.title === "Error" 
-              ? "bg-red-500 text-white" 
-              : toast.title === "Success"
-              ? "bg-green-500 text-white"
-              : "bg-blue-500 text-white"
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-semibold">{toast.title}</div>
-              <div className="text-sm opacity-90">{toast.description}</div>
-            </div>
-            <button
-              onClick={() => dismiss(toast.id)}
-              className="ml-4 text-white hover:text-gray-200"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      ))}
+     {/* Enhanced Toast Notifications with responsive positioning */}
+     {toasts.map((toast) => (
+       <div
+         key={toast.id}
+         className={`fixed z-50 p-responsive-sm rounded-lg shadow-responsive-lg transition-all duration-300 ${
+           toast.title === "Error" 
+             ? "bg-red-500 text-white" 
+             : toast.title === "Success"
+             ? "bg-green-500 text-white"
+             : "bg-blue-500 text-white"
+         } ${
+           // Responsive positioning
+           'top-4 right-4 left-4 sm:left-auto sm:right-4 sm:max-w-sm lg:max-w-md'
+         }`}
+       >
+         <div className="flex items-center justify-between">
+           <div className="flex-1 min-w-0">
+             <div className="font-semibold text-responsive-sm">{toast.title}</div>
+             <div className="text-responsive-xs opacity-90 mt-1">{toast.description}</div>
+           </div>
+           <button
+             onClick={() => dismiss(toast.id)}
+             className="ml-3 text-white hover:text-gray-200 touch-friendly flex-shrink-0"
+           >
+             <X className="w-4 h-4 sm:w-5 sm:h-5" />
+           </button>
+         </div>
+       </div>
+     ))}
 
-     {/* Responsive Sidebar */}
+     {/* Enhanced Responsive Sidebar */}
      <ResponsiveSidebar
        items={sidebarItems}
        activeItem={activeSidebarItem}
@@ -3436,9 +3439,9 @@ export default function Dashboard({ address }: DashboardProps) {
        onOpenChange={setSidebarOpen}
      />
 
-     {/* Main Content Area */}
+     {/* Enhanced Main Content Area with responsive padding */}
      <div className="lg:pl-72 xl:pl-80">
-       {/* Responsive Header */}
+       {/* Enhanced Responsive Header */}
        <ResponsiveHeader
          title="DailyBase"
          subtitle="Your crypto journey"
@@ -3446,16 +3449,16 @@ export default function Dashboard({ address }: DashboardProps) {
          userAddress={address}
        />
 
-       {/* Content Container */}
-       <ResponsiveContainer maxWidth="full" className="py-4 sm:py-6 lg:py-8">
-         {/* Page Content */}
-         <div className="max-w-4xl mx-auto space-y-6">
+       {/* Enhanced Content Container with responsive spacing */}
+       <ResponsiveContainer maxWidth="full" className="py-responsive-sm sm:py-responsive-md lg:py-responsive-lg">
+         {/* Enhanced Page Content with responsive grid */}
+         <div className="max-w-7xl mx-auto space-responsive-md">
            {renderContent()}
          </div>
        </ResponsiveContainer>
      </div>
      
-     {/* User Registration Modal */}
+     {/* Enhanced User Registration Modal */}
      <UserRegistrationModal
        isOpen={showRegistrationModal}
        onClose={() => setShowRegistrationModal(false)}

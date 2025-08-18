@@ -24,7 +24,7 @@ export function ConnectWallet({ onConnect }: ConnectWalletProps) {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-responsive-sm">
       <ConnectButton.Custom>
         {({
           account,
@@ -42,7 +42,7 @@ export function ConnectWallet({ onConnect }: ConnectWalletProps) {
               <Button 
                 size="default"
                 disabled
-                className="group bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold px-4 py-2 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl shadow-xl sm:shadow-2xl border-0 pixelated-text text-sm sm:text-base"
+                className="group bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold rounded-xl sm:rounded-2xl shadow-responsive-lg border-0 pixelated-text text-responsive-sm touch-friendly w-full sm:w-auto"
               >
                 <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 animate-spin" />
                 Loading...
@@ -52,11 +52,11 @@ export function ConnectWallet({ onConnect }: ConnectWalletProps) {
 
           if (connected) {
             return (
-              <div className="space-y-3 sm:space-y-4">
+              <div className="space-responsive-sm">
                 <Button
                   onClick={openAccountModal}
                   size="default"
-                  className="group bg-gradient-to-r from-green-500 to-green-700 text-white font-semibold px-4 py-2 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl shadow-xl sm:shadow-2xl border-0 pixelated-text text-sm sm:text-base"
+                  className="group bg-gradient-to-r from-green-500 to-green-700 text-white font-semibold rounded-xl sm:rounded-2xl shadow-responsive-lg border-0 pixelated-text text-responsive-sm touch-friendly w-full sm:w-auto"
                 >
                   {account.displayName}
                 </Button>
@@ -67,7 +67,7 @@ export function ConnectWallet({ onConnect }: ConnectWalletProps) {
                     disabled={isLoading}
                     size="default"
                     variant="outline"
-                    className="group bg-white/10 border-white/30 text-white backdrop-blur-sm pixelated-text px-4 py-2 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl text-sm sm:text-base"
+                    className="group bg-white/10 border-white/30 text-white backdrop-blur-sm pixelated-text rounded-xl sm:rounded-2xl text-responsive-sm touch-friendly w-full sm:w-auto"
                   >
                     {isLoading ? (
                       <>
@@ -90,7 +90,7 @@ export function ConnectWallet({ onConnect }: ConnectWalletProps) {
             <Button 
               onClick={openConnectModal}
               size="default"
-              className="group bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold px-4 py-2 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl shadow-xl sm:shadow-2xl border-0 pixelated-text text-sm sm:text-base"
+              className="group bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold rounded-xl sm:rounded-2xl shadow-responsive-lg border-0 pixelated-text text-responsive-sm touch-friendly w-full sm:w-auto"
             >
               Connect Base Wallet
             </Button>

@@ -87,37 +87,38 @@ export default function CSVUpload({ onUploadSuccess, onUploadError }: CSVUploadP
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Card className="w-full max-w-md mx-auto card-mobile">
+      <CardHeader className="space-responsive-sm">
+        <CardTitle className="flex items-center gap-2 text-responsive-lg">
           <Upload className="h-5 w-5" />
           CSV Upload
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-responsive-sm">
           Upload CSV files to bulk import users, journals, or comments
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="space-responsive-md">
         {/* File Selection */}
-        <div className="space-y-2">
-          <Label htmlFor="csv-file">Select CSV File</Label>
+        <div className="space-responsive-sm">
+          <Label htmlFor="csv-file" className="text-responsive-base">Select CSV File</Label>
           <Input
             id="csv-file"
             type="file"
             accept=".csv"
             onChange={handleFileChange}
             disabled={isUploading}
+            className="form-mobile-input"
           />
         </div>
 
         {/* File Info */}
         {selectedFile && (
-          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+          <div className="flex items-center gap-2 p-responsive-sm bg-muted rounded-responsive-lg">
             {getUploadTypeIcon()}
-            <div className="flex-1">
-              <p className="font-medium text-sm">{selectedFile.name}</p>
-              <p className="text-xs text-muted-foreground">
+            <div className="flex-1 space-responsive-xs">
+              <p className="font-medium text-responsive-sm">{selectedFile.name}</p>
+              <p className="text-responsive-xs text-muted-foreground">
                 {(selectedFile.size / 1024).toFixed(1)} KB
               </p>
             </div>
@@ -128,48 +129,48 @@ export default function CSVUpload({ onUploadSuccess, onUploadError }: CSVUploadP
         <Button
           onClick={handleUploadFile}
           disabled={!selectedFile || isUploading}
-          className="w-full"
+          className="w-full touch-friendly form-mobile-button"
         >
           {isUploading ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-              Uploading...
+              <span className="text-responsive-sm">Uploading...</span>
             </>
           ) : (
             <>
               <Upload className="h-4 w-4 mr-2" />
-              Upload CSV
+              <span className="text-responsive-sm">Upload CSV</span>
             </>
           )}
         </Button>
 
         {/* Status Messages */}
         {uploadStatus.type && (
-          <Alert className={uploadStatus.type === 'error' ? 'border-red-200 bg-red-50' : 
+          <Alert className={`${uploadStatus.type === 'error' ? 'border-red-200 bg-red-50' : 
                           uploadStatus.type === 'success' ? 'border-green-200 bg-green-50' : 
-                          'border-blue-200 bg-blue-50'}>
-            <AlertDescription className={uploadStatus.type === 'error' ? 'text-red-800' : 
+                          'border-blue-200 bg-blue-50'} rounded-responsive-md`}>
+            <AlertDescription className={`${uploadStatus.type === 'error' ? 'text-red-800' : 
                                        uploadStatus.type === 'success' ? 'text-green-800' : 
-                                       'text-blue-800'}>
+                                       'text-blue-800'} text-responsive-sm`}>
               {uploadStatus.message}
             </AlertDescription>
           </Alert>
         )}
 
         {/* CSV Format Examples */}
-        <div className="mt-6 space-y-3">
-          <h4 className="font-medium text-sm">Supported CSV Formats:</h4>
+        <div className="mt-6 space-responsive-sm">
+          <h4 className="font-medium text-responsive-sm">Supported CSV Formats:</h4>
           
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs">
+          <div className="space-responsive-sm">
+            <div className="flex items-center gap-2 text-responsive-xs">
               <Users className="h-3 w-3" />
               <span>Users: walletAddress, username, email, profilePicture, bio</span>
             </div>
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center gap-2 text-responsive-xs">
               <BookOpen className="h-3 w-3" />
               <span>Journals: baseUserId, journal, privacy, photo, likes, tags</span>
             </div>
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center gap-2 text-responsive-xs">
               <MessageSquare className="h-3 w-3" />
               <span>Comments: baseUserId, journalId, comment</span>
             </div>

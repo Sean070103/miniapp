@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Menu, X, Search, Bell, User, Settings, Home, Calendar, Calculator, BarChart3, Flame } from "lucide-react"
+import { Menu, X, Search, Bell, User, Settings, Home, Calendar, Calculator, BarChart3, Flame, ChevronRight, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-// Responsive breakpoints
+// Enhanced responsive breakpoints
 const BREAKPOINTS = {
+  xs: 480,
   sm: 640,
   md: 768,
   lg: 1024,
@@ -18,18 +19,27 @@ const BREAKPOINTS = {
   '2xl': 1536,
 }
 
-// Hook for responsive behavior
+// Enhanced hook for responsive behavior
 export function useResponsive() {
   const [isMobile, setIsMobile] = React.useState(false)
   const [isTablet, setIsTablet] = React.useState(false)
   const [isDesktop, setIsDesktop] = React.useState(false)
+  const [isLargeDesktop, setIsLargeDesktop] = React.useState(false)
+  const [screenSize, setScreenSize] = React.useState({
+    width: 0,
+    height: 0
+  })
 
   React.useEffect(() => {
     const checkScreenSize = () => {
       const width = window.innerWidth
+      const height = window.innerHeight
+      
+      setScreenSize({ width, height })
       setIsMobile(width < BREAKPOINTS.md)
       setIsTablet(width >= BREAKPOINTS.md && width < BREAKPOINTS.lg)
-      setIsDesktop(width >= BREAKPOINTS.lg)
+      setIsDesktop(width >= BREAKPOINTS.lg && width < BREAKPOINTS['2xl'])
+      setIsLargeDesktop(width >= BREAKPOINTS['2xl'])
     }
 
     checkScreenSize()
@@ -37,31 +47,52 @@ export function useResponsive() {
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
 
-  return { isMobile, isTablet, isDesktop }
+  return { 
+    isMobile, 
+    isTablet, 
+    isDesktop, 
+    isLargeDesktop,
+    screenSize,
+    breakpoints: BREAKPOINTS
+  }
 }
 
-// Responsive Container
+// Enhanced Responsive Container
 interface ResponsiveContainerProps {
   children: React.ReactNode
   className?: string
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full'
+  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full'
+  padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl'
+  centered?: boolean
 }
 
 export function ResponsiveContainer({ 
   children, 
   className, 
-  maxWidth = 'xl' 
+  maxWidth = 'xl',
+  padding = 'md',
+  centered = true
 }: ResponsiveContainerProps) {
   return (
     <div className={cn(
-      "mx-auto px-4 sm:px-6 lg:px-8",
+      "w-full",
+      centered && "mx-auto",
       {
+        // Max width classes
+        'max-w-xs': maxWidth === 'xs',
         'max-w-sm': maxWidth === 'sm',
         'max-w-md': maxWidth === 'md',
         'max-w-lg': maxWidth === 'lg',
         'max-w-xl': maxWidth === 'xl',
         'max-w-2xl': maxWidth === '2xl',
         'max-w-full': maxWidth === 'full',
+        
+        // Padding classes
+        'px-0': padding === 'none',
+        'px-3 sm:px-4 lg:px-6': padding === 'sm',
+        'px-4 sm:px-6 lg:px-8': padding === 'md',
+        'px-6 sm:px-8 lg:px-12': padding === 'lg',
+        'px-8 sm:px-12 lg:px-16': padding === 'xl',
       },
       className
     )}>
@@ -70,7 +101,7 @@ export function ResponsiveContainer({
   )
 }
 
-// Responsive Grid
+// Enhanced Responsive Grid
 interface ResponsiveGridProps {
   children: React.ReactNode
   className?: string
@@ -78,36 +109,53 @@ interface ResponsiveGridProps {
     mobile?: number
     tablet?: number
     desktop?: number
+    large?: number
   }
-  gap?: 'sm' | 'md' | 'lg' | 'xl'
+  gap?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+  autoFit?: boolean
+  autoFill?: boolean
 }
 
 export function ResponsiveGrid({ 
   children, 
   className, 
-  cols = { mobile: 1, tablet: 2, desktop: 3 },
-  gap = 'md'
+  cols = { mobile: 1, tablet: 2, desktop: 3, large: 4 },
+  gap = 'md',
+  autoFit = false,
+  autoFill = false
 }: ResponsiveGridProps) {
   return (
     <div className={cn(
       "grid",
       {
-        'grid-cols-1': cols.mobile === 1,
-        'grid-cols-2': cols.mobile === 2,
-        'grid-cols-3': cols.mobile === 3,
-        'grid-cols-4': cols.mobile === 4,
-        'sm:grid-cols-1': cols.tablet === 1,
-        'sm:grid-cols-2': cols.tablet === 2,
-        'sm:grid-cols-3': cols.tablet === 3,
-        'sm:grid-cols-4': cols.tablet === 4,
-        'lg:grid-cols-1': cols.desktop === 1,
-        'lg:grid-cols-2': cols.desktop === 2,
-        'lg:grid-cols-3': cols.desktop === 3,
-        'lg:grid-cols-4': cols.desktop === 4,
-        'gap-2': gap === 'sm',
-        'gap-4': gap === 'md',
-        'gap-6': gap === 'lg',
-        'gap-8': gap === 'xl',
+        // Auto-fit/fill classes
+        'grid-cols-[repeat(auto-fit,minmax(250px,1fr))]': autoFit,
+        'grid-cols-[repeat(auto-fill,minmax(250px,1fr))]': autoFill,
+        
+        // Manual column classes
+        'grid-cols-1': !autoFit && !autoFill && cols.mobile === 1,
+        'grid-cols-2': !autoFit && !autoFill && cols.mobile === 2,
+        'grid-cols-3': !autoFit && !autoFill && cols.mobile === 3,
+        'grid-cols-4': !autoFit && !autoFill && cols.mobile === 4,
+        'sm:grid-cols-1': !autoFit && !autoFill && cols.tablet === 1,
+        'sm:grid-cols-2': !autoFit && !autoFill && cols.tablet === 2,
+        'sm:grid-cols-3': !autoFit && !autoFill && cols.tablet === 3,
+        'sm:grid-cols-4': !autoFit && !autoFill && cols.tablet === 4,
+        'lg:grid-cols-1': !autoFit && !autoFill && cols.desktop === 1,
+        'lg:grid-cols-2': !autoFit && !autoFill && cols.desktop === 2,
+        'lg:grid-cols-3': !autoFit && !autoFill && cols.desktop === 3,
+        'lg:grid-cols-4': !autoFit && !autoFill && cols.desktop === 4,
+        'xl:grid-cols-1': !autoFit && !autoFill && cols.large === 1,
+        'xl:grid-cols-2': !autoFit && !autoFill && cols.large === 2,
+        'xl:grid-cols-3': !autoFit && !autoFill && cols.large === 3,
+        'xl:grid-cols-4': !autoFit && !autoFill && cols.large === 4,
+        
+        // Gap classes
+        'gap-2': gap === 'xs',
+        'gap-4': gap === 'sm',
+        'gap-6': gap === 'md',
+        'gap-8': gap === 'lg',
+        'gap-12': gap === 'xl',
       },
       className
     )}>
@@ -116,7 +164,102 @@ export function ResponsiveGrid({
   )
 }
 
-// Responsive Sidebar
+// Enhanced Responsive Card
+interface ResponsiveCardProps {
+  children: React.ReactNode
+  className?: string
+  padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl'
+  hover?: boolean
+  interactive?: boolean
+}
+
+export function ResponsiveCard({ 
+  children, 
+  className, 
+  padding = 'md',
+  hover = false,
+  interactive = false
+}: ResponsiveCardProps) {
+  return (
+    <div className={cn(
+      "glass-strong border border-white/10 rounded-2xl glow-primary",
+      {
+        // Padding classes
+        'p-0': padding === 'none',
+        'p-3 sm:p-4 lg:p-6': padding === 'sm',
+        'p-4 sm:p-6 lg:p-8': padding === 'md',
+        'p-6 sm:p-8 lg:p-12': padding === 'lg',
+        'p-8 sm:p-12 lg:p-16': padding === 'xl',
+        
+        // Interactive classes
+        'cursor-pointer transition-all duration-200': interactive,
+        'hover:bg-white/10 hover:border-white/20 hover:shadow-lg': hover || interactive,
+        'active:scale-95': interactive,
+      },
+      className
+    )}>
+      {children}
+    </div>
+  )
+}
+
+// Enhanced Responsive Text
+interface ResponsiveTextProps {
+  children: React.ReactNode
+  className?: string
+  size?: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl'
+  weight?: 'light' | 'normal' | 'medium' | 'semibold' | 'bold' | 'extrabold'
+  responsive?: boolean
+}
+
+export function ResponsiveText({ 
+  children, 
+  className, 
+  size = 'base',
+  weight = 'normal',
+  responsive = true
+}: ResponsiveTextProps) {
+  return (
+    <div className={cn(
+      {
+        // Size classes
+        'text-xs sm:text-sm': size === 'xs' && responsive,
+        'text-sm sm:text-base': size === 'sm' && responsive,
+        'text-base sm:text-lg': size === 'base' && responsive,
+        'text-lg sm:text-xl': size === 'lg' && responsive,
+        'text-xl sm:text-2xl': size === 'xl' && responsive,
+        'text-2xl sm:text-3xl': size === '2xl' && responsive,
+        'text-3xl sm:text-4xl': size === '3xl' && responsive,
+        'text-4xl sm:text-5xl': size === '4xl' && responsive,
+        'text-5xl sm:text-6xl': size === '5xl' && responsive,
+        
+        // Non-responsive sizes
+        'text-xs': size === 'xs' && !responsive,
+        'text-sm': size === 'sm' && !responsive,
+        'text-base': size === 'base' && !responsive,
+        'text-lg': size === 'lg' && !responsive,
+        'text-xl': size === 'xl' && !responsive,
+        'text-2xl': size === '2xl' && !responsive,
+        'text-3xl': size === '3xl' && !responsive,
+        'text-4xl': size === '4xl' && !responsive,
+        'text-5xl': size === '5xl' && !responsive,
+        
+        // Weight classes
+        'font-light': weight === 'light',
+        'font-normal': weight === 'normal',
+        'font-medium': weight === 'medium',
+        'font-semibold': weight === 'semibold',
+        'font-bold': weight === 'bold',
+        'font-extrabold': weight === 'extrabold',
+      },
+      className
+    )}>
+      {children}
+    </div>
+  )
+}
+
+// Enhanced Responsive Sidebar
 interface SidebarItem {
   id: string
   label: string
@@ -143,234 +286,286 @@ export function ResponsiveSidebar({
   onOpenChange,
   className
 }: ResponsiveSidebarProps) {
-  const { isMobile } = useResponsive()
+  const { isMobile, isTablet } = useResponsive()
 
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-slate-900/95 border-r border-slate-700">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-700">
-        <div className="flex items-center gap-3">
-          <img src="/db-removebg.png" alt="DailyBase Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
-          <h2 className="text-lg sm:text-xl font-bold text-white pixelated-text">DailyBase</h2>
+  const sidebarContent = (
+    <div className="flex flex-col h-full glass-strong bg-slate-900/70 border-r border-white/10">
+      {/* User Profile Section */}
+      <div className="p-4 sm:p-6 border-b border-white/10">
+        <div className="flex items-center space-x-3">
+          <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
+            <AvatarFallback className="bg-blue-500 text-white text-sm sm:text-base">
+              {userAddress.slice(2, 6).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm sm:text-base font-medium text-white truncate">
+              {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
+            </p>
+            <p className="text-xs sm:text-sm text-blue-300">Connected</p>
+          </div>
         </div>
-        {isMobile && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-            className="text-slate-400 hover:text-white"
-          >
-            <X className="w-5 h-5" />
-          </Button>
-        )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+      {/* Navigation Items */}
+      <nav className="flex-1 p-2 sm:p-4 space-y-1">
         {items.map((item) => {
           const Icon = item.icon
+          const isActive = activeItem === item.id
+          
           return (
-            <Button
+            <button
               key={item.id}
               onClick={() => {
                 onItemClick(item.id)
-                if (isMobile) onOpenChange(false)
+                if (isMobile || isTablet) {
+                  onOpenChange(false)
+                }
               }}
-              variant={activeItem === item.id ? "default" : "ghost"}
               className={cn(
-                "w-full justify-start text-left pixelated-text relative",
-                activeItem === item.id
-                  ? "bg-blue-600 text-white"
-                  : "text-blue-300 hover:text-white hover:bg-slate-800"
+                "w-full flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left transition-all duration-200 touch-friendly",
+                {
+                  "bg-blue-500/20 text-blue-300 border border-blue-500/30": isActive,
+                  "text-gray-300 hover:bg-white/10 hover:text-white": !isActive,
+                }
               )}
             >
-              <Icon className="w-5 h-5 mr-3" />
-              <span className="flex-1">{item.label}</span>
+              <div className="flex items-center space-x-3">
+                <Icon className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
+                <span className="text-sm sm:text-base font-medium truncate">
+                  {item.label}
+                </span>
+              </div>
               {item.badge && (
-                <Badge 
-                  variant="secondary" 
-                  className="ml-auto bg-blue-500/20 text-blue-300 border-blue-400/30"
-                >
+                <Badge variant="secondary" className="ml-2 text-xs">
                   {item.badge}
                 </Badge>
               )}
-            </Button>
+            </button>
           )
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-slate-700">
-        <div className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg">
-          <Avatar className="w-8 h-8 sm:w-10 sm:h-10">
-            <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm">
-              {userAddress.slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">
-              {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
-            </p>
-            <p className="text-xs text-slate-400">Connected</p>
+      {/* Bottom Actions */}
+      <div className="p-4 sm:p-6 border-t border-white/10 space-y-2">
+        <button className="w-full flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-200 touch-friendly">
+          <div className="flex items-center space-x-3">
+            <Settings className="h-5 w-5 sm:h-6 sm:w-6" />
+            <span className="text-sm sm:text-base">Settings</span>
           </div>
+          <ChevronRight className="h-4 w-4" />
+        </button>
+        
+        <button className="w-full flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-red-300 hover:bg-red-500/10 hover:text-red-200 transition-all duration-200 touch-friendly">
+          <div className="flex items-center space-x-3">
+            <LogOut className="h-5 w-5 sm:h-6 sm:w-6" />
+            <span className="text-sm sm:text-base">Disconnect</span>
         </div>
+        </button>
       </div>
     </div>
   )
 
-  if (isMobile) {
+  // Mobile/Tablet: Sheet overlay
+  if (isMobile || isTablet) {
     return (
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetContent side="left" className="w-80 p-0">
-          <SidebarContent />
+        <SheetContent 
+          side="left" 
+          className="w-80 sm:w-96 p-0 bg-transparent border-none"
+        >
+          {sidebarContent}
         </SheetContent>
       </Sheet>
     )
   }
 
+  // Desktop: Fixed sidebar
   return (
-    <div className={cn("hidden lg:flex lg:flex-col lg:w-64 xl:w-72 lg:fixed lg:inset-y-0 lg:z-50", className)}>
-      <SidebarContent />
+    <div className={cn(
+      "fixed left-0 top-0 z-40 h-full w-72 xl:w-80 transition-all duration-300",
+      className
+    )}>
+      {sidebarContent}
     </div>
   )
 }
 
-// Responsive Header
+// Enhanced Responsive Header
 interface ResponsiveHeaderProps {
   title: string
   subtitle?: string
-  actions?: React.ReactNode
-  onMenuClick?: () => void
+  onMenuClick: () => void
   userAddress: string
   className?: string
+  actions?: React.ReactNode
 }
 
 export function ResponsiveHeader({
   title,
   subtitle,
-  actions,
   onMenuClick,
   userAddress,
-  className
+  className,
+  actions
 }: ResponsiveHeaderProps) {
-  const { isMobile } = useResponsive()
+  const { isMobile, isTablet } = useResponsive()
 
   return (
-    <div className={cn(
-      "bg-slate-900/95 border-b border-slate-700",
-      isMobile ? "p-4" : "p-6",
+    <header className={cn(
+      "sticky top-0 z-30 glass-strong bg-slate-900/70 border-b border-white/10",
       className
     )}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {isMobile && onMenuClick && (
+      <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+        {/* Left Section */}
+        <div className="flex items-center space-x-3 sm:space-x-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={onMenuClick}
-              className="text-slate-400 hover:text-white"
+            className="lg:hidden touch-friendly"
             >
-              <Menu className="w-5 h-5" />
+            <Menu className="h-5 w-5" />
             </Button>
-          )}
-          <div>
-            <h1 className={cn(
-              "font-bold text-white pixelated-text",
-              isMobile ? "text-lg" : "text-2xl"
-            )}>
+          
+          <div className="flex flex-col">
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
               {title}
             </h1>
             {subtitle && (
-              <p className={cn(
-                "text-blue-300 pixelated-text",
-                isMobile ? "text-sm" : "text-base"
-              )}>
+              <p className="text-xs sm:text-sm text-blue-300 hidden sm:block">
                 {subtitle}
               </p>
             )}
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        {/* Right Section */}
+        <div className="flex items-center space-x-2 sm:space-x-3">
           {actions}
-          {isMobile && (
-            <>
-              <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white">
-                <Search className="w-5 h-5" />
+          
+          {/* User Menu */}
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden sm:flex touch-friendly"
+            >
+              <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
-              <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white">
-                <Bell className="w-5 h-5" />
-              </Button>
-            </>
-          )}
-          <Avatar className="w-8 h-8 sm:w-10 sm:h-10">
-            <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm">
-              {userAddress.slice(0, 2).toUpperCase()}
+            
+            <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+              <AvatarFallback className="bg-blue-500 text-white text-xs sm:text-sm">
+                {userAddress.slice(2, 6).toUpperCase()}
             </AvatarFallback>
           </Avatar>
         </div>
       </div>
     </div>
+    </header>
   )
 }
 
-// Responsive Card
-interface ResponsiveCardProps {
+// Responsive Button Component
+interface ResponsiveButtonProps {
   children: React.ReactNode
   className?: string
-  padding?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg'
+  variant?: 'default' | 'outline' | 'ghost'
+  fullWidth?: boolean
+  touchFriendly?: boolean
 }
 
-export function ResponsiveCard({ 
+export function ResponsiveButton({
   children, 
   className, 
-  padding = 'md' 
-}: ResponsiveCardProps) {
-  const { isMobile } = useResponsive()
-
+  size = 'md',
+  variant = 'default',
+  fullWidth = false,
+  touchFriendly = true
+}: ResponsiveButtonProps) {
   return (
-    <div className={cn(
-      "bg-slate-800/50 border border-slate-600 text-white backdrop-blur-sm card-glass",
-      {
-        'p-3': padding === 'sm' || isMobile,
-        'p-4': padding === 'md' && !isMobile,
-        'p-6': padding === 'lg' && !isMobile,
+    <Button
+      className={cn(
+        {
+          'w-full sm:w-auto': fullWidth,
+          'min-h-[44px] min-w-[44px]': touchFriendly,
+          'px-3 py-2 text-sm sm:px-4 sm:py-3 sm:text-base': size === 'sm',
+          'px-4 py-3 text-base sm:px-6 sm:py-4 sm:text-lg': size === 'md',
+          'px-6 py-4 text-lg sm:px-8 sm:py-5 sm:text-xl': size === 'lg',
       },
       className
-    )}>
+      )}
+      variant={variant}
+    >
       {children}
-    </div>
+    </Button>
   )
 }
 
-// Responsive Text
-interface ResponsiveTextProps {
-  children: React.ReactNode
-  variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'body' | 'caption'
+// Responsive Input Component
+interface ResponsiveInputProps {
+  placeholder?: string
   className?: string
+  size?: 'sm' | 'md' | 'lg'
+  fullWidth?: boolean
 }
 
-export function ResponsiveText({ 
-  children, 
-  variant = 'body', 
+export function ResponsiveInput({
+  placeholder,
+  className,
+  size = 'md',
+  fullWidth = true
+}: ResponsiveInputProps) {
+  return (
+    <input
+      type="text"
+      placeholder={placeholder}
+      className={cn(
+        "bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200",
+        {
+          'w-full': fullWidth,
+          'px-3 py-2 text-sm sm:px-4 sm:py-3 sm:text-base': size === 'sm',
+          'px-4 py-3 text-base sm:px-6 sm:py-4 sm:text-lg': size === 'md',
+          'px-6 py-4 text-lg sm:px-8 sm:py-5 sm:text-xl': size === 'lg',
+        },
   className 
-}: ResponsiveTextProps) {
-  const { isMobile } = useResponsive()
+      )}
+    />
+  )
+}
 
-  const baseClasses = "pixelated-text"
-  const variantClasses = {
-    h1: isMobile ? "text-2xl" : "text-4xl",
-    h2: isMobile ? "text-xl" : "text-3xl", 
-    h3: isMobile ? "text-lg" : "text-2xl",
-    h4: isMobile ? "text-base" : "text-xl",
-    body: isMobile ? "text-sm" : "text-base",
-    caption: isMobile ? "text-xs" : "text-sm"
-  }
+// Responsive Spacing Component
+interface ResponsiveSpacingProps {
+  children: React.ReactNode
+  className?: string
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+  direction?: 'vertical' | 'horizontal'
+}
 
+export function ResponsiveSpacing({
+  children,
+  className,
+  size = 'md',
+  direction = 'vertical'
+}: ResponsiveSpacingProps) {
   return (
     <div className={cn(
-      baseClasses,
-      variantClasses[variant],
+      {
+        // Vertical spacing
+        'space-y-1 sm:space-y-2': size === 'xs' && direction === 'vertical',
+        'space-y-2 sm:space-y-4': size === 'sm' && direction === 'vertical',
+        'space-y-4 sm:space-y-6': size === 'md' && direction === 'vertical',
+        'space-y-6 sm:space-y-8': size === 'lg' && direction === 'vertical',
+        'space-y-8 sm:space-y-12': size === 'xl' && direction === 'vertical',
+        
+        // Horizontal spacing
+        'space-x-1 sm:space-x-2': size === 'xs' && direction === 'horizontal',
+        'space-x-2 sm:space-x-4': size === 'sm' && direction === 'horizontal',
+        'space-x-4 sm:space-x-6': size === 'md' && direction === 'horizontal',
+        'space-x-6 sm:space-x-8': size === 'lg' && direction === 'horizontal',
+        'space-x-8 sm:space-x-12': size === 'xl' && direction === 'horizontal',
+      },
       className
     )}>
       {children}

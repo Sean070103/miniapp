@@ -16,16 +16,18 @@ export default function CSVUploadPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container-mobile py-responsive-lg">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-4">CSV Upload System</h1>
-          <p className="text-muted-foreground">
+        <div className="text-center space-responsive-lg">
+          <h1 className="text-responsive-2xl sm:text-responsive-3xl lg:text-responsive-4xl font-bold space-responsive-sm">
+            CSV Upload System
+          </h1>
+          <p className="text-responsive-base text-muted-foreground">
             Bulk import users, journals, and comments to your database using CSV files
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid-responsive-1 lg:grid-responsive-2 gap-responsive-lg space-responsive-lg">
           {/* CSV Upload Component */}
           <div>
             <CSVUpload 
@@ -41,57 +43,57 @@ export default function CSVUploadPage() {
           </div>
 
           {/* Sample Files and Instructions */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+          <div className="space-responsive-md">
+            <Card className="card-mobile">
+              <CardHeader className="space-responsive-sm">
+                <CardTitle className="flex items-center gap-2 text-responsive-lg">
                   <FileText className="h-5 w-5" />
                   Sample CSV Files
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-responsive-sm">
                   Download these sample files to test the upload functionality
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <h4 className="font-medium">Users CSV</h4>
-                    <p className="text-sm text-muted-foreground">Sample user data with walletAddress, username, and bio</p>
+              <CardContent className="space-responsive-sm">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-responsive-sm border rounded-responsive-lg space-responsive-sm">
+                  <div className="space-responsive-xs">
+                    <h4 className="font-medium text-responsive-base">Users CSV</h4>
+                    <p className="text-responsive-xs text-muted-foreground">Sample user data with walletAddress, username, and bio</p>
                   </div>
                   <Button 
                     size="sm" 
                     onClick={() => handleDownloadSample('sample-users.csv')}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 touch-friendly w-full sm:w-auto"
                   >
                     <Download className="h-4 w-4" />
                     Download
                   </Button>
                 </div>
 
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <h4 className="font-medium">Journals CSV</h4>
-                    <p className="text-sm text-muted-foreground">Sample journal entries with content, privacy, and tags</p>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-responsive-sm border rounded-responsive-lg space-responsive-sm">
+                  <div className="space-responsive-xs">
+                    <h4 className="font-medium text-responsive-base">Journals CSV</h4>
+                    <p className="text-responsive-xs text-muted-foreground">Sample journal entries with content, privacy, and tags</p>
                   </div>
                   <Button 
                     size="sm" 
                     onClick={() => handleDownloadSample('sample-journals.csv')}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 touch-friendly w-full sm:w-auto"
                   >
                     <Download className="h-4 w-4" />
                     Download
                   </Button>
                 </div>
 
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <h4 className="font-medium">Comments CSV</h4>
-                    <p className="text-sm text-muted-foreground">Sample comments with baseUserId, journalId, and comment text</p>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-responsive-sm border rounded-responsive-lg space-responsive-sm">
+                  <div className="space-responsive-xs">
+                    <h4 className="font-medium text-responsive-base">Comments CSV</h4>
+                    <p className="text-responsive-xs text-muted-foreground">Sample comments with baseUserId, journalId, and comment text</p>
                   </div>
                   <Button 
                     size="sm" 
                     onClick={() => handleDownloadSample('sample-comments.csv')}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 touch-friendly w-full sm:w-auto"
                   >
                     <Download className="h-4 w-4" />
                     Download
@@ -100,50 +102,52 @@ export default function CSVUploadPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <Card className="card-mobile">
+              <CardHeader className="space-responsive-sm">
+                <CardTitle className="flex items-center gap-2 text-responsive-lg">
                   <Database className="h-5 w-5" />
                   CSV Format Requirements
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-responsive-sm">
                   Follow these formats for successful uploads
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-medium text-sm mb-2">Users Format:</h4>
-                  <code className="text-xs bg-muted p-2 rounded block">
+              <CardContent className="space-responsive-md">
+                <div className="space-responsive-sm">
+                  <h4 className="font-medium text-responsive-sm space-responsive-xs">Users Format:</h4>
+                  <code className="text-responsive-xs bg-muted p-responsive-sm rounded-responsive-sm block overflow-x-auto">
                     walletAddress,username,email,profilePicture,bio
                   </code>
                 </div>
                 
-                <div>
-                  <h4 className="font-medium text-sm mb-2">Journals Format:</h4>
-                  <code className="text-xs bg-muted p-2 rounded block">
+                <div className="space-responsive-sm">
+                  <h4 className="font-medium text-responsive-sm space-responsive-xs">Journals Format:</h4>
+                  <code className="text-responsive-xs bg-muted p-responsive-sm rounded-responsive-sm block overflow-x-auto">
                     baseUserId,journal,privacy,photo,likes,tags
                   </code>
                 </div>
                 
-                <div>
-                  <h4 className="font-medium text-sm mb-2">Comments Format:</h4>
-                  <code className="text-xs bg-muted p-2 rounded block">
+                <div className="space-responsive-sm">
+                  <h4 className="font-medium text-responsive-sm space-responsive-xs">Comments Format:</h4>
+                  <code className="text-responsive-xs bg-muted p-responsive-sm rounded-responsive-sm block overflow-x-auto">
                     baseUserId,journalId,comment
                   </code>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>How to Use</CardTitle>
+            <Card className="card-mobile">
+              <CardHeader className="space-responsive-sm">
+                <CardTitle className="text-responsive-lg">How to Use</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <p>1. Download a sample CSV file or create your own</p>
-                <p>2. Ensure your CSV has the correct headers</p>
-                <p>3. Fill in your data following the format</p>
-                <p>4. Upload the CSV file using the form</p>
-                <p>5. Check the results and database records</p>
+              <CardContent className="space-responsive-sm text-responsive-sm">
+                <div className="space-responsive-xs">
+                  <p>1. Download a sample CSV file or create your own</p>
+                  <p>2. Ensure your CSV has the correct headers</p>
+                  <p>3. Fill in your data following the format</p>
+                  <p>4. Upload the CSV file using the form</p>
+                  <p>5. Check the results and database records</p>
+                </div>
               </CardContent>
             </Card>
           </div>
