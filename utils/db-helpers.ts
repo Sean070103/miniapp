@@ -34,17 +34,19 @@ export const validateRequiredFields = (data: Record<string, any>, requiredFields
 
 // Helper function to create a user
 export const createUser = async (userData: {
-  baseUserId: string
+  walletAddress: string
+  username?: string
+  email?: string
+  profilePicture?: string
   bio?: string
-  profile?: string
 }) => {
   try {
-    const validation = validateRequiredFields(userData, ['baseUserId'])
+    const validation = validateRequiredFields(userData, ['walletAddress'])
     if (validation.error) {
       return validation
     }
 
-    const user = await prisma.baseUsers.create({
+    const user = await prisma.baseUser.create({
       data: userData
     })
 
@@ -126,10 +128,10 @@ export const createRepost = async (repostData: {
 export const createChainComment = async (chainCommentData: {
   baseUserId: string
   commentId: string
-  comment: string
+  chainComment: string
 }) => {
   try {
-    const validation = validateRequiredFields(chainCommentData, ['baseUserId', 'commentId', 'comment'])
+    const validation = validateRequiredFields(chainCommentData, ['baseUserId', 'commentId', 'chainComment'])
     if (validation.error) {
       return validation
     }

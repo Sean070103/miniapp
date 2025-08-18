@@ -1,5 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 
+// Extend globalThis to include prismaGlobal property
+declare global {
+  var prismaGlobal: PrismaClient | undefined;
+}
+
 const prismaClientSingleton = () => {
     return new PrismaClient();
 };

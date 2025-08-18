@@ -13,7 +13,7 @@ import { DailyEntry } from "@/components/dashboard/daily-entry"
 import { useAuth } from "@/contexts/auth-context"
 import { ContributionGrid } from "@/components/dashboard/contribution-grid"
 import { StreakTracker } from "@/components/dashboard/streak-tracker"
-import { useToast, Toast } from "@/components/ui/toast"
+import { useToast } from "@/components/ui/use-toast"
 import { Search as SearchComponent, SearchFilters } from "@/components/ui/search"
 import { ImageUpload, useImageUpload } from "@/components/ui/image-upload"
 import { UserProfile } from "@/components/ui/user-profile"
@@ -62,7 +62,7 @@ export default function Dashboard({ address }: DashboardProps) {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   
   // Toast notifications
-  const { toasts, showToast, removeToast } = useToast();
+  const { toasts, toast, dismiss } = useToast();
 
   // Comment and repost states
   const [dbComments, setDbComments] = useState<any[]>([]);
@@ -559,12 +559,18 @@ export default function Dashboard({ address }: DashboardProps) {
       }));
       
       // Show success toast
-      showToast('Comment posted successfully!', 'success');
+              toast({
+          title: "Success",
+          description: "Comment posted successfully!"
+        });
       
       return newComment;
     } catch (error) {
       console.error("Error posting comment:", error);
-      showToast('Failed to post comment', 'error');
+              toast({
+          title: "Error",
+          description: "Failed to post comment"
+        });
       throw error;
     }
   };
@@ -592,7 +598,10 @@ export default function Dashboard({ address }: DashboardProps) {
         console.log('Like action successful:', data);
         
         // Show success toast
-        showToast(data.liked ? 'Post liked!' : 'Post unliked!', 'success');
+        toast({
+          title: "Success",
+          description: data.liked ? 'Post liked!' : 'Post unliked!'
+        });
         
         // Create notification for like
         if (data.liked) {
@@ -614,11 +623,17 @@ export default function Dashboard({ address }: DashboardProps) {
         }));
       } else {
         console.error('Like action failed');
-        showToast('Failed to like post', 'error');
+        toast({
+          title: "Error",
+          description: "Failed to like post"
+        });
       }
     } catch (error) {
       console.error('Error handling like:', error);
-      showToast('Error liking post', 'error');
+      toast({
+          title: "Error",
+          description: "Error liking post"
+        });
     } finally {
       setLoadingLikes(prev => ({ ...prev, [journalId]: false }));
     }
@@ -645,7 +660,10 @@ export default function Dashboard({ address }: DashboardProps) {
     
     if (!address) {
       console.error('No wallet address available for repost');
-      showToast('Please connect your wallet to repost', 'error');
+      toast({
+          title: "Error",
+          description: "Please connect your wallet to repost"
+        });
       return;
     }
     
@@ -673,7 +691,10 @@ export default function Dashboard({ address }: DashboardProps) {
         console.log('Repost action successful:', data);
         
         // Show success toast
-        showToast(data.reposted ? 'Post reposted!' : 'Repost removed!', 'success');
+        toast({
+          title: "Success",
+          description: data.reposted ? 'Post reposted!' : 'Repost removed!'
+        });
         
         // Create notification for repost
         if (data.reposted) {
@@ -697,7 +718,10 @@ export default function Dashboard({ address }: DashboardProps) {
       } else {
         const errorData = await response.text();
         console.error('Repost action failed:', response.status, errorData);
-        showToast('Failed to repost', 'error');
+        toast({
+          title: "Error",
+          description: "Failed to repost"
+        });
       }
     } catch (error) {
       console.error('Error handling repost:', error);
@@ -708,7 +732,10 @@ export default function Dashboard({ address }: DashboardProps) {
       } else {
         console.error('Caught an unknown error type:', typeof error, error);
       }
-      showToast('Error reposting', 'error');
+      toast({
+          title: "Error",
+          description: "Error reposting"
+        });
     } finally {
       setLoadingReposts(prev => ({ ...prev, [journalId]: false }));
     }
@@ -755,7 +782,10 @@ export default function Dashboard({ address }: DashboardProps) {
         console.log('Post created successfully:', newPost);
         
         // Show success toast
-        showToast('Post created successfully!', 'success');
+        toast({
+          title: "Success",
+          description: "Post created successfully!"
+        });
         
         // Update posts list
         setAllPosts(prev => [newPost, ...prev]);
@@ -766,11 +796,17 @@ export default function Dashboard({ address }: DashboardProps) {
         clearImages(); // Clear uploaded images
       } else {
         console.error('Failed to create post');
-        showToast('Failed to create post', 'error');
+        toast({
+          title: "Error",
+          description: "Failed to create post"
+        });
       }
     } catch (error) {
       console.error('Error creating post:', error);
-      showToast('Error creating post', 'error');
+      toast({
+          title: "Error",
+          description: "Error creating post"
+        });
     } finally {
       setIsCreatingPost(false);
       setIsProcessingImages(false);
@@ -1169,7 +1205,10 @@ export default function Dashboard({ address }: DashboardProps) {
             <div className="mb-8">
               <SearchComponent 
                 onResultSelect={(result) => {
-                  showToast(`Selected: ${result.title}`, 'info');
+                  toast({
+          title: "Info",
+          description: `Selected: ${result.title}`
+        });
                 }}
                 placeholder="Search posts, users, tags..."
                 className="w-full"
@@ -3091,10 +3130,16 @@ export default function Dashboard({ address }: DashboardProps) {
              achievements={userAchievements}
              isOwnProfile={true}
              onEdit={() => {
-               showToast('Edit profile functionality coming soon!', 'info');
+               toast({
+          title: "Info",
+          description: "Edit profile functionality coming soon!"
+        });
              }}
              onFollow={() => {
-               showToast('Follow functionality coming soon!', 'info');
+               toast({
+          title: "Info",
+          description: "Follow functionality coming soon!"
+        });
              }}
            />
          </div>
@@ -3354,15 +3399,32 @@ export default function Dashboard({ address }: DashboardProps) {
 
  return (
    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-     {/* Toast Notifications */}
-     {toasts.map((toast) => (
-       <Toast
-         key={toast.id}
-         type={toast.type}
-         message={toast.message}
-         onClose={() => removeToast(toast.id)}
-       />
-     ))}
+           {/* Toast Notifications */}
+      {toasts.map((toast) => (
+        <div
+          key={toast.id}
+          className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
+            toast.title === "Error" 
+              ? "bg-red-500 text-white" 
+              : toast.title === "Success"
+              ? "bg-green-500 text-white"
+              : "bg-blue-500 text-white"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-semibold">{toast.title}</div>
+              <div className="text-sm opacity-90">{toast.description}</div>
+            </div>
+            <button
+              onClick={() => dismiss(toast.id)}
+              className="ml-4 text-white hover:text-gray-200"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      ))}
 
      {/* Responsive Sidebar */}
      <ResponsiveSidebar

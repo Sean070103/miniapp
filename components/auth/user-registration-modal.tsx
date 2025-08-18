@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/contexts/auth-context"
-import { useToast } from "@/components/ui/toast"
+import { useToast } from "@/components/ui/use-toast"
 import { User, Camera, Check, X, Loader2 } from 'lucide-react'
 
 interface UserRegistrationModalProps {
@@ -24,13 +24,16 @@ export function UserRegistrationModal({ isOpen, onClose, walletAddress }: UserRe
   const [isLoading, setIsLoading] = useState(false)
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null)
   const { createAccount } = useAuth()
-  const { showToast } = useToast()
+  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!username.trim()) {
-      showToast('Username is required', 'error')
+      toast({
+        title: "Error",
+        description: "Username is required"
+      })
       return
     }
 
@@ -55,11 +58,17 @@ export function UserRegistrationModal({ isOpen, onClose, walletAddress }: UserRe
         throw new Error('Failed to create profile')
       }
 
-      showToast('Profile created successfully!', 'success')
+      toast({
+        title: "Success",
+        description: "Profile created successfully!"
+      })
       onClose()
     } catch (error) {
       console.error('Registration failed:', error)
-      showToast('Failed to create profile', 'error')
+      toast({
+        title: "Error",
+        description: "Failed to create profile"
+      })
     } finally {
       setIsLoading(false)
     }

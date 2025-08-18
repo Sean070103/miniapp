@@ -13,8 +13,8 @@ export async function POST(req: Request) {
   }
 
   try {
-    const baseUserDetails = await prisma.baseUsers.findFirst({
-      where: { baseUserId: baseUserId },
+    const baseUserDetails = await prisma.baseUser.findFirst({
+      where: { id: baseUserId },
     });
 
     if (!baseUserDetails) {

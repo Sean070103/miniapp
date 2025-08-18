@@ -3,7 +3,7 @@ import prisma from '../../../utils/connect'
 export async function GET() {
   try {
     // Test the database connection by trying to count records
-    const userCount = await prisma.baseUsers.count()
+    const userCount = await prisma.baseUser.count()
     const journalCount = await prisma.journal.count()
     const commentCount = await prisma.comment.count()
     const repostCount = await prisma.repost.count()

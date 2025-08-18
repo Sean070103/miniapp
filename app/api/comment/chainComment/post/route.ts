@@ -9,7 +9,7 @@ export async function POST(req:Request) {
  const {
  commentId,
  baseUserId,  
- comment,    
+ chainComment,    
  } = body
 
  try {
@@ -24,7 +24,7 @@ export async function POST(req:Request) {
    data: {
     commentId,
     baseUserId,  
-    comment, 
+    chainComment, 
    }
   })
   
