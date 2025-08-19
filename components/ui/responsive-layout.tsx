@@ -289,7 +289,7 @@ export function ResponsiveSidebar({
   const { isMobile, isTablet } = useResponsive()
 
   const sidebarContent = (
-    <div className="flex flex-col h-full glass-strong bg-slate-900/70 border-r border-white/10">
+    <div className="h-full bg-gradient-to-b from-blue-950/70 via-blue-900/60 to-blue-800/50 backdrop-blur-3xl border-r border-white/20 flex flex-col shadow-2xl shadow-blue-500/30 hover:shadow-blue-400/40 transition-all duration-500">
       {/* User Profile Section */}
       <div className="p-4 sm:p-6 border-b border-white/10">
         <div className="flex items-center space-x-3">
@@ -302,7 +302,7 @@ export function ResponsiveSidebar({
             <p className="text-sm sm:text-base font-medium text-white truncate">
               {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
             </p>
-            <p className="text-xs sm:text-sm text-blue-300">Connected</p>
+            <p className="text-xs sm:text-sm text-blue-100">Connected</p>
           </div>
         </div>
       </div>
@@ -323,10 +323,10 @@ export function ResponsiveSidebar({
                 }
               }}
               className={cn(
-                "w-full flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left transition-all duration-200 touch-friendly",
+                "w-full flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left transition-all duration-300 ease-out touch-friendly",
                 {
-                  "bg-blue-500/20 text-blue-300 border border-blue-500/30": isActive,
-                  "text-gray-300 hover:bg-white/10 hover:text-white": !isActive,
+                  "bg-blue-500/60 text-white border border-blue-300/70 shadow-lg shadow-blue-300/40 backdrop-blur-2xl hover:scale-105": isActive,
+                  "text-white hover:bg-white/15 hover:text-white hover:scale-102": !isActive,
                 }
               )}
             >
@@ -348,20 +348,7 @@ export function ResponsiveSidebar({
 
       {/* Bottom Actions */}
       <div className="p-4 sm:p-6 border-t border-white/10 space-y-2">
-        <button className="w-full flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-200 touch-friendly">
-          <div className="flex items-center space-x-3">
-            <Settings className="h-5 w-5 sm:h-6 sm:w-6" />
-            <span className="text-sm sm:text-base">Settings</span>
-          </div>
-          <ChevronRight className="h-4 w-4" />
-        </button>
-        
-        <button className="w-full flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-red-300 hover:bg-red-500/10 hover:text-red-200 transition-all duration-200 touch-friendly">
-          <div className="flex items-center space-x-3">
-            <LogOut className="h-5 w-5 sm:h-6 sm:w-6" />
-            <span className="text-sm sm:text-base">Disconnect</span>
-        </div>
-        </button>
+        {/* Removed duplicate disconnect button - available in main settings */}
       </div>
     </div>
   )
@@ -413,7 +400,7 @@ export function ResponsiveHeader({
 
   return (
     <header className={cn(
-      "sticky top-0 z-30 glass-strong bg-slate-900/70 border-b border-white/10",
+      "sticky top-0 z-30 bg-blue-950/40 backdrop-blur-2xl border-b border-white/10 shadow-lg shadow-blue-400/20",
       className
     )}>
       <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-4">

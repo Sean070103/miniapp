@@ -68,10 +68,10 @@ export function CalendarView() {
       {/* Header with streak info */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent drop-shadow-lg">
             Your Base Journey Calendar
           </h2>
-          <p className="text-blue-600 text-lg">Track your daily Base activities and build streaks</p>
+          <p className="text-blue-100 text-lg font-medium">Track your daily Base activities and build streaks</p>
         </div>
         <div className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border border-blue-200">
           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">

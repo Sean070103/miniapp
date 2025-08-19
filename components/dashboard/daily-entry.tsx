@@ -272,7 +272,7 @@ export function DailyEntry({ userId, onSave, todayEntry }: DailyEntryProps) {
               {todayEntry.tags.map((tag, index) => (
                 <Badge
                   key={index}
-                  className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text"
+                  className="bg-blue-400/50 text-blue-50 border-blue-300/60 pixelated-text shadow-sm shadow-blue-300/30"
                 >
                   <Hash className="w-3 h-3 mr-1" />
                   {tag}
@@ -381,7 +381,7 @@ export function DailyEntry({ userId, onSave, todayEntry }: DailyEntryProps) {
             )}
           </div>
           
-          <p className="text-slate-400 text-xs pixelated-text">
+          <p className="text-blue-100 text-xs pixelated-text">
             Upload images to share with your Base community. Max file size: 4MB
           </p>
         </div>

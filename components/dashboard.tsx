@@ -1421,7 +1421,7 @@ export default function Dashboard({ address }: DashboardProps) {
             {isLoadingFeed ? (
               <div className="space-y-6">
                 {[...Array(3)].map((_, index) => (
-                  <Card key={index} className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+                  <Card key={index} className="bg-white/10 border-white/20 text-white backdrop-blur-2xl card-glass shadow-lg shadow-blue-400/30">
                     <CardHeader className="pb-4">
                       <div className="flex items-start gap-4">
                         <Skeleton className="w-12 h-12 rounded-full bg-slate-600" />
@@ -1795,22 +1795,22 @@ export default function Dashboard({ address }: DashboardProps) {
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h1 className="text-3xl font-bold text-white pixelated-text mb-2">
-                Calendar View
-              </h1>
-              <p className="text-blue-300 pixelated-text">
-                Track your daily entries and activities
-              </p>
+                           <h1 className="text-4xl font-bold text-white pixelated-text mb-3 bg-gradient-to-r from-white via-blue-50 to-cyan-100 bg-clip-text text-transparent drop-shadow-lg">
+               Calendar View
+             </h1>
+             <p className="text-blue-100 pixelated-text text-lg font-medium drop-shadow-sm">
+               Track your daily entries and activities
+             </p>
             </div>
 
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm">
               <CardHeader className="text-center">
                 <div className="flex items-center justify-between mb-4">
                   <Button
                     onClick={goToPreviousYear}
                     variant="outline"
                     size="sm"
-                    className="bg-slate-700/80 border-slate-600 text-white pixelated-text"
+                    className="bg-white/15 border-white/20 text-white pixelated-text backdrop-blur-sm hover:bg-white/25 hover:scale-105 hover:shadow-lg hover:shadow-blue-400/20 transition-all duration-300 ease-out"
                   >
                     {"<<"}
                   </Button>
@@ -1818,20 +1818,20 @@ export default function Dashboard({ address }: DashboardProps) {
                     onClick={goToPreviousMonth}
                     variant="outline"
                     size="sm"
-                    className="bg-slate-700/80 border-slate-600 text-white pixelated-text"
+                    className="bg-white/15 border-white/20 text-white pixelated-text backdrop-blur-sm hover:bg-white/25 hover:scale-105 hover:shadow-lg hover:shadow-blue-400/20 transition-all duration-300 ease-out"
                   >
                     {"<"}
                   </Button>
                   <div className="flex-1 text-center">
-                    <h2 className="text-2xl font-bold text-white pixelated-text">
-                      {getMonthName(currentMonth)} {currentYear}
-                    </h2>
+                                       <h2 className="text-3xl font-bold text-white pixelated-text bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent drop-shadow-md">
+                     {getMonthName(currentMonth)} {currentYear}
+                   </h2>
                   </div>
                   <Button
                     onClick={goToNextMonth}
                     variant="outline"
                     size="sm"
-                    className="bg-slate-700/80 border-slate-600 text-white pixelated-text"
+                    className="bg-white/15 border-white/20 text-white pixelated-text backdrop-blur-sm hover:bg-white/25 hover:scale-105 hover:shadow-lg hover:shadow-blue-400/20 transition-all duration-300 ease-out"
                   >
                     {">"}
                   </Button>
@@ -1839,7 +1839,7 @@ export default function Dashboard({ address }: DashboardProps) {
                     onClick={goToNextYear}
                     variant="outline"
                     size="sm"
-                    className="bg-slate-700/80 border-slate-600 text-white pixelated-text"
+                    className="bg-white/15 border-white/20 text-white pixelated-text backdrop-blur-sm hover:bg-white/25 hover:scale-105 hover:shadow-lg hover:shadow-blue-400/20 transition-all duration-300 ease-out"
                   >
                     {">>"}
                   </Button>
@@ -1847,7 +1847,7 @@ export default function Dashboard({ address }: DashboardProps) {
                 <Button
                   onClick={goToToday}
                   variant="outline"
-                  className="bg-blue-600/20 border-blue-500 text-blue-300 pixelated-text"
+                  className="bg-blue-500/40 border-blue-400/50 text-white pixelated-text backdrop-blur-sm hover:bg-blue-500/60 hover:scale-105 hover:shadow-lg hover:shadow-blue-300/40 transition-all duration-300 ease-out"
                 >
                   Today
                 </Button>
@@ -1856,9 +1856,9 @@ export default function Dashboard({ address }: DashboardProps) {
                 <div className="grid grid-cols-7 gap-1">
                   {dayNames.map((day) => (
                     <div key={day} className="p-2 text-center">
-                      <div className="text-sm font-semibold text-blue-300 pixelated-text">
-                        {day}
-                      </div>
+                                           <div className="text-sm font-semibold text-blue-100 pixelated-text">
+                       {day}
+                     </div>
                     </div>
                   ))}
 
@@ -1872,19 +1872,19 @@ export default function Dashboard({ address }: DashboardProps) {
                     >
                       {day ? (
                         <div
-                          className={`relative w-8 h-8 mx-auto rounded-lg flex items-center justify-center text-sm pixelated-text ${
+                          className={`relative w-10 h-10 mx-auto rounded-xl flex items-center justify-center text-sm pixelated-text transition-all duration-300 hover:scale-110 ${
                             isToday(day)
-                              ? "bg-blue-600 text-white font-bold"
+                              ? "bg-gradient-to-br from-blue-500 to-blue-400 text-white font-bold shadow-lg shadow-blue-300/60"
                               : isSelected(day)
-                              ? "bg-blue-500/30 text-blue-300 border border-blue-400"
+                              ? "bg-gradient-to-br from-blue-400/50 to-blue-300/40 text-blue-50 border-2 border-blue-300/60 shadow-md shadow-blue-300/40"
                               : hasEntriesForDate(day)
-                              ? "bg-green-500/20 text-green-300 border border-green-400/30"
-                              : "text-white hover:bg-slate-600/50"
+                              ? "bg-gradient-to-br from-green-400/40 to-green-300/30 text-green-50 border-2 border-green-300/50 shadow-md shadow-green-300/30"
+                              : "text-white hover:bg-white/20 hover:border hover:border-white/30 hover:shadow-md hover:shadow-white/20"
                           }`}
                         >
                           {day}
                           {hasEntriesForDate(day) && (
-                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full"></div>
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-green-300 to-green-200 rounded-full shadow-sm shadow-green-300/60 animate-pulse"></div>
                           )}
                         </div>
                       ) : (
@@ -1896,7 +1896,7 @@ export default function Dashboard({ address }: DashboardProps) {
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-blue-300 pixelated-text">
                   {selectedDate.toDateString()}
@@ -2082,10 +2082,10 @@ export default function Dashboard({ address }: DashboardProps) {
        return (
          <div className="space-y-8">
            <div className="text-center mb-12">
-             <h1 className="text-4xl font-bold text-white mb-3">
+             <h1 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent drop-shadow-lg">
                Basio Calculator
              </h1>
-             <p className="text-slate-400 text-lg">
+             <p className="text-blue-100 text-xl font-medium drop-shadow-sm">
                Advanced crypto calculation suite
              </p>
            </div>
@@ -2124,8 +2124,8 @@ export default function Dashboard({ address }: DashboardProps) {
                    variant="outline"
                    className={`pixelated-text relative overflow-hidden ${
                      activeCalculatorTab === tab.id
-                       ? `bg-gradient-to-r ${tab.color} text-white border-0 shadow-lg transform scale-105`
-                       : "bg-slate-800 border-slate-600 text-blue-300 hover:bg-slate-700 hover:scale-105 transition-all duration-200"
+                       ? `bg-gradient-to-r ${tab.color} text-white border-0 shadow-lg shadow-blue-400/50 transform scale-105`
+                       : "bg-white/10 border-white/20 text-blue-100 hover:bg-white/20 hover:scale-105 transition-all duration-300 backdrop-blur-sm"
                    }`}
                    onClick={() => setActiveCalculatorTab(tab.id)}
                  >
@@ -2142,75 +2142,75 @@ export default function Dashboard({ address }: DashboardProps) {
            {activeCalculatorTab === "gas" && (
              <div className="max-w-4xl mx-auto">
                <div className="text-center mb-8">
-                 <h2 className="text-2xl font-semibold text-white mb-2">
+                 <h2 className="text-3xl font-semibold text-white mb-3 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent drop-shadow-md">
                    Gas Fee Calculator
                  </h2>
-                 <p className="text-slate-400">
+                 <p className="text-blue-100 text-lg font-medium">
                    Calculate transaction costs with precision
                  </p>
                </div>
                <div className="space-y-6">
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                    <div className="space-y-2">
-                     <label className="text-sm font-medium text-slate-300">
+                     <label className="text-sm font-medium text-blue-100">
                        Gas Price (Gwei)
                      </label>
                      <input
                        type="number"
                        value={gasPrice}
                        onChange={(e) => setGasPrice(e.target.value)}
-                       className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                       className="w-full bg-white/10 border border-white/20 text-white px-4 py-3 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all duration-300 backdrop-blur-sm"
                        placeholder="20"
                      />
                    </div>
                    <div className="space-y-2">
-                     <label className="text-sm font-medium text-slate-300">
+                     <label className="text-sm font-medium text-blue-100">
                        Gas Limit
                      </label>
                      <input
                        type="number"
                        value={gasLimit}
                        onChange={(e) => setGasLimit(e.target.value)}
-                       className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                       className="w-full bg-white/10 border border-white/20 text-white px-4 py-3 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all duration-300 backdrop-blur-sm"
                        placeholder="21000"
                      />
                    </div>
                    <div className="space-y-2">
-                     <label className="text-sm font-medium text-slate-300">
+                     <label className="text-sm font-medium text-blue-100">
                        ETH Price (USD)
                      </label>
                      <input
                        type="number"
                        value={ethPrice}
                        onChange={(e) => setEthPrice(e.target.value)}
-                       className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                       className="w-full bg-white/10 border border-white/20 text-white px-4 py-3 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all duration-300 backdrop-blur-sm"
                        placeholder="2000"
                      />
                    </div>
                  </div>
 
-                 <div className="bg-slate-800/50 rounded-xl p-8 border border-slate-700">
-                   <h4 className="text-white font-semibold mb-6 text-center text-lg">
+                 <div className="bg-white/8 rounded-xl p-8 border border-white/20 backdrop-blur-2xl shadow-lg shadow-blue-400/30">
+                   <h4 className="text-white font-semibold mb-6 text-center text-xl bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
                      Calculation Results
                    </h4>
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                     <div className="text-center p-6 bg-slate-700/50 rounded-lg">
-                       <div className="text-3xl font-bold text-blue-400 mb-2">
+                     <div className="text-center p-6 bg-white/10 rounded-lg border border-white/20 backdrop-blur-sm">
+                       <div className="text-3xl font-bold text-blue-300 mb-2">
                          {gasFeeResult.gwei}
                        </div>
-                       <div className="text-sm text-slate-400">Gwei</div>
+                       <div className="text-sm text-blue-100 font-medium">Gwei</div>
                      </div>
-                     <div className="text-center p-6 bg-slate-700/50 rounded-lg">
-                       <div className="text-3xl font-bold text-green-400 mb-2">
+                     <div className="text-center p-6 bg-white/10 rounded-lg border border-white/20 backdrop-blur-sm">
+                       <div className="text-3xl font-bold text-green-300 mb-2">
                          {gasFeeResult.eth}
                        </div>
-                       <div className="text-sm text-slate-400">ETH</div>
+                       <div className="text-sm text-blue-100 font-medium">ETH</div>
                      </div>
-                     <div className="text-center p-6 bg-slate-700/50 rounded-lg">
-                       <div className="text-3xl font-bold text-purple-400 mb-2">
+                     <div className="text-center p-6 bg-white/10 rounded-lg border border-white/20 backdrop-blur-sm">
+                       <div className="text-3xl font-bold text-purple-300 mb-2">
                          ${gasFeeResult.usd}
                        </div>
-                       <div className="text-sm text-slate-400">USD</div>
+                       <div className="text-sm text-blue-100 font-medium">USD</div>
                      </div>
                    </div>
                  </div>
@@ -2221,13 +2221,13 @@ export default function Dashboard({ address }: DashboardProps) {
            {activeCalculatorTab === "currency" && (
              <div className="max-w-4xl mx-auto">
                <div className="text-center mb-8">
-                 <h2 className="text-2xl font-semibold text-white mb-2">
+                 <h2 className="text-3xl font-semibold text-white mb-3 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent drop-shadow-md">
                    Currency Converter
                  </h2>
-                 <p className="text-slate-400">
+                 <p className="text-blue-100 text-lg font-medium">
                    Convert currencies with real-time exchange rates
                  </p>
-                 <div className="text-xs text-green-300 pixelated-text mt-2">
+                 <div className="text-sm text-green-200 pixelated-text mt-3 font-medium">
                    {Object.keys(liveExchangeRates).length > 0
                      ? "✅ Live rates active"
                      : "⚠️ Using backup rates"}
@@ -3218,27 +3218,27 @@ export default function Dashboard({ address }: DashboardProps) {
            </div>
 
            {/* Account Settings */}
-           <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+           <Card className="bg-white/8 border-white/20 text-white backdrop-blur-3xl card-glass shadow-2xl shadow-blue-400/30 border-opacity-30 hover:bg-white/12 hover:border-white/30 transition-all duration-500">
              <CardHeader>
-               <CardTitle className="text-blue-300 pixelated-text">
+               <CardTitle className="text-blue-100 pixelated-text">
                  Account Settings
                </CardTitle>
              </CardHeader>
              <CardContent className="space-y-4">
-               <div className="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg">
-                 <div>
-                   <h3 className="text-white pixelated-text font-semibold">
+                                                                                                                                   <div className="flex items-center justify-between p-4 bg-white/8 rounded-lg border border-white/20 backdrop-blur-xl shadow-md shadow-blue-400/15">
+                   <div>
+                                        <h3 className="text-white pixelated-text font-semibold">
                      Wallet Address
                    </h3>
-                   <p className="text-blue-300 pixelated-text text-sm">
+                   <p className="text-blue-100 pixelated-text text-sm">
                      {getAddressDisplay(address)}
                    </p>
-                 </div>
+                   </div>
                  <Button
                    onClick={copyAddress}
                    variant="outline"
                    size="sm"
-                   className="bg-slate-700 border-slate-600 text-white pixelated-text"
+                   className="bg-blue-500/40 border-blue-300 text-blue-50 pixelated-text hover:bg-blue-500/60"
                  >
                    {copied ? (
                      <Check className="w-4 h-4" />
@@ -3312,26 +3312,26 @@ export default function Dashboard({ address }: DashboardProps) {
              </CardContent>
            </Card>
 
-           {/* Preferences */}
-           <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+                      {/* Preferences */}
+           <Card className="bg-white/8 border-white/20 text-white backdrop-blur-3xl card-glass shadow-2xl shadow-blue-400/30 border-opacity-30 hover:bg-white/12 hover:border-white/30 transition-all duration-500">
              <CardHeader>
-               <CardTitle className="text-blue-300 pixelated-text">
+               <CardTitle className="text-blue-100 pixelated-text">
                  Preferences
                </CardTitle>
              </CardHeader>
              <CardContent className="space-y-4">
-               <div className="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg">
-                 <div>
-                   <h3 className="text-white pixelated-text font-semibold">
+                                                                                                                                   <div className="flex items-center justify-between p-4 bg-white/8 rounded-lg border border-white/20 backdrop-blur-xl shadow-md shadow-blue-400/15">
+                   <div>
+                                        <h3 className="text-white pixelated-text font-semibold">
                      Theme
                    </h3>
-                   <p className="text-blue-300 pixelated-text text-sm">
+                   <p className="text-blue-100 pixelated-text text-sm">
                      Dark mode (default)
                    </p>
-                 </div>
-                 <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text">
-                   Dark
-                 </Badge>
+                   </div>
+                                                                         <Badge className="bg-blue-400/50 text-blue-50 border-blue-300/60 pixelated-text shadow-sm shadow-blue-300/30">
+                       Dark
+                     </Badge>
                </div>
 
                <div className="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg">
@@ -3346,7 +3346,7 @@ export default function Dashboard({ address }: DashboardProps) {
                  <Button
                    variant="outline"
                    size="sm"
-                   className="bg-green-600/20 border-green-500 text-green-300 pixelated-text"
+                   className="bg-blue-500/40 border-blue-300 text-blue-50 pixelated-text"
                  >
                    Enabled
                  </Button>
@@ -3355,9 +3355,9 @@ export default function Dashboard({ address }: DashboardProps) {
            </Card>
 
            {/* About */}
-           <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+           <Card className="bg-white/8 border-white/20 text-white backdrop-blur-3xl card-glass shadow-2xl shadow-blue-400/30 border-opacity-30 hover:bg-white/12 hover:border-white/30 transition-all duration-500">
              <CardHeader>
-               <CardTitle className="text-blue-300 pixelated-text">
+               <CardTitle className="text-blue-100 pixelated-text">
                  About DailyBase
                </CardTitle>
              </CardHeader>
@@ -3371,10 +3371,10 @@ export default function Dashboard({ address }: DashboardProps) {
                  <h3 className="text-xl font-semibold text-white pixelated-text mb-2">
                    DailyBase
                  </h3>
-                 <p className="text-blue-300 pixelated-text mb-4">
+                 <p className="text-blue-100 pixelated-text mb-4">
                    Your personal crypto journal
                  </p>
-                 <p className="text-sm text-blue-300/70 pixelated-text">
+                 <p className="text-sm text-blue-100/80 pixelated-text">
                    Version 1.0.0
                  </p>
                </div>
@@ -3398,7 +3398,26 @@ export default function Dashboard({ address }: DashboardProps) {
  };
 
  return (
-   <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+   <div className="min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-blue-800 relative overflow-hidden">
+     {/* Animated Background Pattern */}
+     <div className="absolute inset-0 opacity-40">
+       <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.08)_1px,transparent_0)] bg-[length:25px_25px] animate-pulse"></div>
+       <div className="absolute inset-0 bg-gradient-to-r from-blue-400/8 via-white/5 to-blue-400/8 animate-pulse"></div>
+       <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(0,212,255,0.15),transparent_50%)] animate-pulse"></div>
+       <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(255,255,255,0.12),transparent_50%)] animate-pulse"></div>
+     </div>
+     
+     {/* Floating Particles */}
+     <div className="absolute inset-0 overflow-hidden">
+       <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white/20 rounded-full animate-bounce" style={{animationDelay: '0s', animationDuration: '3s'}}></div>
+       <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-cyan-300/30 rounded-full animate-bounce" style={{animationDelay: '1s', animationDuration: '4s'}}></div>
+       <div className="absolute bottom-1/4 left-1/3 w-1.5 h-1.5 bg-blue-300/25 rounded-full animate-bounce" style={{animationDelay: '2s', animationDuration: '3.5s'}}></div>
+       <div className="absolute top-2/3 right-1/4 w-1 h-1 bg-white/15 rounded-full animate-bounce" style={{animationDelay: '0.5s', animationDuration: '4.5s'}}></div>
+       <div className="absolute bottom-1/3 left-1/4 w-1.5 h-1.5 bg-cyan-200/20 rounded-full animate-bounce" style={{animationDelay: '1.5s', animationDuration: '3.2s'}}></div>
+     </div>
+     
+     {/* Enhanced gradient overlay */}
+     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/15 via-transparent to-white/8 animate-pulse"></div>
      {/* Enhanced Toast Notifications with responsive positioning */}
      {toasts.map((toast) => (
        <div
@@ -3450,7 +3469,7 @@ export default function Dashboard({ address }: DashboardProps) {
        />
 
        {/* Enhanced Content Container with responsive spacing */}
-       <ResponsiveContainer maxWidth="full" className="py-responsive-sm sm:py-responsive-md lg:py-responsive-lg">
+       <ResponsiveContainer maxWidth="full" className="py-responsive-sm sm:py-responsive-md lg:py-responsive-lg px-4 sm:px-6 lg:px-8">
          {/* Enhanced Page Content with responsive grid */}
          <div className="max-w-7xl mx-auto space-responsive-md">
            {renderContent()}

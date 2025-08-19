@@ -227,8 +227,8 @@ export function StreakTracker({ entries }: StreakTrackerProps) {
 
       {/* Debug Info - Only show in development */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-600">
-          <h4 className="text-blue-300 font-semibold mb-2 pixelated-text">Debug Info</h4>
+        <div className="bg-white/8 rounded-2xl p-4 border border-white/20 backdrop-blur-2xl shadow-lg shadow-blue-400/20">
+                      <h4 className="text-blue-100 font-semibold mb-2 pixelated-text">Debug Info</h4>
           <div className="text-xs text-slate-400 space-y-1">
             <p>Posted dates: {[...new Set(entries.map(entry => entry.date))].sort().join(', ')}</p>
             <p>Current streak: {current} days</p>

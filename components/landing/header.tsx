@@ -11,11 +11,11 @@ export function Header() {
   return (
     <div className="text-center mb-20">
              <div className="flex items-center justify-center mb-8">
-         <h1 className="text-5xl font-bold text-blue-600">
+         <h1 className="text-6xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent drop-shadow-lg">
            DailyBase
          </h1>
        </div>
-             <p className="text-2xl text-black mb-6 font-medium leading-relaxed">
+             <p className="text-2xl text-blue-100 mb-6 font-medium leading-relaxed drop-shadow-sm">
          Your Daily Web3 Life Log on Base
        </p>
        <div className="flex items-center justify-center gap-3 mb-8">

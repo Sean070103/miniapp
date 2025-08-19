@@ -1006,40 +1006,27 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
     return (
           <div className="space-y-6">
             {/* Feed Header */}
-            <div className="text-center mb-6">
-              <h1 className="text-3xl font-bold text-white pixelated-text mb-2">
-                DailyBase Feed
-              </h1>
-              <p className="text-blue-300 pixelated-text">
-                Your personal crypto journey timeline
-              </p>
-            </div>
-
-            {/* Create New Post */}
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass hover-lift">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-3">
-                  <Avatar className="w-12 h-12 ring-2 ring-blue-400/20">
-                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-lg">
-                      DB
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <CardTitle className="text-blue-300 flex items-center gap-2 pixelated-text">
-                      <Plus className="w-5 h-5" />
-                      What's happening in your crypto world today?
-                    </CardTitle>
-                  </div>
+            <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 py-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-xl font-bold text-white">
+                    Home
+                  </h1>
+                  <p className="text-slate-400 text-sm">
+                    Your crypto journey timeline
+                  </p>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <DailyEntry
-                  userId={baseUserId}
-                  onSave={handleJournalSave}
-                  todayEntry={convertToJournal(getTodayEntry())}
-                />
-              </CardContent>
-            </Card>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-slate-400 hover:text-white border-slate-600 hover:border-slate-500"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
 
             {/* Loading State */}
             {isLoading ? (
@@ -1047,7 +1034,7 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
         {[1, 2, 3].map((i) => (
                   <Card
                     key={i}
-                    className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass"
+                    className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm"
                   >
             <CardContent className="p-6">
               <div className="flex items-center space-x-4 mb-4">
@@ -1070,7 +1057,7 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
       </div>
             ) : /* Feed Posts */
             entries.length === 0 ? (
-      <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+      <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm">
         <CardContent className="flex flex-col items-center justify-center py-16">
           <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-6">
             <BookOpen className="w-10 h-10 text-white" />
@@ -1078,10 +1065,10 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
                   <h3 className="text-2xl font-semibold text-white pixelated-text mb-3">
                     Your Feed is Empty
                   </h3>
-          <p className="text-blue-300 text-center mb-8 max-w-md leading-relaxed">
-                    Start your DailyBase journey by creating your first entry.
-                    Share your crypto activities, track your progress, and build
-                    meaningful streaks.
+                    <p className="text-blue-100 text-center mb-8 max-w-md leading-relaxed">
+            Start your DailyBase journey by creating your first entry.
+            Share your crypto activities, track your progress, and build
+            meaningful streaks.
           </p>
           <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white pixelated-text px-8 py-3 text-lg">
             <Plus className="w-5 h-5 mr-2" />
@@ -1092,152 +1079,88 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
             ) : (
     <div className="space-y-6">
                 {dbEntries.map((entry, index) => (
-                  <Card
+                  <div
                     key={entry.id}
-                    className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass hover-lift transition-all duration-300"
+                    className="border-b border-slate-700/50 hover:bg-slate-800/30 transition-colors duration-200 cursor-pointer"
                   >
-          <CardHeader className="pb-4">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-4">
-                <Avatar className="w-12 h-12 ring-2 ring-blue-400/20 flex-shrink-0">
-                            <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold">
-                              {entry.dateCreated
-                                ? new Date(entry.dateCreated)
-                                    .getDate()
-                                    .toString()
-                                    .padStart(2, "0")
-                                : "DB"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="font-semibold text-white pixelated-text text-lg">
-                                {entry.baseUserId.slice(0, 6)}...
-                                {entry.baseUserId.slice(-4)}
-                    </div>
-                      <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text text-xs">
-                                Entry #{index + 1}
-                      </Badge>
-                  </div>
-                  <div className="text-sm text-blue-300 pixelated-text flex items-center gap-2">
-                    <Calendar className="w-3 h-3" />
-                              {entry.dateCreated
-                                ? new Date(
-                                    entry.dateCreated
-                                  ).toLocaleDateString("en-US", {
-                                    weekday: "long",
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                  })
-                                : "No date"}
-                    <span className="text-blue-300/60">•</span>
-                              <span>
-                                {entry.dateCreated
-                                  ? new Date(
-                                      entry.dateCreated
-                                    ).toLocaleTimeString("en-US", {
-                                      hour: "numeric",
-                                      minute: "2-digit",
-                                      hour12: true,
-                                    })
-                                  : "No time"}
+                    <div className="flex gap-3 p-4">
+                      {/* Avatar */}
+                      <Avatar className="w-12 h-12 flex-shrink-0">
+                        <AvatarFallback className="bg-blue-500 text-white font-semibold">
+                          {entry.baseUserId.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        {/* Header */}
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-white text-sm">
+                            {entry.baseUserId.slice(0, 6)}...{entry.baseUserId.slice(-4)}
+                          </span>
+                          <span className="text-slate-400 text-sm">•</span>
+                          <span className="text-slate-400 text-sm">
+                            {entry.dateCreated
+                              ? new Date(entry.dateCreated).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric"
+                                })
+                              : "Now"}
+                          </span>
+                        </div>
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="mt-3">
+                          <p className="text-white leading-relaxed text-base">
+                            {entry.journal}
+                          </p>
+                        </div>
+                        
+                        {/* Media */}
+                        {entry.photos && entry.photos.length > 0 && (
+                          <div className="mt-3 rounded-xl overflow-hidden">
+                            <img
+                              src={entry.photos[0]}
+                              alt="Journal entry"
+                              className="w-full h-auto max-h-64 object-cover"
+                            />
+                          </div>
+                        )}
+                        
+                        {/* Tags */}
+                        {entry.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {entry.tags.map((tag, tagIndex) => (
+                              <span
+                                key={tagIndex}
+                                className="text-blue-400 text-sm hover:underline cursor-pointer"
+                              >
+                                #{tag}
                               </span>
-                  </div>
-                </div>
-              </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-blue-300 hover:text-blue-200 hover:bg-blue-500/10 rounded-full p-2"
-                          >
-                            <Heart className="w-4 h-4" />
-                            <span className="sr-only">Like</span>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-blue-300 hover:text-blue-200 hover:bg-blue-500/10 rounded-full p-2"
-                          >
-                            <MessageSquare className="w-4 h-4" />
-                            <span className="sr-only">Comment</span>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-blue-300 hover:text-blue-200 hover:bg-blue-500/10 rounded-full p-2"
-                          >
-                            <Share2 className="w-4 h-4" />
-                            <span className="sr-only">Share</span>
-              </Button>
-                        </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-                      {entry.photos && entry.photos.length > 0 && (
-                        <div className="mb-4 rounded-xl overflow-hidden">
-                          <img
-                            src={entry.photos[0]} // Assuming photos are an array of URLs
-                            alt="Journal entry"
-                            className="w-full h-auto max-h-64 object-cover"
-                          />
-              </div>
-            )}
-                      <div className="bg-slate-700/30 rounded-xl p-4 mb-4">
-                        <p className="text-white leading-relaxed pixelated-text text-lg">
-                          {entry.journal}
-                        </p>
-                      </div>
-                      {entry.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-4">
-                          {entry.tags.map((tag, tagIndex) => (
-                            <Badge
-                              key={tagIndex}
-                              className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text hover:bg-blue-500/30 transition-colors"
-                            >
-                    #{tag}
-                  </Badge>
-                ))}
-              </div>
-            )}
-                      <div className="flex items-center justify-between pt-4 border-t border-slate-600/30">
-                        <div className="flex items-center gap-4 text-sm text-blue-300/70">
-                          <span className="flex items-center gap-1">
-                            <Heart className="w-3 h-3" />
-                            {entry.likes} likes
-                          </span>
-
-                          <button
-                            onClick={async () => {
-                              const comment = prompt("Enter your comment:");
-                              if (comment) {
-                                try {
-                                  await postComment(entry.id, comment);
-                                  alert("Comment posted!");
-                                  // Optionally refresh comments after posting
-                                  const updatedComments =
-                                    await fetchJournalComments(entry.id);
-                                  // Update your state here if needed
-                                } catch (err: any) {
-                                  alert(`Error: ${err.message}`);
-                                }
-                              }
-                            }}
-                            className="flex items-center gap-1 hover:text-blue-200 cursor-pointer"
-                          >
-                            <MessageSquare className="w-3 h-3" />
-                           {dbComments.length} comments
-                          </button>
-
-                          <span className="flex items-center gap-1">
-                            <Share2 className="w-3 h-3" />
-                            Share
-                          </span>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Actions */}
+                        <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-700/50">
+                          <div className="flex items-center gap-6 text-sm text-slate-400">
+                            <button className="flex items-center gap-2 hover:text-blue-400 transition-colors">
+                              <Heart className="w-4 h-4" />
+                              <span>Like</span>
+                            </button>
+                            <button className="flex items-center gap-2 hover:text-blue-400 transition-colors">
+                              <MessageSquare className="w-4 h-4" />
+                              <span>Reply</span>
+                            </button>
+                            <button className="flex items-center gap-2 hover:text-blue-400 transition-colors">
+                              <Share2 className="w-4 h-4" />
+                              <span>Share</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
                   ))}
               </div>
             )}
@@ -1269,6 +1192,15 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
 
   return (
     <div className="min-h-screen relative overflow-hidden">
+      {/* Floating Post Button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Button
+          onClick={() => setActiveSidebarItem("home")}
+          className="bg-blue-500 hover:bg-blue-600 text-white rounded-full w-14 h-14 shadow-lg hover:shadow-xl transition-all duration-300"
+        >
+          <Plus className="w-6 h-6" />
+        </Button>
+      </div>
       {/* System-themed Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
         {/* Circuit board pattern */}

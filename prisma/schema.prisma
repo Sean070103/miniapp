@@ -21,6 +21,23 @@ model BaseUser {
  profilePicture String?
  bio            String?
  dateCreated    DateTime @default(now())
+ 
+ // Following relationships
+ following      Follow[] @relation("UserFollowing")
+ followers      Follow[] @relation("UserFollowers")
+ 
+ // Notifications
+ notifications  Notification[]
+ 
+ // Analytics
+ userAnalytics  UserAnalytics?
+ 
+ // Moderation
+ reports        ContentReport[] @relation("UserReports")
+ moderations    ContentReport[] @relation("UserModerations")
+ 
+ // Drafts
+ drafts         Draft[]
 }
 
 model Journal {
@@ -32,6 +49,16 @@ model Journal {
  tags        String[]
  privacy     String   @default("public")
  dateCreated DateTime @default(now())
+ 
+ // Analytics
+ contentAnalytics ContentAnalytics?
+ 
+ // Draft support
+ isDraft     Boolean  @default(false)
+ 
+ // Moderation
+ isFlagged   Boolean  @default(false)
+ isHidden    Boolean  @default(false)
 }
 
 model Repost {
@@ -62,4 +89,99 @@ model Chaincomments {
  baseUserId   String
  chainComment String
  dateCreated  DateTime @default(now())
+}
+
+// New models for following system
+model Follow {
+ id          String   @id @default(auto()) @map("_id") @db.ObjectId
+ followerId  String
+ followingId String
+ dateCreated DateTime @default(now())
+ 
+ follower    BaseUser @relation("UserFollowing", fields: [followerId], references: [id])
+ following   BaseUser @relation("UserFollowers", fields: [followingId], references: [id])
+ 
+ @@unique([followerId, followingId])
+}
+
+// Notifications system
+model Notification {
+ id          String   @id @default(auto()) @map("_id") @db.ObjectId
+ userId      String
+ type        String   // 'follow', 'like', 'comment', 'repost', 'mention'
+ title       String
+ message     String
+ data        String?  // JSON string for additional data
+ isRead      Boolean  @default(false)
+ dateCreated DateTime @default(now())
+ 
+ user        BaseUser @relation(fields: [userId], references: [id])
+}
+
+// User Analytics
+model UserAnalytics {
+ id              String   @id @default(auto()) @map("_id") @db.ObjectId
+ userId          String   @unique
+ totalPosts      Int      @default(0)
+ totalLikes      Int      @default(0)
+ totalComments   Int      @default(0)
+ totalReposts    Int      @default(0)
+ totalFollowers  Int      @default(0)
+ totalFollowing  Int      @default(0)
+ currentStreak   Int      @default(0)
+ longestStreak   Int      @default(0)
+ lastActive      DateTime @default(now())
+ engagementRate  Float    @default(0)
+ 
+ user            BaseUser @relation(fields: [userId], references: [id])
+}
+
+// Content Analytics
+model ContentAnalytics {
+ id              String   @id @default(auto()) @map("_id") @db.ObjectId
+ journalId       String   @unique
+ views           Int      @default(0)
+ likes           Int      @default(0)
+ comments        Int      @default(0)
+ reposts         Int      @default(0)
+ shares          Int      @default(0)
+ engagementRate  Float    @default(0)
+ reach           Int      @default(0)
+ 
+ journal         Journal  @relation(fields: [journalId], references: [id])
+}
+
+// Content Moderation
+model ContentReport {
+ id            String   @id @default(auto()) @map("_id") @db.ObjectId
+ reporterId    String
+ contentId     String
+ contentType   String   // 'journal', 'comment', 'user'
+ type          String   // 'spam', 'inappropriate', 'harassment', 'other'
+ reason        String
+ details       String?
+ status        String   @default("pending") // 'pending', 'resolved', 'dismissed'
+ moderatorId   String?
+ action        String?  // 'hide', 'delete', 'warn'
+ notes         String?
+ dateCreated   DateTime @default(now())
+ resolvedAt    DateTime?
+ 
+ reporter      BaseUser @relation("UserReports", fields: [reporterId], references: [id])
+ moderator     BaseUser? @relation("UserModerations", fields: [moderatorId], references: [id])
+}
+
+// Draft system
+model Draft {
+ id          String   @id @default(auto()) @map("_id") @db.ObjectId
+ userId      String
+ title       String?
+ content     String
+ tags        String[]
+ photos      String[]
+ privacy     String   @default("public")
+ dateCreated DateTime @default(now())
+ lastSaved   DateTime @default(now())
+ 
+ user        BaseUser @relation(fields: [userId], references: [id])
 }

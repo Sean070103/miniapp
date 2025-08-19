@@ -208,7 +208,7 @@ export function ProfilePage({ address, entries, onBack }: ProfilePageProps) {
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-white pixelated-text">Profile</h1>
-            <p className="text-blue-300 pixelated-text">Manage your account and preferences</p>
+            <p className="text-blue-100 pixelated-text">Manage your account and preferences</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -363,7 +363,7 @@ export function ProfilePage({ address, entries, onBack }: ProfilePageProps) {
                   <h3 className="text-white pixelated-text font-semibold">Network</h3>
                   <p className="text-blue-300 pixelated-text text-sm">Base Network</p>
                 </div>
-                <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text">
+                <Badge className="bg-blue-400/50 text-blue-50 border-blue-300/60 pixelated-text shadow-sm shadow-blue-300/30">
                   Connected
                 </Badge>
               </div>
@@ -456,9 +456,9 @@ export function ProfilePage({ address, entries, onBack }: ProfilePageProps) {
           </Card>
 
           {/* Preferences */}
-          <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
+          <Card className="bg-white/8 border-white/20 text-white backdrop-blur-3xl card-glass shadow-2xl shadow-blue-400/30 border-opacity-30 hover:bg-white/12 hover:border-white/30 transition-all duration-500">
             <CardHeader>
-              <CardTitle className="text-blue-300 pixelated-text flex items-center gap-2">
+              <CardTitle className="text-blue-100 pixelated-text flex items-center gap-2">
                 <Settings className="w-5 h-5" />
                 Preferences
               </CardTitle>
@@ -469,7 +469,7 @@ export function ProfilePage({ address, entries, onBack }: ProfilePageProps) {
                   <Bell className="w-5 h-5 text-blue-400" />
                   <div>
                     <h3 className="text-white pixelated-text font-semibold">Push Notifications</h3>
-                    <p className="text-blue-300 pixelated-text text-sm">Daily reminders and updates</p>
+                    <p className="text-blue-100 pixelated-text text-sm">Daily reminders and updates</p>
                   </div>
                 </div>
                 <Switch
@@ -483,7 +483,7 @@ export function ProfilePage({ address, entries, onBack }: ProfilePageProps) {
                   <Activity className="w-5 h-5 text-green-400" />
                   <div>
                     <h3 className="text-white pixelated-text font-semibold">Email Updates</h3>
-                    <p className="text-blue-300 pixelated-text text-sm">Weekly activity summaries</p>
+                    <p className="text-blue-100 pixelated-text text-sm">Weekly activity summaries</p>
                   </div>
                 </div>
                 <Switch
@@ -497,7 +497,7 @@ export function ProfilePage({ address, entries, onBack }: ProfilePageProps) {
                   <Moon className="w-5 h-5 text-purple-400" />
                   <div>
                     <h3 className="text-white pixelated-text font-semibold">Dark Mode</h3>
-                    <p className="text-blue-300 pixelated-text text-sm">Use dark theme</p>
+                    <p className="text-blue-100 pixelated-text text-sm">Use dark theme</p>
                   </div>
                 </div>
                 <Switch
