@@ -74,8 +74,7 @@ export function EnhancedFeed({ userId }: EnhancedFeedProps) {
       console.error('Error loading feed:', error)
       toast({
         title: "Error",
-        description: "Failed to load feed data",
-        variant: "destructive"
+        description: "Failed to load feed data"
       })
     } finally {
       setIsLoading(false)

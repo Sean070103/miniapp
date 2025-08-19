@@ -7,19 +7,19 @@ interface HeroContentProps {
 
 export function HeroContent({ onConnect, title = "Daily Base" }: HeroContentProps) {
   return (
-    <div className="relative z-10 min-h-screen flex flex-col items-center justify-center container-mobile">
-      <div className="text-center space-responsive-md pixel-font">
+    <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 sm:px-6">
+      <div className="text-center pixel-font">
         <h1 
-          className="text-responsive-2xl sm:text-responsive-3xl md:text-responsive-4xl lg:text-responsive-5xl font-bold animate-fade-in-up bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent"
+          className="text-[40px] sm:text-[56px] md:text-[72px] lg:text-[96px] leading-[1.1] font-bold animate-fade-in-up text-white"
           style={{ 
             fontFamily: "'Press Start 2P', monospace",
-            textShadow: '2px 2px 4px rgba(0,0,0,0.4)',
+            textShadow: '2px 2px 6px rgba(0,0,0,0.35)',
             lineHeight: '1.2'
           }}
         >
           {title}
         </h1>
-        <div className="animate-fade-in-delayed">
+        <div className="mt-6 sm:mt-8 animate-fade-in-delayed">
           <ConnectWallet onConnect={onConnect} />
         </div>
       </div>

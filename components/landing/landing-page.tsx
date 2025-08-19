@@ -1,5 +1,6 @@
 import { BackgroundEffects } from "./background-effects"
 import { HeroContent } from "./hero-content"
+import React from "react"
 
 interface LandingPageProps {
   onConnect: (address: string) => void
@@ -10,13 +11,32 @@ export function LandingPage({
   onConnect, 
   title = "Daily Base"
 }: LandingPageProps) {
+  const [mode, setMode] = React.useState<'day' | 'night'>(() => {
+    if (typeof window === 'undefined') return 'day'
+    return (localStorage.getItem('db-landing-mode') as 'day' | 'night') || 'day'
+  })
+
+  const toggleMode = () => {
+    const next = mode === 'day' ? 'night' : 'day'
+    setMode(next)
+    if (typeof window !== 'undefined') localStorage.setItem('db-landing-mode', next)
+  }
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* System-themed Background */}
-      <BackgroundEffects />
+      <BackgroundEffects mode={mode} />
       
       {/* Content */}
       <HeroContent onConnect={onConnect} title={title} />
+
+      {/* Day/Night Toggle */}
+      <button
+        onClick={toggleMode}
+        className="absolute top-2 right-2 sm:top-4 sm:right-4 z-40 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/10 border border-white/30 text-white text-xs sm:text-sm backdrop-blur-sm hover:bg-white/20 transition-all"
+      >
+        {mode === 'day' ? 'Night Mode' : 'Day Mode'}
+      </button>
 
       {/* Dirt positioned to fill the gap up to the measurement line */}
       <div className="absolute bottom-0 left-0 right-0 z-30 w-full h-[60px] sm:h-[80px] md:h-[100px] lg:h-[120px] overflow-hidden">

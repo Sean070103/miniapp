@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
     if (status) whereClause.status = status
     if (type) whereClause.type = type
 
-    const reports = await prisma.contentReport.findMany({
+    // Fetch reports (include known relations only)
+    const reportsRaw = await prisma.contentReport.findMany({
       where: whereClause,
       include: {
         reporter: {
@@ -23,20 +24,33 @@ export async function GET(request: NextRequest) {
             username: true,
             profilePicture: true
           }
-        },
-        reportedContent: {
-          select: {
-            id: true,
-            journal: true,
-            baseUserId: true,
-            dateCreated: true
-          }
         }
       },
       orderBy: { dateCreated: 'desc' },
       take: limit,
       skip: offset
     })
+
+    // Batch fetch referenced content (journals) since we don't have a formal relation in the schema
+    const journalIds = Array.from(new Set(
+      reportsRaw
+        .filter(r => r.contentType === 'journal')
+        .map(r => r.contentId)
+    ))
+
+    const journals = journalIds.length
+      ? await prisma.journal.findMany({
+          where: { id: { in: journalIds } },
+          select: { id: true, journal: true, baseUserId: true, dateCreated: true }
+        })
+      : []
+
+    const journalById = new Map(journals.map(j => [j.id, j]))
+
+    const reports = reportsRaw.map(r => ({
+      ...r,
+      content: r.contentType === 'journal' ? journalById.get(r.contentId) || null : null
+    }))
 
     const totalCount = await prisma.contentReport.count({
       where: whereClause

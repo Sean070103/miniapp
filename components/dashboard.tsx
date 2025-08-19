@@ -1796,11 +1796,11 @@ export default function Dashboard({ address }: DashboardProps) {
           <div className="space-y-6">
             <div className="text-center mb-6">
                            <h1 className="text-4xl font-bold text-white pixelated-text mb-3 bg-gradient-to-r from-white via-blue-50 to-cyan-100 bg-clip-text text-transparent drop-shadow-lg">
-               Calendar View
-             </h1>
+                Calendar View
+              </h1>
              <p className="text-blue-100 pixelated-text text-lg font-medium drop-shadow-sm">
-               Track your daily entries and activities
-             </p>
+                Track your daily entries and activities
+              </p>
             </div>
 
             <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm">
@@ -1824,8 +1824,8 @@ export default function Dashboard({ address }: DashboardProps) {
                   </Button>
                   <div className="flex-1 text-center">
                                        <h2 className="text-3xl font-bold text-white pixelated-text bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent drop-shadow-md">
-                     {getMonthName(currentMonth)} {currentYear}
-                   </h2>
+                      {getMonthName(currentMonth)} {currentYear}
+                    </h2>
                   </div>
                   <Button
                     onClick={goToNextMonth}
@@ -1857,8 +1857,8 @@ export default function Dashboard({ address }: DashboardProps) {
                   {dayNames.map((day) => (
                     <div key={day} className="p-2 text-center">
                                            <div className="text-sm font-semibold text-blue-100 pixelated-text">
-                       {day}
-                     </div>
+                        {day}
+                      </div>
                     </div>
                   ))}
 
@@ -2150,7 +2150,7 @@ export default function Dashboard({ address }: DashboardProps) {
                  </p>
                </div>
                <div className="space-y-6">
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
                    <div className="space-y-2">
                      <label className="text-sm font-medium text-blue-100">
                        Gas Price (Gwei)
@@ -2193,7 +2193,7 @@ export default function Dashboard({ address }: DashboardProps) {
                    <h4 className="text-white font-semibold mb-6 text-center text-xl bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
                      Calculation Results
                    </h4>
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
                      <div className="text-center p-6 bg-white/10 rounded-lg border border-white/20 backdrop-blur-sm">
                        <div className="text-3xl font-bold text-blue-300 mb-2">
                          {gasFeeResult.gwei}
@@ -2235,7 +2235,7 @@ export default function Dashboard({ address }: DashboardProps) {
                </div>
 
                <div className="space-y-6">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
                    <div className="space-y-2">
                      <label className="text-sm font-medium text-slate-300">
                        From Currency
@@ -3226,14 +3226,14 @@ export default function Dashboard({ address }: DashboardProps) {
              </CardHeader>
              <CardContent className="space-y-4">
                                                                                                                                    <div className="flex items-center justify-between p-4 bg-white/8 rounded-lg border border-white/20 backdrop-blur-xl shadow-md shadow-blue-400/15">
-                   <div>
-                                        <h3 className="text-white pixelated-text font-semibold">
+                 <div>
+                   <h3 className="text-white pixelated-text font-semibold">
                      Wallet Address
                    </h3>
                    <p className="text-blue-100 pixelated-text text-sm">
                      {getAddressDisplay(address)}
                    </p>
-                   </div>
+                 </div>
                  <Button
                    onClick={copyAddress}
                    variant="outline"
@@ -3312,7 +3312,7 @@ export default function Dashboard({ address }: DashboardProps) {
              </CardContent>
            </Card>
 
-                      {/* Preferences */}
+           {/* Preferences */}
            <Card className="bg-white/8 border-white/20 text-white backdrop-blur-3xl card-glass shadow-2xl shadow-blue-400/30 border-opacity-30 hover:bg-white/12 hover:border-white/30 transition-all duration-500">
              <CardHeader>
                <CardTitle className="text-blue-100 pixelated-text">
@@ -3321,17 +3321,17 @@ export default function Dashboard({ address }: DashboardProps) {
              </CardHeader>
              <CardContent className="space-y-4">
                                                                                                                                    <div className="flex items-center justify-between p-4 bg-white/8 rounded-lg border border-white/20 backdrop-blur-xl shadow-md shadow-blue-400/15">
-                   <div>
-                                        <h3 className="text-white pixelated-text font-semibold">
+                 <div>
+                   <h3 className="text-white pixelated-text font-semibold">
                      Theme
                    </h3>
                    <p className="text-blue-100 pixelated-text text-sm">
                      Dark mode (default)
                    </p>
-                   </div>
+                 </div>
                                                                          <Badge className="bg-blue-400/50 text-blue-50 border-blue-300/60 pixelated-text shadow-sm shadow-blue-300/30">
-                       Dark
-                     </Badge>
+                   Dark
+                 </Badge>
                </div>
 
                <div className="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg">
@@ -3459,7 +3459,7 @@ export default function Dashboard({ address }: DashboardProps) {
      />
 
      {/* Enhanced Main Content Area with responsive padding */}
-     <div className="lg:pl-72 xl:pl-80">
+     <div className="lg:pl-72 xl:pl-80 2xl:pl-80">
        {/* Enhanced Responsive Header */}
        <ResponsiveHeader
          title="DailyBase"
@@ -3469,9 +3469,9 @@ export default function Dashboard({ address }: DashboardProps) {
        />
 
        {/* Enhanced Content Container with responsive spacing */}
-       <ResponsiveContainer maxWidth="full" className="py-responsive-sm sm:py-responsive-md lg:py-responsive-lg px-4 sm:px-6 lg:px-8">
+       <ResponsiveContainer maxWidth="full" className="py-4 sm:py-6 md:py-8 lg:py-10 xl:py-12 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
          {/* Enhanced Page Content with responsive grid */}
-         <div className="max-w-7xl mx-auto space-responsive-md">
+         <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12">
            {renderContent()}
          </div>
        </ResponsiveContainer>

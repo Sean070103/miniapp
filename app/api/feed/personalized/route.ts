@@ -131,22 +131,15 @@ async function getHybridFeed(userId: string, limit: number, offset: number) {
 
 async function getUserPreferences(userId: string) {
   // Get user's interaction history
-  const [likedPosts, commentedPosts, userTags] = await Promise.all([
+  // Step 1: fetch ids for liked and commented journals (avoid strict relation typing)
+  const [likedLikes, userComments, userTagRows] = await Promise.all([
     prisma.like.findMany({
       where: { userId },
-      include: {
-        journal: {
-          select: { tags: true }
-        }
-      }
+      select: { journalId: true }
     }),
     prisma.comment.findMany({
       where: { baseUserId: userId },
-      include: {
-        journal: {
-          select: { tags: true }
-        }
-      }
+      select: { journalId: true }
     }),
     prisma.journal.findMany({
       where: { baseUserId: userId },
@@ -154,11 +147,27 @@ async function getUserPreferences(userId: string) {
     })
   ])
 
+  // Step 2: fetch journals for those ids to grab tags
+  const [likedJournals, commentedJournals] = await Promise.all([
+    likedLikes.length
+      ? prisma.journal.findMany({
+          where: { id: { in: likedLikes.map((l) => l.journalId) } },
+          select: { tags: true }
+        })
+      : Promise.resolve([] as { tags: string[] }[]),
+    userComments.length
+      ? prisma.journal.findMany({
+          where: { id: { in: userComments.map((c) => c.journalId) } },
+          select: { tags: true }
+        })
+      : Promise.resolve([] as { tags: string[] }[])
+  ])
+
   // Extract preferred tags
   const allTags = [
-    ...likedPosts.flatMap(p => p.journal?.tags || []),
-    ...commentedPosts.flatMap(p => p.journal?.tags || []),
-    ...userTags.flatMap(p => p.tags)
+    ...likedJournals.flatMap((p) => p.tags || []),
+    ...commentedJournals.flatMap((p) => p.tags || []),
+    ...userTagRows.flatMap((p) => p.tags)
   ]
 
   const tagFrequency: { [key: string]: number } = {}
@@ -175,9 +184,9 @@ async function getUserPreferences(userId: string) {
   return {
     preferredTags,
     interactionHistory: {
-      likes: likedPosts.length,
-      comments: commentedPosts.length,
-      posts: userTags.length
+      likes: likedLikes.length,
+      comments: userComments.length,
+      posts: userTagRows.length
     }
   }
 }

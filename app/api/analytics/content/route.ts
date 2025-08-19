@@ -181,67 +181,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET /api/analytics/content/trending - Get trending content
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const period = searchParams.get('period') || '7d' // '1d', '7d', '30d'
-    const limit = parseInt(searchParams.get('limit') || '10')
-
-    const now = new Date()
-    let startDate: Date
-
-    switch (period) {
-      case '1d':
-        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-        break
-      case '7d':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-        break
-      case '30d':
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-        break
-      default:
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    }
-
-    const trendingContent = await prisma.contentAnalytics.findMany({
-      where: {
-        journal: {
-          dateCreated: { gte: startDate }
-        }
-      },
-      include: {
-        journal: {
-          select: {
-            id: true,
-            journal: true,
-            baseUserId: true,
-            dateCreated: true,
-            tags: true
-          }
-        }
-      },
-      orderBy: [
-        { engagementRate: 'desc' },
-        { views: 'desc' }
-      ],
-      take: limit
-    })
-
-    return NextResponse.json({
-      success: true,
-      data: trendingContent,
-      period
-    })
-  } catch (error) {
-    console.error('Error in Trending Content GET:', error)
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
+// NOTE: Trending endpoint moved to /api/analytics/content/trending
 
 function calculateContentEngagementRate(analytics: any): number {
   const totalInteractions = analytics.likes + analytics.comments + analytics.reposts + analytics.shares

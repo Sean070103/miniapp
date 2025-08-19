@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type') || 'posts' // 'posts', 'tags', 'users'
     const period = searchParams.get('period') || '24h' // '1h', '24h', '7d', '30d'
     const limit = parseInt(searchParams.get('limit') || '20')
-    const category = searchParams.get('category') // Optional category filter
+    const category = searchParams.get('category') || undefined // Optional category filter
 
     const now = new Date()
     let startDate: Date
@@ -154,8 +154,8 @@ async function getTrendingUsers(startDate: Date, limit: number) {
   })
 
   // Calculate trending score for each user
-  const usersWithScore = users.map(user => {
-    const activityScore = calculateUserActivityScore(user, startDate)
+  const usersWithScore = await Promise.all(users.map(async (user) => {
+    const activityScore = await calculateUserActivityScore(user, startDate)
     const followerScore = Math.log(user._count.followers + 1) * 10
     const engagementScore = user.userAnalytics?.engagementRate || 0
     
@@ -165,7 +165,7 @@ async function getTrendingUsers(startDate: Date, limit: number) {
       ...user,
       trendingScore
     }
-  })
+  }))
 
   // Sort by trending score and return top results
   return usersWithScore
@@ -196,7 +196,7 @@ function calculateEngagementScore(analytics: any): number {
   return engagementRate * 100
 }
 
-async function calculateUserActivityScore(user: any, startDate: Date): number {
+async function calculateUserActivityScore(user: any, startDate: Date): Promise<number> {
   // Count user's recent activity
   const [posts, likes, comments, reposts] = await Promise.all([
     prisma.journal.count({

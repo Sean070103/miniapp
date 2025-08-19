@@ -89,10 +89,10 @@ export function ResponsiveContainer({
         
         // Padding classes
         'px-0': padding === 'none',
-        'px-3 sm:px-4 lg:px-6': padding === 'sm',
-        'px-4 sm:px-6 lg:px-8': padding === 'md',
-        'px-6 sm:px-8 lg:px-12': padding === 'lg',
-        'px-8 sm:px-12 lg:px-16': padding === 'xl',
+        'px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10': padding === 'sm',
+        'px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16': padding === 'md',
+        'px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20': padding === 'lg',
+        'px-8 sm:px-12 md:px-16 lg:px-20 xl:px-24': padding === 'xl',
       },
       className
     )}>
@@ -132,7 +132,7 @@ export function ResponsiveGrid({
         'grid-cols-[repeat(auto-fit,minmax(250px,1fr))]': autoFit,
         'grid-cols-[repeat(auto-fill,minmax(250px,1fr))]': autoFill,
         
-        // Manual column classes
+        // Manual column classes with enhanced breakpoints
         'grid-cols-1': !autoFit && !autoFill && cols.mobile === 1,
         'grid-cols-2': !autoFit && !autoFill && cols.mobile === 2,
         'grid-cols-3': !autoFit && !autoFill && cols.mobile === 3,
@@ -141,6 +141,10 @@ export function ResponsiveGrid({
         'sm:grid-cols-2': !autoFit && !autoFill && cols.tablet === 2,
         'sm:grid-cols-3': !autoFit && !autoFill && cols.tablet === 3,
         'sm:grid-cols-4': !autoFit && !autoFill && cols.tablet === 4,
+        'md:grid-cols-1': !autoFit && !autoFill && cols.tablet === 1,
+        'md:grid-cols-2': !autoFit && !autoFill && cols.tablet === 2,
+        'md:grid-cols-3': !autoFit && !autoFill && cols.tablet === 3,
+        'md:grid-cols-4': !autoFit && !autoFill && cols.tablet === 4,
         'lg:grid-cols-1': !autoFit && !autoFill && cols.desktop === 1,
         'lg:grid-cols-2': !autoFit && !autoFill && cols.desktop === 2,
         'lg:grid-cols-3': !autoFit && !autoFill && cols.desktop === 3,
@@ -149,13 +153,17 @@ export function ResponsiveGrid({
         'xl:grid-cols-2': !autoFit && !autoFill && cols.large === 2,
         'xl:grid-cols-3': !autoFit && !autoFill && cols.large === 3,
         'xl:grid-cols-4': !autoFit && !autoFill && cols.large === 4,
+        '2xl:grid-cols-1': !autoFit && !autoFill && cols.large === 1,
+        '2xl:grid-cols-2': !autoFit && !autoFill && cols.large === 2,
+        '2xl:grid-cols-3': !autoFit && !autoFill && cols.large === 3,
+        '2xl:grid-cols-4': !autoFit && !autoFill && cols.large === 4,
         
-        // Gap classes
-        'gap-2': gap === 'xs',
-        'gap-4': gap === 'sm',
-        'gap-6': gap === 'md',
-        'gap-8': gap === 'lg',
-        'gap-12': gap === 'xl',
+        // Gap classes with enhanced breakpoints
+        'gap-2 sm:gap-3 md:gap-4 lg:gap-6 xl:gap-8': gap === 'xs',
+        'gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12': gap === 'sm',
+        'gap-6 sm:gap-8 md:gap-10 lg:gap-12 xl:gap-16': gap === 'md',
+        'gap-8 sm:gap-10 md:gap-12 lg:gap-16 xl:gap-20': gap === 'lg',
+        'gap-12 sm:gap-16 md:gap-20 lg:gap-24 xl:gap-32': gap === 'xl',
       },
       className
     )}>
@@ -222,16 +230,16 @@ export function ResponsiveText({
   return (
     <div className={cn(
       {
-        // Size classes
-        'text-xs sm:text-sm': size === 'xs' && responsive,
-        'text-sm sm:text-base': size === 'sm' && responsive,
-        'text-base sm:text-lg': size === 'base' && responsive,
-        'text-lg sm:text-xl': size === 'lg' && responsive,
-        'text-xl sm:text-2xl': size === 'xl' && responsive,
-        'text-2xl sm:text-3xl': size === '2xl' && responsive,
-        'text-3xl sm:text-4xl': size === '3xl' && responsive,
-        'text-4xl sm:text-5xl': size === '4xl' && responsive,
-        'text-5xl sm:text-6xl': size === '5xl' && responsive,
+        // Size classes with enhanced breakpoints
+        'text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl': size === 'xs' && responsive,
+        'text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl': size === 'sm' && responsive,
+        'text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl': size === 'base' && responsive,
+        'text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl': size === 'lg' && responsive,
+        'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl': size === 'xl' && responsive,
+        'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl': size === '2xl' && responsive,
+        'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl': size === '3xl' && responsive,
+        'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl': size === '4xl' && responsive,
+        'text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl': size === '5xl' && responsive,
         
         // Non-responsive sizes
         'text-xs': size === 'xs' && !responsive,

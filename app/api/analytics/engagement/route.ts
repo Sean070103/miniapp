@@ -182,7 +182,7 @@ async function generateOverallEngagementReport(period: string) {
   const { startDate, endDate } = getDateRange(period)
 
   // Get overall platform metrics
-  const [totalPosts, totalLikes, totalComments, totalReposts, totalViews] = await Promise.all([
+  const [totalPosts, totalLikes, totalComments, totalReposts, totalViewsAgg] = await Promise.all([
     prisma.journal.count({
       where: {
         dateCreated: { gte: startDate, lte: endDate },
@@ -216,7 +216,7 @@ async function generateOverallEngagementReport(period: string) {
     })
   ])
 
-  const totalViews = totalViews._sum.views || 0
+  const totalViews = totalViewsAgg._sum.views || 0
   const avgEngagementRate = totalPosts > 0 ? (totalLikes + totalComments + totalReposts) / totalPosts : 0
 
   // Get trending topics
