@@ -19,9 +19,12 @@ import { ImageUpload, useImageUpload } from "@/components/ui/image-upload"
 import { UserProfile } from "@/components/ui/user-profile"
 import { AchievementBadge, ACHIEVEMENTS } from "@/components/ui/achievement-badge"
 import { ResponsiveSidebar, ResponsiveHeader, ResponsiveContainer, ResponsiveGrid, ResponsiveCard, ResponsiveText, useResponsive } from "@/components/ui/responsive-layout"
+import { LayoutEnhancer, EnhancedSection, EnhancedGrid } from "@/components/ui/layout-enhancer"
 import { UserRegistrationModal } from "@/components/auth/user-registration-modal"
 import { ProfileManagement } from "@/components/auth/profile-management"
 import { UserSearch } from "@/components/ui/user-search"
+import { TVContainer, TVImage, TVImageGrid } from "@/components/ui/tv-container"
+import { TVPostContainer, PostHeader, PostContent, PostTags, PostActions } from "@/components/ui/tv-post-container"
 
 interface DailyEntry {
   id: string
@@ -123,6 +126,9 @@ export default function Dashboard({ address }: DashboardProps) {
   const [trendingTopics, setTrendingTopics] = useState<string[]>([]);
   const [feedFilter, setFeedFilter] = useState<'all' | 'following' | 'trending'>('all');
   const [isLoadingFeed, setIsLoadingFeed] = useState(false);
+
+  // TV styles order for image posts, typed as a readonly tuple to preserve literal types
+  const tvStylesOrder = ['retro', 'modern', 'futuristic', 'vintage', 'minimal'] as const;
 
   // Calendar states
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -1190,19 +1196,10 @@ export default function Dashboard({ address }: DashboardProps) {
     switch (activeSidebarItem) {
       case "home":
         return (
-          <div className="space-y-6 glass-strong bg-slate-900/40 rounded-2xl p-4 sm:p-6">
-            {/* Header */}
-            <div className="text-center mb-6">
-              <ResponsiveText size="2xl" className="text-white mb-2 font-bold">
-                DailyBase Feed
-              </ResponsiveText>
-              <ResponsiveText size="base" className="text-blue-300">
-                Your personal crypto journey timeline
-              </ResponsiveText>
-            </div>
+          <div className="space-y-6">
 
-            {/* Search Bar */}
-            <div className="mb-8">
+            {/* Farcaster-style Search Bar */}
+            <div className="mb-6">
               <SearchComponent 
                 onResultSelect={(result) => {
                   toast({
@@ -1213,7 +1210,7 @@ export default function Dashboard({ address }: DashboardProps) {
                 placeholder="Search posts, users, tags..."
                 className="w-full"
               />
-              <div className="mt-4">
+              <div className="mt-3">
                 <SearchFilters 
                   activeFilter={searchFilter} 
                   onFilterChange={setSearchFilter} 
@@ -1221,53 +1218,53 @@ export default function Dashboard({ address }: DashboardProps) {
               </div>
             </div>
 
-            {/* Create Post */}
-            <ResponsiveCard className="mb-6">
-              <div className="flex items-start gap-4">
-                <Avatar className="w-10 h-10 sm:w-12 sm:h-12 ring-2 ring-blue-400/20 flex-shrink-0">
-                  <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm">
+            {/* Gaming-style Create Post */}
+            <div className="bg-gradient-to-br from-gray-800/90 via-gray-700/80 to-gray-800/90 backdrop-blur-xl rounded-xl border-2 border-green-500/50 p-4 mb-6 shadow-lg gaming-glow">
+              <div className="flex items-start gap-3">
+                <Avatar className="w-10 h-10 border-2 border-green-500/50 flex-shrink-0 shadow-lg shadow-green-500/20">
+                  <AvatarFallback className="bg-gradient-to-br from-green-600 to-green-700 text-green-100 text-sm font-bold pixelated-text">
                     {address.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 space-y-4">
+                <div className="flex-1 space-y-3">
                   <div>
-                    <ResponsiveText size="lg" className="text-blue-300 mb-3 font-semibold">
+                    <div className="text-green-100 mb-2 font-bold text-sm pixelated-text">
                       What's happening in your crypto world today?
-                    </ResponsiveText>
+                    </div>
                     <textarea
                       value={newPostContent}
                       onChange={(e) => setNewPostContent(e.target.value)}
                       placeholder="Share your thoughts, trades, or insights..."
-                      className="w-full p-4 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 resize-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 pixelated-text"
+                      className="w-full p-3 bg-gray-900/50 border-2 border-green-500/30 rounded-lg text-green-100 placeholder-green-300/50 resize-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all duration-200 text-sm pixelated-text"
                       rows={3}
                       maxLength={500}
                     />
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-sm text-slate-400">
-                        {newPostContent.length}/500
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => document.getElementById('image-upload')?.click()}
-                          className="text-blue-300 hover:text-blue-200 hover:bg-blue-500/10 rounded-lg px-3 py-2 transition-all duration-300"
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          {images.length > 0 ? `${images.length} Image${images.length > 1 ? 's' : ''}` : 'Add Photo'}
-                        </Button>
-                        
-                        {/* Privacy Selector */}
+                                          <div className="flex items-center justify-between mt-2">
+                        <span className="text-sm text-green-300/70 pixelated-text">
+                          {newPostContent.length}/500
+                        </span>
                         <div className="flex items-center gap-2">
-                          <select
-                            value={newPostPrivacy}
-                            onChange={(e) => setNewPostPrivacy(e.target.value as 'public' | 'private')}
-                            className="bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => document.getElementById('image-upload')?.click()}
+                            className="text-green-400 hover:text-green-300 hover:bg-green-900/30 rounded-lg px-3 py-2 transition-all duration-300 pixelated-text"
                           >
-                            <option value="public">🌍 Public</option>
-                            <option value="private">🔒 Private</option>
-                          </select>
-                        </div>
+                            <Plus className="w-4 h-4 mr-1" />
+                            {images.length > 0 ? `${images.length} Image${images.length > 1 ? 's' : ''}` : 'Add Photo'}
+                          </Button>
+                          
+                          {/* Privacy Selector */}
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={newPostPrivacy}
+                              onChange={(e) => setNewPostPrivacy(e.target.value as 'public' | 'private')}
+                              className="bg-gray-900/50 border-2 border-green-500/30 rounded-lg px-3 py-2 text-sm text-green-100 focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all duration-300 pixelated-text"
+                            >
+                              <option value="public">🌍 Public</option>
+                              <option value="private">🔒 Private</option>
+                            </select>
+                          </div>
                         <input
                           id="image-upload"
                           type="file"
@@ -1286,7 +1283,7 @@ export default function Dashboard({ address }: DashboardProps) {
                   {/* Image Preview */}
                   {images.length > 0 && (
                     <div className="space-y-2">
-                      <ResponsiveText size="base" className="text-blue-300">
+                      <ResponsiveText size="base" className="text-orange-500">
                         Selected Images ({images.length}):
                       </ResponsiveText>
                       <div className="flex flex-wrap gap-2">
@@ -1295,7 +1292,7 @@ export default function Dashboard({ address }: DashboardProps) {
                             <img
                               src={URL.createObjectURL(image)}
                               alt={`Preview ${index + 1}`}
-                              className="w-16 h-16 object-cover rounded-lg border-2 border-blue-400/30 hover:border-blue-400/60 transition-all duration-300"
+                              className="w-16 h-16 object-cover rounded-lg border-2 border-orange-400/30 hover:border-orange-400/60 transition-all duration-300"
                             />
                             <Button
                               variant="ghost"
@@ -1415,11 +1412,11 @@ export default function Dashboard({ address }: DashboardProps) {
                   </div>
                 </div>
               </div>
-            </ResponsiveCard>
+            </div>
 
-            {/* Feed Content */}
+            {/* Enhanced Feed Content with better responsive layout */}
             {isLoadingFeed ? (
-              <div className="space-y-6">
+              <div className="space-responsive-lg">
                 {[...Array(3)].map((_, index) => (
                   <Card key={index} className="bg-white/10 border-white/20 text-white backdrop-blur-2xl card-glass shadow-lg shadow-blue-400/30">
                     <CardHeader className="pb-4">
@@ -1445,10 +1442,10 @@ export default function Dashboard({ address }: DashboardProps) {
                   <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-6">
                     <Home className="w-12 h-12 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white pixelated-text mb-3">
+                  <h3 className="text-responsive-2xl font-bold text-white pixelated-text mb-3">
                     No posts yet
                   </h3>
-                  <p className="text-blue-300 text-center mb-8 max-w-md leading-relaxed">
+                  <p className="text-blue-300 text-center mb-8 max-w-md leading-relaxed text-responsive-base">
                     Be the first to share your crypto journey! Create a post to get started.
                   </p>
                   <Button className="bg-gradient-to-r from-blue-500 to-purple-600 text-white pixelated-text px-8 py-3 text-lg hover:shadow-lg hover:shadow-blue-500/25">
@@ -1458,230 +1455,48 @@ export default function Dashboard({ address }: DashboardProps) {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-6">
+              <div className="space-responsive-xl">
                 {getFilteredPosts().map((entry, index) => {
                   const userRepost = userReposts.find(repost => repost.journalId === entry.id);
                   const commentCount = commentCounts[entry.id] || 0;
                   
                   return (
-                    <Card
-                      key={entry.id}
-                      className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 border border-slate-600/60 text-white backdrop-blur-sm card-glass hover-lift transition-all duration-300 shadow-xl hover:shadow-2xl"
-                    >
-                      <CardHeader className="pb-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-4">
-                            <Avatar className="w-12 h-12 ring-2 ring-blue-400/30 flex-shrink-0">
-                              <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold">
-                                {entry.baseUserId.slice(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-3 mb-1">
-                                <div className="font-semibold text-white pixelated-text text-lg truncate">
-                                  {entry.baseUserId.slice(0, 6)}...{entry.baseUserId.slice(-4)}
-                                </div>
-                                <Badge className="bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-blue-300 border-blue-400/50 pixelated-text text-xs font-medium px-2 py-1 flex-shrink-0">
-                                  #{index + 1}
-                                </Badge>
-                                {entry.likes > 10 && (
-                                  <Badge className="bg-gradient-to-r from-orange-500/30 to-red-500/30 text-orange-300 border-orange-400/50 pixelated-text text-xs font-medium px-2 py-1 flex-shrink-0">
-                                    🔥 Hot
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="text-sm text-blue-300 pixelated-text flex items-center gap-2">
-                                <Calendar className="w-4 h-4" />
-                                {entry.dateCreated
-                                  ? new Date(entry.dateCreated).toLocaleDateString("en-US", {
-                                      weekday: "long",
-                                      year: "numeric",
-                                      month: "long",
-                                      day: "numeric",
-                                    })
-                                  : "No date"}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-slate-700/60 rounded-full p-2 transition-all duration-300 hover:scale-110">
-                              <Share2 className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-slate-700/60 rounded-full p-2 transition-all duration-300 hover:scale-110">
-                              <BookOpen className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        {/* Enhanced Image Display */}
-                        {entry.photos && entry.photos.length > 0 && (
-                          <div className="mb-6 rounded-2xl overflow-hidden group relative">
-                            <div className="relative">
-                              {entry.photos.length === 1 ? (
-                                <img 
-                                  src={entry.photos[0]} 
-                                  alt="Journal entry" 
-                                  className="w-full h-auto max-h-[400px] object-cover transition-transform duration-500 group-hover:scale-105" 
-                                />
-                              ) : (
-                                <div className={`grid gap-2 ${
-                                  entry.photos.length === 2 ? 'grid-cols-2' :
-                                  entry.photos.length === 3 ? 'grid-cols-2' :
-                                  'grid-cols-2'
-                                }`}>
-                                  {entry.photos.slice(0, 4).map((photo, photoIndex) => (
-                                    <div key={photoIndex} className={`relative group cursor-pointer ${
-                                      entry.photos!.length === 3 && photoIndex === 2 ? 'col-span-2' : ''
-                                    }`}>
-                                      <div className="w-full h-full bg-slate-600 overflow-hidden rounded-xl">
-                                        <img
-                                          src={photo}
-                                          alt={`Post image ${photoIndex + 1}`}
-                                          className={`w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 ${
-                                            entry.photos!.length === 1 ? 'h-64' :
-                                            entry.photos!.length === 2 ? 'h-40' :
-                                            entry.photos!.length === 3 && photoIndex === 2 ? 'h-40' : 'h-40'
-                                          }`}
-                                          onError={(e) => {
-                                            const target = e.target as HTMLImageElement;
-                                            target.style.display = 'none';
-                                            target.parentElement!.innerHTML = `
-                                              <div class="w-full h-full bg-slate-600 flex items-center justify-center rounded-xl">
-                                                <div class="text-center text-slate-400">
-                                                  <span class="text-xs">Image failed to load</span>
-                                                </div>
-                                              </div>
-                                            `;
-                                          }}
-                                        />
-                                      </div>
-                                    </div>
-                                  ))}
-                                  {entry.photos.length > 4 && (
-                                    <div className="h-40 bg-slate-600 rounded-xl flex items-center justify-center text-xs text-slate-400">
-                                      +{entry.photos.length - 4} more
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <Button size="sm" className="bg-black/60 text-white hover:bg-black/80 rounded-full p-2">
-                                  <BookOpen className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
+                    <div key={entry.id}>
+                      <TVPostContainer
+                        neonColor="cyan"
+                        className="mb-10"
+                        hasImage={entry.photos && entry.photos.length > 0}
+                        tvStyle={'retro'}
+                      >
+                        <PostHeader
+                          user={{
+                            address: entry.baseUserId,
+                            name: entry.baseUserId.slice(0, 6) + "..." + entry.baseUserId.slice(-4)
+                          }}
+                          date={entry.dateCreated ? new Date(entry.dateCreated) : new Date()}
+                          privacy={entry.privacy}
+                        />
+                        <PostContent
+                          content={entry.journal || "This user shared their crypto journey..."}
+                          photos={entry.photos}
+                        />
                         
-                        {/* Enhanced Content Display */}
-                        <div className="bg-gradient-to-r from-slate-700/40 to-slate-800/40 rounded-2xl p-6 mb-6 border border-slate-600/40">
-                          <p className="text-white leading-relaxed pixelated-text text-lg break-words">
-                            {entry.journal || "This user shared their crypto journey..."}
-                          </p>
-                        </div>
-                        {/* Enhanced Tags Display */}
-                        {entry.tags.length > 0 && (
-                          <div className="mb-8">
-                            <div className="flex items-center gap-3 mb-4">
-                              <div className="w-3 h-3 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"></div>
-                              <span className="text-blue-300 pixelated-text font-bold text-lg">Topics</span>
-                            </div>
-                            <div className="flex flex-wrap gap-3">
-                              {entry.tags.map((tag, tagIndex) => (
-                                <Badge 
-                                  key={tagIndex} 
-                                  className="bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-blue-300 border-blue-400/50 pixelated-text hover:bg-blue-500/40 transition-all duration-300 cursor-pointer font-bold px-4 py-2 text-sm"
-                                >
-                                  #{tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                        <PostTags tags={entry.tags} />
                         
-                        {/* Enhanced Action Buttons */}
-                        <div className="flex items-center justify-between pt-6 border-t border-slate-600/40">
-                          <div className="flex items-center gap-4">
-                            {/* Like Button */}
-                            <div className="group relative">
-                              <button 
-                                onClick={() => handleLike(entry.id)}
-                                disabled={loadingLikes[entry.id]}
-                                className={`flex items-center gap-3 px-6 py-3 rounded-xl border transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-                                  loadingLikes[entry.id] ? "opacity-50 cursor-not-allowed" : ""
-                                } ${
-                                  userLikes[entry.id]
-                                    ? "bg-gradient-to-r from-pink-500/20 to-red-500/20 border-pink-500/60 hover:shadow-pink-500/30"
-                                    : "bg-gradient-to-r from-pink-500/15 to-red-500/15 border-pink-500/40 hover:border-pink-500/70 hover:shadow-pink-500/25"
-                                }`}
-                              >
-                                <div className="relative">
-                                  {loadingLikes[entry.id] ? (
-                                    <div className="w-5 h-5 border-2 border-pink-400 border-t-transparent rounded-full animate-spin"></div>
-                                  ) : (
-                                    <Heart className={`w-5 h-5 transition-colors ${
-                                      userLikes[entry.id] ? "text-pink-300 fill-pink-300" : "text-pink-400 group-hover:text-pink-300"
-                                    }`} />
-                                  )}
-                                  <div className="absolute inset-0 w-5 h-5 bg-pink-400/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                </div>
-                                <span className="text-pink-300 pixelated-text font-semibold text-lg">{likeCounts[entry.id] || entry.likes || 0}</span>
-                              </button>
-                            </div>
-
-                            {/* Comment Button */}
-                            <div className="group relative">
-                              <button
-                                onClick={() => {
+                        <PostActions
+                          likes={likeCounts[entry.id] || entry.likes || 0}
+                          comments={commentCount}
+                          reposts={repostCounts[entry.id] || 0}
+                          isLiked={userLikes[entry.id]}
+                          loadingLikes={loadingLikes[entry.id]}
+                          onLike={() => handleLike(entry.id)}
+                          onComment={() => {
                                   setCurrentJournalId(entry.id);
                                   setCommentCounts(prev => ({ ...prev, [entry.id]: commentCount }));
                                 }}
-                                className="flex items-center gap-3 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500/15 to-cyan-500/15 border border-blue-500/40 hover:border-blue-500/70 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/25"
-                              >
-                                <div className="relative">
-                                  <MessageSquare className="w-5 h-5 text-blue-400 group-hover:text-blue-300 transition-colors" />
-                                  <div className="absolute inset-0 w-5 h-5 bg-blue-400/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                </div>
-                                <span className="text-blue-300 pixelated-text font-semibold text-lg">{commentCounts[entry.id] || commentCount || 0}</span>
-                              </button>
-                            </div>
-
-                            {/* Repost Button */}
-                            <div className="group relative">
-                              <button
-                                onClick={() => handleRepost(entry.id)}
-                                className={`flex items-center gap-3 px-6 py-3 rounded-xl border transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-                                  userRepost
-                                    ? "bg-gradient-to-r from-green-500/15 to-emerald-500/15 border-green-500/60 hover:shadow-green-500/25"
-                                    : "bg-gradient-to-r from-purple-500/15 to-violet-500/15 border-purple-500/40 hover:border-purple-500/70 hover:shadow-purple-500/25"
-                                }`}
-                              >
-                                <div className="relative">
-                                  <Share2 className={`w-5 h-5 transition-colors ${
-                                    userRepost ? "text-green-400 group-hover:text-green-300" : "text-purple-400 group-hover:text-purple-300"
-                                  }`} />
-                                  <div className={`absolute inset-0 w-5 h-5 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity ${
-                                    userRepost ? "bg-green-400/20" : "bg-purple-400/20"
-                                  }`}></div>
-                                </div>
-                                <span className={`pixelated-text font-semibold text-lg ${
-                                  userRepost ? "text-green-300" : "text-purple-300"
-                                }`}>
-                                  {userRepost ? "Reposted" : "Repost"}
-                                </span>
-                                <span className={`pixelated-text font-medium text-base ${
-                                  userRepost ? "text-green-300" : "text-purple-300"
-                                }`}>
-                                  ({repostCounts[entry.id] || 0})
-                                </span>
-                              </button>
-                            </div>
-                          </div>
-                          
-
-                        </div>
+                          onRepost={() => handleRepost(entry.id)}
+                        />
+                      </TVPostContainer>
                         
                         {/* Enhanced Comments Section */}
                         {currentJournalId === entry.id && (
@@ -1710,7 +1525,7 @@ export default function Dashboard({ address }: DashboardProps) {
                             <div className="flex gap-4 mb-6">
                               <Avatar className="w-10 h-10 ring-2 ring-blue-400/30 flex-shrink-0">
                                 <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold">
-                                  {user?.address?.slice(0, 2).toUpperCase()}
+                                {user?.address?.slice(0, 2).toUpperCase() || 'DB'}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="flex-1">
@@ -1783,8 +1598,7 @@ export default function Dashboard({ address }: DashboardProps) {
                             </div>
                           </div>
                         )}
-                      </CardContent>
-                    </Card>
+                    </div>
                   );
                 })}
               </div>
@@ -3398,26 +3212,16 @@ export default function Dashboard({ address }: DashboardProps) {
  };
 
  return (
-   <div className="min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-blue-800 relative overflow-hidden">
-     {/* Animated Background Pattern */}
-     <div className="absolute inset-0 opacity-40">
-       <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.08)_1px,transparent_0)] bg-[length:25px_25px] animate-pulse"></div>
-       <div className="absolute inset-0 bg-gradient-to-r from-blue-400/8 via-white/5 to-blue-400/8 animate-pulse"></div>
-       <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(0,212,255,0.15),transparent_50%)] animate-pulse"></div>
-       <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(255,255,255,0.12),transparent_50%)] animate-pulse"></div>
+   <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black relative overflow-hidden">
+     {/* Gaming Theme Background Pattern */}
+     <div className="absolute left-0 right-0 bottom-0 top-24 opacity-40 pointer-events-none">
+       {/* Tetris-style falling blocks */}
+       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.08)_2px,transparent_2px),linear-gradient(rgba(255,255,255,0.08)_2px,transparent_2px)] bg-[length:40px_40px]"></div>
+       {/* Minecraft-style pixel grid */}
+       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,197,94,0.1),transparent_30%),radial-gradient(circle_at_80%_80%,rgba(239,68,68,0.1),transparent_30%)]"></div>
+       {/* Mario-style floating platforms */}
+       <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(251,191,36,0.05)_1px,transparent_1px),linear-gradient(-45deg,rgba(251,191,36,0.05)_1px,transparent_1px)] bg-[length:80px_80px]"></div>
      </div>
-     
-     {/* Floating Particles */}
-     <div className="absolute inset-0 overflow-hidden">
-       <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white/20 rounded-full animate-bounce" style={{animationDelay: '0s', animationDuration: '3s'}}></div>
-       <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-cyan-300/30 rounded-full animate-bounce" style={{animationDelay: '1s', animationDuration: '4s'}}></div>
-       <div className="absolute bottom-1/4 left-1/3 w-1.5 h-1.5 bg-blue-300/25 rounded-full animate-bounce" style={{animationDelay: '2s', animationDuration: '3.5s'}}></div>
-       <div className="absolute top-2/3 right-1/4 w-1 h-1 bg-white/15 rounded-full animate-bounce" style={{animationDelay: '0.5s', animationDuration: '4.5s'}}></div>
-       <div className="absolute bottom-1/3 left-1/4 w-1.5 h-1.5 bg-cyan-200/20 rounded-full animate-bounce" style={{animationDelay: '1.5s', animationDuration: '3.2s'}}></div>
-     </div>
-     
-     {/* Enhanced gradient overlay */}
-     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/15 via-transparent to-white/8 animate-pulse"></div>
      {/* Enhanced Toast Notifications with responsive positioning */}
      {toasts.map((toast) => (
        <div
@@ -3448,7 +3252,7 @@ export default function Dashboard({ address }: DashboardProps) {
        </div>
      ))}
 
-     {/* Enhanced Responsive Sidebar */}
+     {/* Enhanced Responsive Sidebar with Gaming Theme */}
      <ResponsiveSidebar
        items={sidebarItems}
        activeItem={activeSidebarItem}
@@ -3456,25 +3260,19 @@ export default function Dashboard({ address }: DashboardProps) {
        userAddress={address}
        isOpen={sidebarOpen}
        onOpenChange={setSidebarOpen}
+       className="bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 border-r border-green-500/40 shadow-lg shadow-green-500/20"
      />
 
      {/* Enhanced Main Content Area with responsive padding */}
      <div className="lg:pl-72 xl:pl-80 2xl:pl-80">
-       {/* Enhanced Responsive Header */}
-       <ResponsiveHeader
-         title="DailyBase"
-         subtitle="Your crypto journey"
-         onMenuClick={() => setSidebarOpen(true)}
-         userAddress={address}
-       />
+       {/* Header hidden on main feed */}
 
-       {/* Enhanced Content Container with responsive spacing */}
-       <ResponsiveContainer maxWidth="full" className="py-4 sm:py-6 md:py-8 lg:py-10 xl:py-12 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
-         {/* Enhanced Page Content with responsive grid */}
-         <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12">
+       {/* Gaming-style Content Container */}
+       <div className="max-w-2xl mx-auto px-4 py-6 sm:py-8">
+         <div className="space-y-4">
            {renderContent()}
          </div>
-       </ResponsiveContainer>
+       </div>
      </div>
      
      {/* Enhanced User Registration Modal */}
@@ -3484,5 +3282,5 @@ export default function Dashboard({ address }: DashboardProps) {
        walletAddress={address}
      />
    </div>
- );
+ )
 }

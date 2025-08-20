@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { TVImageGrid } from "@/components/ui/tv-container";
 import { Save, Edit3, Info, Hash, Camera, X, Loader2, AlertCircle, Image as ImageIcon, Check } from "lucide-react";
 import { UploadButton } from "@uploadthing/react";
 import type { OurFileRouter } from "@/app/api/uploadthing/core";
@@ -238,30 +239,16 @@ export function DailyEntry({ userId, onSave, todayEntry }: DailyEntryProps) {
         <div className="bg-slate-700/50 rounded-xl p-6 border border-slate-600">
           {todayEntry.photos && todayEntry.photos.length > 0 && (
             <div className="mb-4">
-              <div className={`grid gap-1 rounded-xl overflow-hidden ${
-                todayEntry.photos.length === 1 ? 'grid-cols-1' :
-                todayEntry.photos.length === 2 ? 'grid-cols-2' :
-                todayEntry.photos.length === 3 ? 'grid-cols-2' :
-                'grid-cols-2'
-              }`}>
-                {todayEntry.photos.map((photo, index) => (
-                  <div key={index} className={`relative ${
-                    todayEntry.photos!.length === 3 && index === 2 ? 'col-span-2' : ''
-                  }`}>
-                    <div className="w-full h-full bg-slate-600">
-                      <ImageWithFallback
-                        src={photo}
-                        alt={`Post image ${index + 1}`}
-                        className={`w-full h-full object-cover ${
-                          todayEntry.photos!.length === 1 ? 'max-h-96' :
-                          todayEntry.photos!.length === 2 ? 'h-48' :
-                          todayEntry.photos!.length === 3 && index === 2 ? 'h-48' : 'h-48'
-                        }`}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <TVImageGrid
+                images={todayEntry.photos}
+                maxImages={4}
+                size="md"
+                aspectRatio="16:9"
+                className="w-full"
+                objectPosition="center"
+                objectFit="cover"
+                neonColor="purple"
+              />
             </div>
           )}
           <p className="text-white text-lg leading-relaxed pixelated-text">
@@ -317,39 +304,17 @@ export function DailyEntry({ userId, onSave, todayEntry }: DailyEntryProps) {
           
           {/* Photo Preview */}
           {photos.length > 0 && (
-            <div className={`grid gap-1 rounded-xl overflow-hidden ${
-              photos.length === 1 ? 'grid-cols-1' :
-              photos.length === 2 ? 'grid-cols-2' :
-              photos.length === 3 ? 'grid-cols-2' :
-              'grid-cols-2'
-            }`}>
-              {photos.map((photo, index) => (
-                <div key={index} className={`relative group ${
-                  photos.length === 3 && index === 2 ? 'col-span-2' : ''
-                }`}>
-                  <div className="w-full h-full bg-slate-600">
-                    <ImageWithFallback
-                      src={photo}
-                      alt={`Photo ${index + 1}`}
-                      className={`w-full h-full object-cover ${
-                        photos.length === 1 ? 'max-h-96' :
-                        photos.length === 2 ? 'h-48' :
-                        photos.length === 3 && index === 2 ? 'h-48' : 'h-48'
-                      }`}
-                      index={index}
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-black/50 hover:bg-black/70 rounded-full"
-                    onClick={() => removePhoto(index)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
+            <div className="mb-4">
+              <TVImageGrid
+                images={photos}
+                maxImages={4}
+                size="md"
+                aspectRatio="16:9"
+                className="w-full"
+                objectPosition="center"
+                objectFit="cover"
+                neonColor="purple"
+              />
             </div>
           )}
 

@@ -38,6 +38,8 @@ import { useEffect, useRef, useState } from "react";
 import { ContributionGrid } from "@/components/dashboard/contribution-grid";
 import { StreakTracker } from "@/components/dashboard/streak-tracker";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TVImageGrid } from "@/components/ui/tv-container";
+import { TVPostContainer, PostHeader, PostContent, PostTags, PostActions } from "@/components/ui/tv-post-container";
 import { useAuth } from "@/contexts/auth-context";
 import { baseNetworkAPI } from "@/lib/baseNetworkAPI";
 import { exchangeRateService } from "@/lib/config";
@@ -102,6 +104,9 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
    const [currentJournalId, setCurrentJournalId] = useState<string | null>(
      null
    );
+
+  // TV styles order for image posts, typed to preserve literal types
+  const tvStylesOrder = ['retro', 'modern', 'futuristic', 'vintage', 'minimal'] as const;
 
   console.log("ito yung db comments",dbComments)
   // Post comment
@@ -1079,88 +1084,38 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
             ) : (
     <div className="space-y-6">
                 {dbEntries.map((entry, index) => (
-                  <div
+                  <TVPostContainer
                     key={entry.id}
-                    className="border-b border-slate-700/50 hover:bg-slate-800/30 transition-colors duration-200 cursor-pointer"
+                    neonColor="pink"
+                    className="mb-6"
+                    hasImage={entry.photos && entry.photos.length > 0}
+                    tvStyle={'retro'}
                   >
-                    <div className="flex gap-3 p-4">
-                      {/* Avatar */}
-                      <Avatar className="w-12 h-12 flex-shrink-0">
-                        <AvatarFallback className="bg-blue-500 text-white font-semibold">
-                          {entry.baseUserId.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        {/* Header */}
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold text-white text-sm">
-                            {entry.baseUserId.slice(0, 6)}...{entry.baseUserId.slice(-4)}
-                          </span>
-                          <span className="text-slate-400 text-sm">•</span>
-                          <span className="text-slate-400 text-sm">
-                            {entry.dateCreated
-                              ? new Date(entry.dateCreated).toLocaleDateString("en-US", {
-                                  month: "short",
-                                  day: "numeric"
-                                })
-                              : "Now"}
-                          </span>
-                        </div>
-                        </div>
-                        
-                        {/* Content */}
-                        <div className="mt-3">
-                          <p className="text-white leading-relaxed text-base">
-                            {entry.journal}
-                          </p>
-                        </div>
-                        
-                        {/* Media */}
-                        {entry.photos && entry.photos.length > 0 && (
-                          <div className="mt-3 rounded-xl overflow-hidden">
-                            <img
-                              src={entry.photos[0]}
-                              alt="Journal entry"
-                              className="w-full h-auto max-h-64 object-cover"
-                            />
-                          </div>
-                        )}
-                        
-                        {/* Tags */}
-                        {entry.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            {entry.tags.map((tag, tagIndex) => (
-                              <span
-                                key={tagIndex}
-                                className="text-blue-400 text-sm hover:underline cursor-pointer"
-                              >
-                                #{tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {/* Actions */}
-                        <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-700/50">
-                          <div className="flex items-center gap-6 text-sm text-slate-400">
-                            <button className="flex items-center gap-2 hover:text-blue-400 transition-colors">
-                              <Heart className="w-4 h-4" />
-                              <span>Like</span>
-                            </button>
-                            <button className="flex items-center gap-2 hover:text-blue-400 transition-colors">
-                              <MessageSquare className="w-4 h-4" />
-                              <span>Reply</span>
-                            </button>
-                            <button className="flex items-center gap-2 hover:text-blue-400 transition-colors">
-                              <Share2 className="w-4 h-4" />
-                              <span>Share</span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    <PostHeader
+                      user={{
+                        address: entry.baseUserId,
+                        name: entry.baseUserId.slice(0, 6) + "..." + entry.baseUserId.slice(-4)
+                      }}
+                      date={entry.dateCreated ? new Date(entry.dateCreated) : new Date()}
+                      privacy={entry.privacy}
+                    />
+                    
+                    <PostContent
+                      content={entry.journal || "This user shared their crypto journey..."}
+                      photos={entry.photos}
+                    />
+                    
+                    <PostTags tags={entry.tags} />
+                    
+                    <PostActions
+                      likes={entry.likes || 0}
+                      comments={0}
+                      reposts={0}
+                      onLike={() => {}}
+                      onComment={() => {}}
+                      onRepost={() => {}}
+                    />
+                  </TVPostContainer>
                   ))}
               </div>
             )}

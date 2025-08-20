@@ -408,7 +408,7 @@ export function ResponsiveHeader({
 
   return (
     <header className={cn(
-      "sticky top-0 z-30 bg-blue-950/40 backdrop-blur-2xl border-b border-white/10 shadow-lg shadow-blue-400/20",
+      "sticky top-0 z-30 bg-blue-950/40 backdrop-blur-2xl shadow-lg shadow-blue-400/20",
       className
     )}>
       <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-4">

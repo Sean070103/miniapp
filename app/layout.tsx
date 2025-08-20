@@ -5,6 +5,8 @@ import { AuthProvider } from '@/contexts/auth-context'
 import { WalletSync } from '@/components/providers/wallet-sync'
 import { MiniKitContextProvider } from '@/components/providers/MiniKitProvider'
 import { HydrationProvider } from '@/components/providers/hydration-provider'
+import { ErrorBoundary } from '@/components/providers/error-boundary'
+import { ChunkErrorHandler } from '@/components/providers/chunk-error-handler'
 
 export async function generateMetadata(): Promise<Metadata> {
   const URL = process.env.NEXT_PUBLIC_URL || 'https://your-domain.com';
@@ -49,16 +51,20 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P:wght@400&display=swap" rel="stylesheet" />
       </head>
       <body className="pixel-font" suppressHydrationWarning={true}>
-        <HydrationProvider>
-          <MiniKitContextProvider>
-            <WalletProvider>
-              <AuthProvider>
-                <WalletSync />
-                {children}
-              </AuthProvider>
-            </WalletProvider>
-          </MiniKitContextProvider>
-        </HydrationProvider>
+        <ChunkErrorHandler>
+          <ErrorBoundary>
+            <HydrationProvider>
+              <MiniKitContextProvider>
+                <WalletProvider>
+                  <AuthProvider>
+                    <WalletSync />
+                    {children}
+                  </AuthProvider>
+                </WalletProvider>
+              </MiniKitContextProvider>
+            </HydrationProvider>
+          </ErrorBoundary>
+        </ChunkErrorHandler>
       </body>
     </html>
   )
