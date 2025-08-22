@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
  provider = "mongodb"
- url      = "mongodb+srv://lornayocor:cXqrgEX74ex576j3@juntos.n0m0ol6.mongodb.net/miniapp?retryWrites=true&w=majority&appName=juntos"
+ url      = env("DATABASE_URL")
 }
 
 model BaseUser {
@@ -43,10 +43,10 @@ model BaseUser {
 model Journal {
  id          String   @id @default(auto()) @map("_id") @db.ObjectId
  baseUserId  String
- photos      String[] // Changed from photo String? to photos String[]
+ photos      String[] // Changed back to String[] for MongoDB
  journal     String
  likes       Int      @default(0)
- tags        String[]
+ tags        String[] // Changed back to String[] for MongoDB
  privacy     String   @default("public")
  dateCreated DateTime @default(now())
  

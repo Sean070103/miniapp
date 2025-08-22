@@ -1,0 +1,13 @@
+{
+  "buildCommand": "pnpm build",
+  "installCommand": "pnpm install",
+  "framework": "nextjs",
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "DATABASE_URL": "YOUR_ACTUAL_MONGODB_CONNECTION_STRING_HERE"
+  }
+}

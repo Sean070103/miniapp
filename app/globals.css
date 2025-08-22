@@ -94,6 +94,173 @@
   .gaming-glow:hover {
     box-shadow: 0 0 30px rgba(34, 197, 94, 0.6), inset 0 0 30px rgba(34, 197, 94, 0.2);
   }
+
+  /* Enhanced Gaming Effects */
+  .pixel-border {
+    border: 2px solid #22c55e;
+    box-shadow: 
+      0 0 0 2px #000,
+      0 0 0 4px #22c55e,
+      0 0 20px rgba(34, 197, 94, 0.5);
+  }
+
+  .pixel-border:hover {
+    box-shadow: 
+      0 0 0 2px #000,
+      0 0 0 4px #16a34a,
+      0 0 30px rgba(34, 197, 94, 0.8);
+  }
+
+  .scanlines {
+    background-image: 
+      linear-gradient(
+        transparent 50%, 
+        rgba(34, 197, 94, 0.1) 50%
+      );
+    background-size: 100% 4px;
+  }
+
+  .pixel-shine {
+    background: linear-gradient(
+      45deg,
+      transparent 30%,
+      rgba(34, 197, 94, 0.3) 50%,
+      transparent 70%
+    );
+    background-size: 200% 200%;
+    animation: pixel-shine 2s ease-in-out infinite;
+  }
+
+  @keyframes pixel-shine {
+    0% { background-position: -200% -200%; }
+    100% { background-position: 200% 200%; }
+  }
+
+  .pixel-button {
+    background: linear-gradient(145deg, #22c55e, #16a34a);
+    border: 2px solid #000;
+    box-shadow: 
+      2px 2px 0px #000,
+      4px 4px 0px rgba(0,0,0,0.3);
+    transition: all 0.1s ease;
+  }
+
+  .pixel-button:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 
+      4px 4px 0px #000,
+      6px 6px 0px rgba(0,0,0,0.3);
+  }
+
+  .pixel-button:active {
+    transform: translate(0px, 0px);
+    box-shadow: 
+      1px 1px 0px #000,
+      2px 2px 0px rgba(0,0,0,0.3);
+  }
+
+  .pixel-card {
+    background: linear-gradient(145deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.05));
+    border: 2px solid #22c55e;
+    box-shadow: 
+      0 0 0 2px #000,
+      0 0 20px rgba(34, 197, 94, 0.3);
+    position: relative;
+  }
+
+  .pixel-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      linear-gradient(90deg, transparent 98%, rgba(34, 197, 94, 0.3) 100%),
+      linear-gradient(0deg, transparent 98%, rgba(34, 197, 94, 0.3) 100%);
+    background-size: 20px 20px;
+    pointer-events: none;
+  }
+
+  .pixel-input {
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #22c55e;
+    box-shadow: 
+      0 0 0 2px #000,
+      inset 0 0 10px rgba(34, 197, 94, 0.2);
+  }
+
+  .pixel-input:focus {
+    box-shadow: 
+      0 0 0 2px #000,
+      0 0 0 4px #22c55e,
+      inset 0 0 10px rgba(34, 197, 94, 0.4);
+  }
+
+  .pixel-avatar {
+    border: 3px solid #22c55e;
+    box-shadow: 
+      0 0 0 2px #000,
+      0 0 15px rgba(34, 197, 94, 0.5);
+  }
+
+  .pixel-avatar:hover {
+    box-shadow: 
+      0 0 0 2px #000,
+      0 0 25px rgba(34, 197, 94, 0.8);
+  }
+
+  .pixel-text-shadow {
+    text-shadow: 
+      2px 2px 0px #000,
+      4px 4px 0px rgba(0,0,0,0.5);
+  }
+
+  .pixel-text-glow {
+    text-shadow: 
+      0 0 5px #22c55e,
+      0 0 10px #22c55e,
+      0 0 15px #22c55e;
+  }
+
+  .pixel-bg-pattern {
+    background-image: 
+      radial-gradient(circle at 25% 25%, rgba(34, 197, 94, 0.1) 2px, transparent 2px),
+      radial-gradient(circle at 75% 75%, rgba(34, 197, 94, 0.1) 2px, transparent 2px);
+    background-size: 20px 20px;
+  }
+
+  .pixel-grid {
+    background-image: 
+      linear-gradient(rgba(34, 197, 94, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34, 197, 94, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .pixel-dots {
+    background-image: radial-gradient(circle, rgba(34, 197, 94, 0.2) 1px, transparent 1px);
+    background-size: 10px 10px;
+  }
+
+  .pixel-animation {
+    animation: pixel-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pixel-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+
+  .pixel-loading {
+    background: linear-gradient(90deg, #22c55e, #16a34a, #22c55e);
+    background-size: 200% 100%;
+    animation: pixel-loading 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pixel-loading {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
 }
 
 /* Custom scrollbar styles */

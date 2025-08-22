@@ -116,14 +116,11 @@ export function TVPostContainer({
       {/* Gaming Post Container */}
       <div className={cn(
         'relative rounded-2xl p-4 sm:p-6',
-        'bg-gradient-to-br from-gray-800/90 via-gray-700/80 to-gray-800/90 backdrop-blur-xl',
-        'border-2 border-green-500/70 ring-1 ring-green-500/20',
-        'shadow-[0_8px_32px_rgba(0,0,0,0.4)] hover:shadow-[0_12px_48px_rgba(34,197,94,0.3)]',
+        'pixel-card scanlines',
         'transition-all duration-300',
-        'hover:border-green-400 hover:ring-green-400/40',
-        'pixelated-border'
+        'hover:scale-[1.02]'
       )}>
-        <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-green-500/10 via-transparent to-green-500/5"></div>
+        <div className="pointer-events-none absolute inset-0 rounded-2xl pixel-shine"></div>
         {/* Content Area */}
         <div className="relative">
           {children}
@@ -311,40 +308,40 @@ export function PostActions({
           onClick={onLike}
           disabled={loadingLikes}
           className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 hover:bg-green-900/30 hover:scale-105',
+            'pixel-button flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 hover:scale-105',
             loadingLikes ? "opacity-50 cursor-not-allowed" : "",
-            isLiked ? "text-green-400" : "text-green-300/70 hover:text-green-400"
+            isLiked ? "text-green-400 pixel-text-glow" : "text-green-300/70 hover:text-green-400"
           )}
         >
           <div className="relative">
             {loadingLikes ? (
-              <div className="w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+              <div className="pixel-loading w-5 h-5 rounded-full"></div>
             ) : (
               <Heart className={cn(
                 'w-5 h-5 transition-all duration-300',
-                isLiked ? "text-green-400 fill-green-400 drop-shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "text-green-300/70 hover:text-green-400 hover:scale-110"
+                isLiked ? "text-green-400 fill-green-400 pixel-text-glow" : "text-green-300/70 hover:text-green-400 hover:scale-110"
               )} />
             )}
           </div>
-          <span className="text-sm font-bold text-green-100">{likes}</span>
+          <span className="text-sm font-bold text-green-100 pixel-text-shadow">{likes}</span>
         </button>
 
         {/* Enhanced Comment Button */}
         <button
           onClick={onComment}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-green-300/70 hover:text-green-400 hover:bg-green-900/30 hover:scale-105 transition-all duration-300"
+          className="pixel-button flex items-center gap-2 px-3 py-2 rounded-lg text-green-300/70 hover:text-green-400 hover:scale-105 transition-all duration-300"
         >
           <MessageSquare className="w-5 h-5 hover:scale-110 transition-transform duration-300" />
-          <span className="text-sm font-bold text-green-100">{comments}</span>
+          <span className="text-sm font-bold text-green-100 pixel-text-shadow">{comments}</span>
         </button>
 
         {/* Enhanced Repost Button */}
         <button
           onClick={onRepost}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-green-300/70 hover:text-green-400 hover:bg-green-900/30 hover:scale-105 transition-all duration-300"
+          className="pixel-button flex items-center gap-2 px-3 py-2 rounded-lg text-green-300/70 hover:text-green-400 hover:scale-105 transition-all duration-300"
         >
           <Share2 className="w-5 h-5 hover:scale-110 transition-transform duration-300" />
-          <span className="text-sm font-bold text-green-100">{reposts}</span>
+          <span className="text-sm font-bold text-green-100 pixel-text-shadow">{reposts}</span>
         </button>
       </div>
     </div>

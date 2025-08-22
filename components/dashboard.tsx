@@ -492,6 +492,34 @@ export default function Dashboard({ address }: DashboardProps) {
     setSelectedDate(today);
   };
 
+  const calculateCurrentStreak = () => {
+    if (entries.length === 0) return 0;
+    
+    const sortedEntries = entries
+      .map(entry => new Date(entry.date))
+      .sort((a, b) => b.getTime() - a.getTime());
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    let streak = 0;
+    let currentDate = today;
+    
+    for (let i = 0; i < 365; i++) { // Check up to a year back
+      const dateString = currentDate.toISOString().split('T')[0];
+      const hasEntry = entries.some(entry => entry.date === dateString);
+      
+      if (hasEntry) {
+        streak++;
+        currentDate.setDate(currentDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    
+    return streak;
+  };
+
   // Data management utility functions
   const exportData = () => {
     const dataToExport = {
@@ -1120,18 +1148,6 @@ export default function Dashboard({ address }: DashboardProps) {
     currencySwap.toCurrency
   );
 
-  // Sidebar items configuration
-  const sidebarItems = [
-    { id: 'home' as SidebarItem, label: 'Home', icon: Home },
-    { id: 'calendar' as SidebarItem, label: 'Calendar', icon: Calendar },
-    { id: 'calculator' as SidebarItem, label: 'Calculator', icon: Calculator },
-    { id: 'stats' as SidebarItem, label: 'Stats', icon: BarChart3 },
-    { id: 'streak' as SidebarItem, label: 'Streak', icon: Flame },
-    { id: 'notifications' as SidebarItem, label: 'Notifications', icon: Bell },
-    { id: 'profile' as SidebarItem, label: 'Profile', icon: User },
-    { id: 'settings' as SidebarItem, label: 'Settings', icon: Settings },
-  ];
-
   // Notification states
   const [notifications, setNotifications] = useState<{
     id: string;
@@ -1143,8 +1159,25 @@ export default function Dashboard({ address }: DashboardProps) {
     read: boolean;
   }[]>([]);
 
+  // Sidebar items configuration
+  const sidebarItems = [
+    { id: 'home' as SidebarItem, label: 'Home', icon: Home },
+    { id: 'calendar' as SidebarItem, label: 'Calendar', icon: Calendar },
+    { id: 'calculator' as SidebarItem, label: 'Calculator', icon: Calculator },
+    { id: 'stats' as SidebarItem, label: 'Stats', icon: BarChart3 },
+    { id: 'streak' as SidebarItem, label: 'Streak', icon: Flame },
+    { 
+      id: 'notifications' as SidebarItem, 
+      label: 'Notifications', 
+      icon: Bell,
+      badge: notifications.filter(n => !n.read).length > 0 ? notifications.filter(n => !n.read).length : undefined
+    },
+    { id: 'profile' as SidebarItem, label: 'Profile', icon: User },
+    { id: 'settings' as SidebarItem, label: 'Settings', icon: Settings },
+  ];
+
   // Notification functions
-  const createNotification = (type: 'like' | 'comment' | 'repost', journalId: string, content: string) => {
+  const createNotification = async (type: 'like' | 'comment' | 'repost', journalId: string, content: string) => {
     const notification = {
       id: Date.now().toString(),
       type,
@@ -1161,6 +1194,33 @@ export default function Dashboard({ address }: DashboardProps) {
     const storedNotifications = JSON.parse(localStorage.getItem('dailybase-notifications') || '[]');
     storedNotifications.unshift(notification);
     localStorage.setItem('dailybase-notifications', JSON.stringify(storedNotifications.slice(0, 50))); // Keep last 50
+
+    // Also create notification in database
+    try {
+      // Get the post author's ID to send them the notification
+      const post = allPosts.find(p => p.id === journalId);
+      if (post && post.baseUserId !== address) { // Don't notify yourself
+        await fetch('/api/notifications', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: post.baseUserId, // Notify the post author
+            type,
+            title: `${type.charAt(0).toUpperCase() + type.slice(1)} Notification`,
+            message: `${address.slice(0, 6)}...${address.slice(-4)} ${content}`,
+            data: {
+              actorId: address,
+              journalId,
+              action: type
+            }
+          }),
+        });
+      }
+    } catch (error) {
+      console.error('Error creating notification in database:', error);
+    }
   };
 
   const markNotificationAsRead = (notificationId: string) => {
@@ -1176,8 +1236,10 @@ export default function Dashboard({ address }: DashboardProps) {
     localStorage.removeItem('dailybase-notifications');
   };
 
-  // Load notifications from localStorage
+  // Load notifications from localStorage and database
   useEffect(() => {
+    const loadNotifications = async () => {
+      // Load from localStorage first
     const storedNotifications = localStorage.getItem('dailybase-notifications');
     if (storedNotifications) {
       try {
@@ -1187,10 +1249,45 @@ export default function Dashboard({ address }: DashboardProps) {
           timestamp: new Date(n.timestamp)
         })));
       } catch (error) {
-        console.error('Error loading notifications:', error);
+          console.error('Error loading notifications from localStorage:', error);
+        }
       }
-    }
-  }, []);
+
+      // Also load from database
+      if (address) {
+        try {
+          const response = await fetch(`/api/notifications?userId=${address}&limit=50`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data) {
+              // Merge database notifications with localStorage
+              const dbNotifications = data.data.map((n: any) => ({
+                id: n.id,
+                type: n.type,
+                userId: n.userId,
+                journalId: n.journalId,
+                content: n.message,
+                timestamp: new Date(n.dateCreated),
+                read: n.isRead
+              }));
+              
+              // Combine and deduplicate
+              const allNotifications = [...dbNotifications, ...notifications];
+              const uniqueNotifications = allNotifications.filter((notification, index, self) => 
+                index === self.findIndex(n => n.id === notification.id)
+              );
+              
+              setNotifications(uniqueNotifications);
+            }
+          }
+        } catch (error) {
+          console.error('Error loading notifications from database:', error);
+        }
+      }
+    };
+
+    loadNotifications();
+  }, [address]);
 
   const renderContent = () => {
     switch (activeSidebarItem) {
@@ -1219,52 +1316,52 @@ export default function Dashboard({ address }: DashboardProps) {
             </div>
 
             {/* Gaming-style Create Post */}
-            <div className="bg-gradient-to-br from-gray-800/90 via-gray-700/80 to-gray-800/90 backdrop-blur-xl rounded-xl border-2 border-green-500/50 p-4 mb-6 shadow-lg gaming-glow">
-              <div className="flex items-start gap-3">
-                <Avatar className="w-10 h-10 border-2 border-green-500/50 flex-shrink-0 shadow-lg shadow-green-500/20">
-                  <AvatarFallback className="bg-gradient-to-br from-green-600 to-green-700 text-green-100 text-sm font-bold pixelated-text">
+            <div className="pixel-card rounded-xl p-3 sm:p-4 mb-6 scanlines">
+              <div className="flex items-start gap-2 sm:gap-3">
+                <Avatar className="w-8 h-8 sm:w-10 sm:h-10 pixel-avatar flex-shrink-0">
+                  <AvatarFallback className="bg-gradient-to-br from-green-600 to-green-700 text-green-100 text-xs sm:text-sm font-bold pixelated-text pixel-text-shadow">
                     {address.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 space-y-3">
+                <div className="flex-1 space-y-2 sm:space-y-3 min-w-0">
                   <div>
-                    <div className="text-green-100 mb-2 font-bold text-sm pixelated-text">
+                    <div className="text-green-100 mb-2 font-bold text-xs sm:text-sm pixelated-text">
                       What's happening in your crypto world today?
                     </div>
                     <textarea
                       value={newPostContent}
                       onChange={(e) => setNewPostContent(e.target.value)}
                       placeholder="Share your thoughts, trades, or insights..."
-                      className="w-full p-3 bg-gray-900/50 border-2 border-green-500/30 rounded-lg text-green-100 placeholder-green-300/50 resize-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all duration-200 text-sm pixelated-text"
+                      className="w-full p-2 sm:p-3 pixel-input rounded-lg text-green-100 placeholder-green-300/50 resize-none transition-all duration-200 text-xs sm:text-sm pixelated-text"
                       rows={3}
                       maxLength={500}
                     />
-                                          <div className="flex items-center justify-between mt-2">
-                        <span className="text-sm text-green-300/70 pixelated-text">
-                          {newPostContent.length}/500
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => document.getElementById('image-upload')?.click()}
-                            className="text-green-400 hover:text-green-300 hover:bg-green-900/30 rounded-lg px-3 py-2 transition-all duration-300 pixelated-text"
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-2 space-y-2 sm:space-y-0">
+                        <span className="text-xs sm:text-sm text-green-300/70 pixelated-text">
+                        {newPostContent.length}/500
+                      </span>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => document.getElementById('image-upload')?.click()}
+                            className="pixel-button text-green-100 hover:text-green-300 rounded-lg px-2 sm:px-3 py-1 sm:py-2 transition-all duration-300 pixelated-text text-xs sm:text-sm w-full sm:w-auto"
+                        >
+                          <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                          {images.length > 0 ? `${images.length} Image${images.length > 1 ? 's' : ''}` : 'Add Photo'}
+                        </Button>
+                        
+                        {/* Privacy Selector */}
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                          <select
+                            value={newPostPrivacy}
+                            onChange={(e) => setNewPostPrivacy(e.target.value as 'public' | 'private')}
+                              className="pixel-input rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm text-green-100 transition-all duration-300 pixelated-text w-full sm:w-auto"
                           >
-                            <Plus className="w-4 h-4 mr-1" />
-                            {images.length > 0 ? `${images.length} Image${images.length > 1 ? 's' : ''}` : 'Add Photo'}
-                          </Button>
-                          
-                          {/* Privacy Selector */}
-                          <div className="flex items-center gap-2">
-                            <select
-                              value={newPostPrivacy}
-                              onChange={(e) => setNewPostPrivacy(e.target.value as 'public' | 'private')}
-                              className="bg-gray-900/50 border-2 border-green-500/30 rounded-lg px-3 py-2 text-sm text-green-100 focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all duration-300 pixelated-text"
-                            >
-                              <option value="public">🌍 Public</option>
-                              <option value="private">🔒 Private</option>
-                            </select>
-                          </div>
+                            <option value="public">🌍 Public</option>
+                            <option value="private">🔒 Private</option>
+                          </select>
+                        </div>
                         <input
                           id="image-upload"
                           type="file"
@@ -1283,16 +1380,16 @@ export default function Dashboard({ address }: DashboardProps) {
                   {/* Image Preview */}
                   {images.length > 0 && (
                     <div className="space-y-2">
-                      <ResponsiveText size="base" className="text-orange-500">
+                      <ResponsiveText size="base" className="text-orange-500 text-xs sm:text-sm">
                         Selected Images ({images.length}):
                       </ResponsiveText>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-1 sm:gap-2">
                         {images.map((image, index) => (
                           <div key={index} className="relative group">
                             <img
                               src={URL.createObjectURL(image)}
                               alt={`Preview ${index + 1}`}
-                              className="w-16 h-16 object-cover rounded-lg border-2 border-orange-400/30 hover:border-orange-400/60 transition-all duration-300"
+                              className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg border-2 border-orange-400/30 hover:border-orange-400/60 transition-all duration-300"
                             />
                             <Button
                               variant="ghost"
@@ -1310,9 +1407,9 @@ export default function Dashboard({ address }: DashboardProps) {
                                   }
                                 });
                               }}
-                              className="absolute -top-2 -right-2 w-6 h-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300"
+                              className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-4 h-4 sm:w-6 sm:h-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300"
                             >
-                              <X className="w-3 h-3" />
+                              <X className="w-2 h-2 sm:w-3 sm:h-3" />
                             </Button>
                           </div>
                         ))}
@@ -1321,9 +1418,9 @@ export default function Dashboard({ address }: DashboardProps) {
                         variant="outline"
                         size="sm"
                         onClick={clearImages}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-400/10 border-red-400/30"
+                        className="text-red-400 hover:text-red-300 hover:bg-red-400/10 border-red-400/30 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
                       >
-                        <X className="w-4 h-4 mr-1" />
+                        <X className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                         Clear All Images
                       </Button>
                     </div>
@@ -1332,14 +1429,14 @@ export default function Dashboard({ address }: DashboardProps) {
                   {/* Tags Display */}
                   {newPostTags.length > 0 && (
                     <div className="space-y-2">
-                      <ResponsiveText size="base" className="text-blue-300">
+                      <ResponsiveText size="base" className="text-blue-300 text-xs sm:text-sm">
                         Tags:
                       </ResponsiveText>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-1 sm:gap-2">
                         {newPostTags.map((tag, index) => (
                           <Badge
                             key={index}
-                            className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text"
+                            className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1"
                           >
                             #{tag}
                             <Button
@@ -1348,7 +1445,7 @@ export default function Dashboard({ address }: DashboardProps) {
                               onClick={() => removeTagFromPost(tag)}
                               className="ml-1 p-0 h-auto text-blue-300 hover:text-blue-200"
                             >
-                              <X className="w-3 h-3" />
+                              <X className="w-2 h-2 sm:w-3 sm:h-3" />
                             </Button>
                           </Badge>
                         ))}
@@ -1357,12 +1454,12 @@ export default function Dashboard({ address }: DashboardProps) {
                   )}
 
                   {/* Add Tags */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <input
                       id="tag-input"
                       type="text"
                       placeholder="Add tags..."
-                      className="flex-1 px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 pixelated-text"
+                      className="flex-1 px-2 sm:px-3 py-1 sm:py-2 pixel-input rounded-lg text-green-100 placeholder-green-300/50 transition-all duration-300 pixelated-text text-xs sm:text-sm"
                       onKeyPress={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
@@ -1384,7 +1481,7 @@ export default function Dashboard({ address }: DashboardProps) {
                       }}
                       variant="outline"
                       size="sm"
-                      className="bg-blue-600/20 border-blue-500 text-blue-300 hover:bg-blue-600/30"
+                      className="pixel-button text-green-100 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 w-full sm:w-auto"
                     >
                       Add Tag
                     </Button>
@@ -1395,17 +1492,17 @@ export default function Dashboard({ address }: DashboardProps) {
                     <Button
                       onClick={handleCreatePost}
                       disabled={!newPostContent.trim() || isCreatingPost}
-                      className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white pixelated-text px-6 py-2 hover:shadow-lg hover:shadow-blue-500/25 disabled:opacity-50"
+                      className="pixel-button text-green-100 px-4 sm:px-6 py-2 disabled:opacity-50 text-xs sm:text-sm w-full sm:w-auto pixel-text-shadow"
                     >
                       {isCreatingPost ? (
                         <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          {isProcessingImages ? 'Processing Images...' : 'Posting...'}
+                          <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white mr-1 sm:mr-2"></div>
+                          <span className="text-xs sm:text-sm">{isProcessingImages ? 'Processing Images...' : 'Posting...'}</span>
                         </>
                       ) : (
                         <>
-                          <Plus className="w-4 h-4 mr-2" />
-                          Post
+                          <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          <span className="text-xs sm:text-sm">Post</span>
                         </>
                       )}
                     </Button>
@@ -1609,22 +1706,55 @@ export default function Dashboard({ address }: DashboardProps) {
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-                           <h1 className="text-4xl font-bold text-white pixelated-text mb-3 bg-gradient-to-r from-white via-blue-50 to-cyan-100 bg-clip-text text-transparent drop-shadow-lg">
+              <h1 className="text-4xl font-bold text-green-100 pixelated-text mb-3 pixel-text-shadow">
                 Calendar View
               </h1>
-             <p className="text-blue-100 pixelated-text text-lg font-medium drop-shadow-sm">
+              <p className="text-green-300 pixelated-text text-lg font-medium pixel-text-shadow">
                 Track your daily entries and activities
               </p>
             </div>
 
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm">
+            {/* Gaming-style Stats Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <div className="bg-transparent border-2 border-green-500/50 rounded-lg p-4 text-center backdrop-blur-sm">
+                <div className="text-2xl font-bold text-green-100 pixelated-text pixel-text-shadow mb-1">
+                  {entries.filter(entry => {
+                    const entryDate = new Date(entry.date);
+                    return entryDate.getMonth() === currentMonth && entryDate.getFullYear() === currentYear;
+                  }).length}
+                </div>
+                <div className="text-sm text-green-300 pixelated-text">Entries This Month</div>
+              </div>
+              
+              <div className="bg-transparent border-2 border-green-500/50 rounded-lg p-4 text-center backdrop-blur-sm">
+                <div className="flex items-center justify-center mb-1">
+                  <Flame className="w-6 h-6 text-green-400 mr-2 pixel-text-glow" />
+                  <span className="text-2xl font-bold text-green-100 pixelated-text pixel-text-shadow">
+                    {calculateCurrentStreak()}
+                  </span>
+                </div>
+                <div className="text-sm text-green-300 pixelated-text">Day Streak</div>
+              </div>
+              
+              <div className="bg-transparent border-2 border-green-500/50 rounded-lg p-4 text-center backdrop-blur-sm">
+                <div className="text-2xl font-bold text-green-100 pixelated-text pixel-text-shadow mb-1">
+                  {Math.round((entries.filter(entry => {
+                    const entryDate = new Date(entry.date);
+                    return entryDate.getMonth() === currentMonth && entryDate.getFullYear() === currentYear;
+                  }).length / new Date(currentYear, currentMonth + 1, 0).getDate()) * 100)}%
+                </div>
+                <div className="text-sm text-green-300 pixelated-text">Monthly Completion</div>
+              </div>
+            </div>
+
+            <Card className="bg-transparent border-2 border-green-500/50 backdrop-blur-sm">
               <CardHeader className="text-center">
                 <div className="flex items-center justify-between mb-4">
                   <Button
                     onClick={goToPreviousYear}
                     variant="outline"
                     size="sm"
-                    className="bg-white/15 border-white/20 text-white pixelated-text backdrop-blur-sm hover:bg-white/25 hover:scale-105 hover:shadow-lg hover:shadow-blue-400/20 transition-all duration-300 ease-out"
+                    className="pixel-button text-green-100 pixelated-text hover:scale-105 transition-all duration-300"
                   >
                     {"<<"}
                   </Button>
@@ -1632,12 +1762,12 @@ export default function Dashboard({ address }: DashboardProps) {
                     onClick={goToPreviousMonth}
                     variant="outline"
                     size="sm"
-                    className="bg-white/15 border-white/20 text-white pixelated-text backdrop-blur-sm hover:bg-white/25 hover:scale-105 hover:shadow-lg hover:shadow-blue-400/20 transition-all duration-300 ease-out"
+                    className="pixel-button text-green-100 pixelated-text hover:scale-105 transition-all duration-300"
                   >
                     {"<"}
                   </Button>
                   <div className="flex-1 text-center">
-                                       <h2 className="text-3xl font-bold text-white pixelated-text bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent drop-shadow-md">
+                    <h2 className="text-3xl font-bold text-green-100 pixelated-text pixel-text-shadow">
                       {getMonthName(currentMonth)} {currentYear}
                     </h2>
                   </div>
@@ -1645,7 +1775,7 @@ export default function Dashboard({ address }: DashboardProps) {
                     onClick={goToNextMonth}
                     variant="outline"
                     size="sm"
-                    className="bg-white/15 border-white/20 text-white pixelated-text backdrop-blur-sm hover:bg-white/25 hover:scale-105 hover:shadow-lg hover:shadow-blue-400/20 transition-all duration-300 ease-out"
+                    className="pixel-button text-green-100 pixelated-text hover:scale-105 transition-all duration-300"
                   >
                     {">"}
                   </Button>
@@ -1653,7 +1783,7 @@ export default function Dashboard({ address }: DashboardProps) {
                     onClick={goToNextYear}
                     variant="outline"
                     size="sm"
-                    className="bg-white/15 border-white/20 text-white pixelated-text backdrop-blur-sm hover:bg-white/25 hover:scale-105 hover:shadow-lg hover:shadow-blue-400/20 transition-all duration-300 ease-out"
+                    className="pixel-button text-green-100 pixelated-text hover:scale-105 transition-all duration-300"
                   >
                     {">>"}
                   </Button>
@@ -1661,16 +1791,16 @@ export default function Dashboard({ address }: DashboardProps) {
                 <Button
                   onClick={goToToday}
                   variant="outline"
-                  className="bg-blue-500/40 border-blue-400/50 text-white pixelated-text backdrop-blur-sm hover:bg-blue-500/60 hover:scale-105 hover:shadow-lg hover:shadow-blue-300/40 transition-all duration-300 ease-out"
+                  className="pixel-button text-green-100 pixelated-text hover:scale-105 transition-all duration-300"
                 >
                   Today
                 </Button>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-7 gap-1">
+                <div className="pixel-grid grid grid-cols-7 gap-1 p-2">
                   {dayNames.map((day) => (
                     <div key={day} className="p-2 text-center">
-                                           <div className="text-sm font-semibold text-blue-100 pixelated-text">
+                      <div className="text-sm font-semibold text-green-100 pixelated-text pixel-text-shadow">
                         {day}
                       </div>
                     </div>
@@ -1680,25 +1810,25 @@ export default function Dashboard({ address }: DashboardProps) {
                     <div
                       key={index}
                       className={`p-2 text-center cursor-pointer transition-all duration-200 ${
-                        day ? "hover:bg-slate-600/30" : ""
+                        day ? "hover:scale-105" : ""
                       }`}
                       onClick={() => handleDateClick(day || 0)}
                     >
                       {day ? (
                         <div
-                          className={`relative w-10 h-10 mx-auto rounded-xl flex items-center justify-center text-sm pixelated-text transition-all duration-300 hover:scale-110 ${
+                          className={`relative w-10 h-10 mx-auto rounded-lg flex items-center justify-center text-sm pixelated-text transition-all duration-300 hover:scale-110 ${
                             isToday(day)
-                              ? "bg-gradient-to-br from-blue-500 to-blue-400 text-white font-bold shadow-lg shadow-blue-300/60"
+                              ? "pixel-button text-green-100 font-bold pixel-text-glow"
                               : isSelected(day)
-                              ? "bg-gradient-to-br from-blue-400/50 to-blue-300/40 text-blue-50 border-2 border-blue-300/60 shadow-md shadow-blue-300/40"
+                              ? "pixel-border text-green-100 pixel-text-shadow"
                               : hasEntriesForDate(day)
-                              ? "bg-gradient-to-br from-green-400/40 to-green-300/30 text-green-50 border-2 border-green-300/50 shadow-md shadow-green-300/30"
-                              : "text-white hover:bg-white/20 hover:border hover:border-white/30 hover:shadow-md hover:shadow-white/20"
+                              ? "pixel-card text-green-100 pixel-text-shadow pixel-animation"
+                              : "text-green-100 hover:pixel-border hover:pixel-text-shadow"
                           }`}
                         >
                           {day}
                           {hasEntriesForDate(day) && (
-                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-green-300 to-green-200 rounded-full shadow-sm shadow-green-300/60 animate-pulse"></div>
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full pixel-text-glow animate-pulse"></div>
                           )}
                         </div>
                       ) : (
@@ -1710,9 +1840,9 @@ export default function Dashboard({ address }: DashboardProps) {
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm">
+            <Card className="bg-transparent border-2 border-green-500/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-blue-300 pixelated-text">
+                <CardTitle className="text-green-100 pixelated-text pixel-text-shadow">
                   {selectedDate.toDateString()}
                 </CardTitle>
               </CardHeader>
@@ -1731,13 +1861,13 @@ export default function Dashboard({ address }: DashboardProps) {
                       .map((entry, index) => (
                         <div
                           key={index}
-                          className="bg-slate-700/50 rounded-lg p-3 border border-slate-600/30"
+                          className="bg-transparent border-2 border-green-500/50 rounded-lg p-3 backdrop-blur-sm"
                         >
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-white pixelated-text font-semibold">
+                            <span className="text-green-100 pixelated-text font-semibold pixel-text-shadow">
                               {entry.content}
                             </span>
-                            <span className="text-blue-300 pixelated-text text-sm">
+                            <span className="text-green-300 pixelated-text text-sm pixel-text-shadow">
                               {new Date(entry.timestamp).toLocaleTimeString(
                                 "en-US",
                                 {
@@ -1956,75 +2086,75 @@ export default function Dashboard({ address }: DashboardProps) {
            {activeCalculatorTab === "gas" && (
              <div className="max-w-4xl mx-auto">
                <div className="text-center mb-8">
-                 <h2 className="text-3xl font-semibold text-white mb-3 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent drop-shadow-md">
+                 <h2 className="text-3xl font-bold text-green-100 mb-3 pixelated-text drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]">
                    Gas Fee Calculator
                  </h2>
-                 <p className="text-blue-100 text-lg font-medium">
+                 <p className="text-green-300/80 text-lg font-medium pixelated-text">
                    Calculate transaction costs with precision
                  </p>
                </div>
                <div className="space-y-6">
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
                    <div className="space-y-2">
-                     <label className="text-sm font-medium text-blue-100">
+                     <label className="text-sm font-bold text-green-100 pixelated-text">
                        Gas Price (Gwei)
                      </label>
                      <input
                        type="number"
                        value={gasPrice}
                        onChange={(e) => setGasPrice(e.target.value)}
-                       className="w-full bg-white/10 border border-white/20 text-white px-4 py-3 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all duration-300 backdrop-blur-sm"
+                       className="w-full pixel-input text-green-100 px-4 py-3 rounded-lg transition-all duration-300 pixelated-text placeholder-green-300/50"
                        placeholder="20"
                      />
                    </div>
                    <div className="space-y-2">
-                     <label className="text-sm font-medium text-blue-100">
+                     <label className="text-sm font-bold text-green-100 pixelated-text">
                        Gas Limit
                      </label>
                      <input
                        type="number"
                        value={gasLimit}
                        onChange={(e) => setGasLimit(e.target.value)}
-                       className="w-full bg-white/10 border border-white/20 text-white px-4 py-3 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all duration-300 backdrop-blur-sm"
+                       className="w-full pixel-input text-green-100 px-4 py-3 rounded-lg transition-all duration-300 pixelated-text placeholder-green-300/50"
                        placeholder="21000"
                      />
                    </div>
                    <div className="space-y-2">
-                     <label className="text-sm font-medium text-blue-100">
+                     <label className="text-sm font-bold text-green-100 pixelated-text">
                        ETH Price (USD)
                      </label>
                      <input
                        type="number"
                        value={ethPrice}
                        onChange={(e) => setEthPrice(e.target.value)}
-                       className="w-full bg-white/10 border border-white/20 text-white px-4 py-3 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all duration-300 backdrop-blur-sm"
+                       className="w-full pixel-input text-green-100 px-4 py-3 rounded-lg transition-all duration-300 pixelated-text placeholder-green-300/50"
                        placeholder="2000"
                      />
                    </div>
                  </div>
 
-                 <div className="bg-white/8 rounded-xl p-8 border border-white/20 backdrop-blur-2xl shadow-lg shadow-blue-400/30">
-                   <h4 className="text-white font-semibold mb-6 text-center text-xl bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+                 <div className="pixel-card rounded-xl p-8 scanlines">
+                   <h4 className="text-green-100 font-bold mb-6 text-center text-xl pixelated-text">
                      Calculation Results
                    </h4>
                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
-                     <div className="text-center p-6 bg-white/10 rounded-lg border border-white/20 backdrop-blur-sm">
-                       <div className="text-3xl font-bold text-blue-300 mb-2">
+                     <div className="text-center p-6 pixel-card rounded-lg pixel-animation hover:scale-105 transition-all duration-300">
+                       <div className="text-3xl font-bold text-green-300 mb-2 pixelated-text pixel-text-shadow">
                          {gasFeeResult.gwei}
                        </div>
-                       <div className="text-sm text-blue-100 font-medium">Gwei</div>
+                       <div className="text-sm text-green-100 font-bold pixelated-text pixel-text-shadow">Gwei</div>
                      </div>
-                     <div className="text-center p-6 bg-white/10 rounded-lg border border-white/20 backdrop-blur-sm">
-                       <div className="text-3xl font-bold text-green-300 mb-2">
+                     <div className="text-center p-6 pixel-card rounded-lg pixel-animation hover:scale-105 transition-all duration-300">
+                       <div className="text-3xl font-bold text-green-400 mb-2 pixelated-text pixel-text-shadow">
                          {gasFeeResult.eth}
                        </div>
-                       <div className="text-sm text-blue-100 font-medium">ETH</div>
+                       <div className="text-sm text-green-100 font-bold pixelated-text pixel-text-shadow">ETH</div>
                      </div>
-                     <div className="text-center p-6 bg-white/10 rounded-lg border border-white/20 backdrop-blur-sm">
-                       <div className="text-3xl font-bold text-purple-300 mb-2">
+                     <div className="text-center p-6 pixel-card rounded-lg pixel-animation hover:scale-105 transition-all duration-300">
+                       <div className="text-3xl font-bold text-green-300 mb-2 pixelated-text pixel-text-shadow">
                          ${gasFeeResult.usd}
                        </div>
-                       <div className="text-sm text-blue-100 font-medium">USD</div>
+                       <div className="text-sm text-green-100 font-bold pixelated-text pixel-text-shadow">USD</div>
                      </div>
                    </div>
                  </div>
@@ -2801,116 +2931,7 @@ export default function Dashboard({ address }: DashboardProps) {
              </CardContent>
            </Card>
            
-           <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-             <CardHeader>
-               <CardTitle className="text-blue-300 flex items-center gap-2 pixelated-text">
-                 <Trophy className="w-5 h-5" />
-                 Recent Achievements
-               </CardTitle>
-             </CardHeader>
-             <CardContent>
-               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                 {userAchievements.slice(0, 8).map((achievement) => (
-                   <AchievementBadge 
-                     key={achievement.id} 
-                     achievement={achievement} 
-                     showProgress={true}
-                     size="sm"
-                   />
-                 ))}
-               </div>
-             </CardContent>
-           </Card>
 
-           <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-             <CardHeader>
-               <CardTitle className="text-blue-300 pixelated-text">
-                 Streak History
-               </CardTitle>
-             </CardHeader>
-             <CardContent>
-               <div className="text-center py-8">
-                 <Flame className="w-16 h-16 text-orange-400 mb-4 mx-auto opacity-50" />
-                 <h3 className="text-xl font-semibold text-white pixelated-text mb-2">
-                   Streak History Coming Soon
-                 </h3>
-                 <p className="text-blue-300 text-center mb-6 max-w-md mx-auto">
-                   Track your longest streaks, milestones, and streak
-                   achievements over time.
-                 </p>
-                 <div className="flex justify-center gap-4">
-                   <Badge className="bg-orange-500/20 text-orange-300 border-orange-400/30 pixelated-text">
-                     Longest: 7 days
-                   </Badge>
-                   <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 pixelated-text">
-                     Current: 3 days
-                   </Badge>
-                 </div>
-               </div>
-             </CardContent>
-           </Card>
-
-           <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-             <CardHeader>
-               <CardTitle className="text-blue-300 pixelated-text">
-                 Streak Goals
-               </CardTitle>
-             </CardHeader>
-             <CardContent>
-               <div className="space-y-4">
-                 <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                   <div className="flex items-center gap-3">
-                     <Target className="w-5 h-5 text-blue-400" />
-                     <div>
-                       <div className="text-white pixelated-text">
-                         7 Day Streak
-                       </div>
-                       <div className="text-sm text-blue-300">
-                         Complete 7 consecutive days
-                       </div>
-                     </div>
-                   </div>
-                   <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-400/30 pixelated-text">
-                     In Progress
-                   </Badge>
-                 </div>
-
-                 <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                   <div className="flex items-center gap-3">
-                     <Target className="w-5 h-5 text-blue-400" />
-                     <div>
-                       <div className="text-white pixelated-text">
-                         30 Day Streak
-                       </div>
-                       <div className="text-sm text-blue-300">
-                         Complete 30 consecutive days
-                       </div>
-                     </div>
-                   </div>
-                   <Badge className="bg-slate-500/20 text-slate-300 border-slate-400/30 pixelated-text">
-                     Locked
-                   </Badge>
-                 </div>
-
-                 <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                   <div className="flex items-center gap-3">
-                     <Target className="w-5 h-5 text-blue-400" />
-                     <div>
-                       <div className="text-white pixelated-text">
-                         100 Day Streak
-                       </div>
-                       <div className="text-sm text-blue-300">
-                         Complete 100 consecutive days
-                       </div>
-                     </div>
-                   </div>
-                   <Badge className="bg-slate-500/20 text-slate-300 border-slate-400/30 pixelated-text">
-                     Locked
-                   </Badge>
-                 </div>
-               </div>
-             </CardContent>
-           </Card>
          </div>
        );
 
@@ -2964,57 +2985,85 @@ export default function Dashboard({ address }: DashboardProps) {
          <div className="space-y-6">
            {/* Notifications Header */}
            <div className="text-center mb-6">
-             <h1 className="text-3xl font-bold text-white pixelated-text mb-2">
+             <h1 className="text-3xl font-bold text-green-100 pixelated-text mb-2">
                Notifications
              </h1>
-             <p className="text-blue-300 pixelated-text">
+             <p className="text-green-300/80 pixelated-text">
                Stay updated with your crypto activities
              </p>
            </div>
 
            {/* Notifications List */}
            <div className="space-y-4">
-             {/* Empty State */}
-             <Card className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-slate-600/50 text-white backdrop-blur-sm card-glass shadow-lg">
+             {notifications.length === 0 ? (
+               /* Empty State */
+               <Card className="bg-gradient-to-br from-gray-800/90 via-gray-700/80 to-gray-800/90 border-2 border-green-500/50 text-white backdrop-blur-xl shadow-lg gaming-glow">
                <CardContent className="flex flex-col items-center justify-center py-16">
-                 <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-6">
+                   <div className="w-24 h-24 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mb-6 gaming-glow">
                    <Bell className="w-12 h-12 text-white" />
                  </div>
-                 <h3 className="text-2xl font-bold text-white pixelated-text mb-3">
+                   <h3 className="text-2xl font-bold text-green-100 pixelated-text mb-3">
                    No notifications yet
                  </h3>
-                 <p className="text-blue-300 text-center mb-8 max-w-md leading-relaxed">
+                   <p className="text-green-300/80 text-center mb-8 max-w-md leading-relaxed pixelated-text">
                    When you get likes, comments, reposts, or other interactions, they'll appear here.
                  </p>
                  <Button 
                    onClick={() => setActiveSidebarItem("home")}
-                   className="bg-gradient-to-r from-blue-500 to-purple-600 text-white pixelated-text px-8 py-3 text-lg hover:shadow-lg hover:shadow-blue-500/25"
+                     className="bg-gradient-to-r from-green-500 to-green-600 text-white pixelated-text px-8 py-3 text-lg hover:shadow-lg hover:shadow-green-500/25 gaming-glow"
                  >
                    <Home className="w-5 h-5 mr-2" />
                    Go to Feed
                  </Button>
                </CardContent>
              </Card>
+             ) : (
+               /* Notifications List */
+               <>
+                 <div className="flex justify-between items-center mb-4">
+                   <h2 className="text-xl font-bold text-green-100 pixelated-text">
+                     Recent Activity ({notifications.length})
+                   </h2>
+                   <Button 
+                     onClick={clearAllNotifications}
+                     variant="outline"
+                     size="sm"
+                     className="text-green-400 hover:text-green-300 hover:bg-green-900/30 border-green-500/50 pixelated-text"
+                   >
+                     Clear All
+                   </Button>
            </div>
 
-           {/* Empty State */}
-           <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
-             <CardContent className="flex flex-col items-center justify-center py-12">
-               <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mb-6">
-                 <Bell className="w-10 h-10 text-white" />
+                 {notifications.map((notification) => (
+                   <Card 
+                     key={notification.id} 
+                     className={`bg-gradient-to-br from-gray-800/90 via-gray-700/80 to-gray-800/90 border-2 ${notification.read ? 'border-green-500/30' : 'border-green-400/70'} backdrop-blur-xl shadow-lg gaming-glow hover:gaming-glow transition-all duration-300`}
+                   >
+                     <CardContent className="p-4">
+                       <div className="flex items-start gap-3">
+                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${notification.read ? 'bg-green-500/30' : 'bg-green-500/60'} gaming-glow`}>
+                           {notification.type === 'like' && <Heart className="w-5 h-5 text-green-100" />}
+                           {notification.type === 'comment' && <MessageSquare className="w-5 h-5 text-green-100" />}
+                           {notification.type === 'repost' && <Share2 className="w-5 h-5 text-green-100" />}
                </div>
-               <h3 className="text-xl font-semibold text-white pixelated-text mb-3">
-                 All caught up!
-               </h3>
-               <p className="text-blue-300 text-center mb-6 max-w-md">
-                 You're up to date with all your notifications. New activities will appear here.
-               </p>
-               <Button className="bg-gradient-to-r from-purple-500 to-pink-600 text-white pixelated-text">
-                 <RotateCcw className="w-4 h-4 mr-2" />
-                 Refresh
-               </Button>
+                         <div className="flex-1">
+                           <p className="text-green-100 font-medium pixelated-text">
+                             {notification.content}
+                           </p>
+                           <p className="text-green-300/70 text-sm pixelated-text">
+                             {new Date(notification.timestamp).toLocaleString()}
+                           </p>
+                         </div>
+                         {!notification.read && (
+                           <div className="w-3 h-3 bg-green-400 rounded-full gaming-glow"></div>
+                         )}
+                       </div>
              </CardContent>
            </Card>
+                 ))}
+               </>
+             )}
+           </div>
          </div>
        );
 
@@ -3268,8 +3317,8 @@ export default function Dashboard({ address }: DashboardProps) {
        {/* Header hidden on main feed */}
 
        {/* Gaming-style Content Container */}
-       <div className="max-w-2xl mx-auto px-4 py-6 sm:py-8">
-         <div className="space-y-4">
+       <div className="max-w-2xl mx-auto px-2 sm:px-4 py-4 sm:py-6 lg:py-8">
+         <div className="space-y-3 sm:space-y-4">
            {renderContent()}
          </div>
        </div>
