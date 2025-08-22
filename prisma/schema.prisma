@@ -28,6 +28,7 @@ model BaseUser {
  
  // Notifications
  notifications  Notification[]
+ notificationPreferences NotificationPreferences?
  
  // Analytics
  userAnalytics  UserAnalytics?
@@ -124,6 +125,26 @@ model Notification {
  // Indexes for better performance
  @@index([userId, isRead])
  @@index([userId, dateCreated])
+}
+
+// Notification preferences
+model NotificationPreferences {
+ id                String   @id @default(auto()) @map("_id") @db.ObjectId
+ userId            String   @unique
+ likes             Boolean  @default(true)
+ comments          Boolean  @default(true)
+ reposts           Boolean  @default(true)
+ follows           Boolean  @default(true)
+ mentions          Boolean  @default(true)
+ emailDigest       Boolean  @default(false)
+ pushNotifications Boolean  @default(true)
+ quietHours        Boolean  @default(false)
+ quietHoursStart   String   @default("22:00")
+ quietHoursEnd     String   @default("08:00")
+ dateCreated       DateTime @default(now())
+ dateUpdated       DateTime @updatedAt
+ 
+ user              BaseUser @relation(fields: [userId], references: [id])
 }
 
 // User Analytics

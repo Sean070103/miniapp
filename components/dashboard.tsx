@@ -25,6 +25,10 @@ import { ProfileManagement } from "@/components/auth/profile-management"
 import { UserSearch } from "@/components/ui/user-search"
 import { TVContainer, TVImage, TVImageGrid } from "@/components/ui/tv-container"
 import { TVPostContainer, PostHeader, PostContent, PostTags, PostActions } from "@/components/ui/tv-post-container"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { RichNotificationCard } from "@/components/ui/rich-notification-card"
+import { NotificationPreferences } from "@/components/ui/notification-preferences"
+import { useSocket } from "@/hooks/use-socket"
 
 interface DailyEntry {
   id: string
@@ -123,6 +127,8 @@ export default function Dashboard({ address }: DashboardProps) {
   
   // Home feed states
   const [allPosts, setAllPosts] = useState<Journal[]>([]);
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<Journal | null>(null);
   const [trendingTopics, setTrendingTopics] = useState<string[]>([]);
   const [feedFilter, setFeedFilter] = useState<'all' | 'following' | 'trending'>('all');
   const [isLoadingFeed, setIsLoadingFeed] = useState(false);
@@ -205,6 +211,44 @@ export default function Dashboard({ address }: DashboardProps) {
 
   // Get baseuser ID from user account
   const baseUserId = user?.account?.id;
+
+  // Real-time notifications
+  const { isConnected: isSocketConnected } = useSocket({
+    userId: baseUserId,
+    onNotification: (notification) => {
+      // Add new notification to the list
+      setNotifications(prev => [notification, ...prev])
+      
+      // Show toast notification
+      toast({
+        title: notification.title,
+        description: notification.message,
+        duration: 5000
+      })
+    },
+    onConnect: () => {
+      console.log('Real-time notifications connected')
+    },
+    onDisconnect: () => {
+      console.log('Real-time notifications disconnected')
+    }
+  })
+
+  const openPostModal = async (journalId: string) => {
+    let post = allPosts.find(p => p.id === journalId) || dbEntries.find(p => p.id === journalId) || null;
+    if (!post && journalId) {
+      try {
+        const res = await fetch(`/api/journal/getby/journal/${journalId}`);
+        if (res.ok) {
+          post = await res.json();
+        }
+      } catch (e) {
+        console.error('Failed to fetch post by id', e);
+      }
+    }
+    setSelectedPost(post);
+    setIsPostModalOpen(true);
+  };
 
   // Fetch baseuser journal
   const fetchBaseUserJournal = async () => {
@@ -1354,23 +1398,28 @@ export default function Dashboard({ address }: DashboardProps) {
               const data = await response.json();
               if (data.success && data.data) {
                 // Merge database notifications with localStorage
-                const dbNotifications = data.data.map((n: any) => ({
-                  id: n.id,
-                  type: n.type,
-                  userId: n.userId,
-                  journalId: n.journalId,
-                  content: n.message,
-                  timestamp: new Date(n.dateCreated),
-                  read: n.isRead
-                }));
+                const dbNotifications = data.data.map((n: any) => {
+                  let parsed: any = undefined
+                  try { parsed = n.data ? JSON.parse(n.data) : undefined } catch {}
+                  return {
+                    id: n.id,
+                    type: n.type,
+                    userId: n.userId,
+                    journalId: parsed?.journalId,
+                    content: n.message,
+                    data: n.data,
+                    timestamp: new Date(n.dateCreated),
+                    read: n.isRead
+                  }
+                })
                 
                 // Combine and deduplicate
-                const allNotifications = [...dbNotifications, ...notifications];
+                const allNotifications = [...dbNotifications, ...notifications]
                 const uniqueNotifications = allNotifications.filter((notification, index, self) => 
                   index === self.findIndex(n => n.id === notification.id)
-                );
+                )
                 
-                setNotifications(uniqueNotifications);
+                setNotifications(uniqueNotifications)
               }
             }
           }
@@ -3090,6 +3139,47 @@ export default function Dashboard({ address }: DashboardProps) {
              </p>
            </div>
 
+           {/* Post Modal */}
+           <Dialog open={isPostModalOpen} onOpenChange={setIsPostModalOpen}>
+             <DialogContent className="max-w-3xl bg-gradient-to-br from-gray-900/95 via-gray-800/90 to-gray-900/95 border border-purple-500/30 text-green-100">
+               <DialogHeader>
+                 <DialogTitle className="pixelated-text text-green-100">Post Preview</DialogTitle>
+               </DialogHeader>
+               {selectedPost ? (
+                 <div className="mt-2">
+                   <TVPostContainer>
+                     <PostHeader
+                       user={{
+                         address: selectedPost.baseUserId,
+                         name: `User_${selectedPost.baseUserId.slice(0,6)}`
+                       }}
+                       date={new Date(selectedPost.dateCreated)}
+                       privacy={selectedPost.privacy}
+                     />
+                     <PostContent
+                       content={selectedPost.journal}
+                       photos={selectedPost.photos}
+                     />
+                     <PostTags tags={selectedPost.tags || []} />
+                     <PostActions
+                       likes={likeCounts[selectedPost.id] || selectedPost.likes || 0}
+                       comments={commentCounts[selectedPost.id] || 0}
+                       reposts={repostCounts[selectedPost.id] || 0}
+                       isLiked={!!userLikes[selectedPost.id]}
+                       loadingLikes={!!loadingLikes[selectedPost.id]}
+                       isOwner={selectedPost.baseUserId === address}
+                       onLike={() => handleLike(selectedPost.id)}
+                       onComment={() => {}}
+                       onRepost={() => {}}
+                     />
+                   </TVPostContainer>
+                 </div>
+               ) : (
+                 <div className="text-green-200">Post not found.</div>
+               )}
+             </DialogContent>
+           </Dialog>
+
            {/* Notifications List */}
            <div className="space-y-4">
              {notifications.length === 0 ? (
@@ -3118,9 +3208,15 @@ export default function Dashboard({ address }: DashboardProps) {
                /* Notifications List */
                <>
                  <div className="flex justify-between items-center mb-4">
-                   <h2 className="text-xl font-bold text-green-100 pixelated-text">
-                     Recent Activity ({notifications.length})
-                   </h2>
+                   <div className="flex items-center gap-2">
+                     <h2 className="text-xl font-bold text-green-100 pixelated-text">
+                       Recent Activity ({notifications.length})
+                     </h2>
+                     <div className={`w-2 h-2 rounded-full ${isSocketConnected ? 'bg-green-400' : 'bg-red-400'} gaming-glow`}></div>
+                     <span className="text-xs text-green-300 pixelated-text">
+                       {isSocketConnected ? 'Live' : 'Offline'}
+                     </span>
+                   </div>
                    <div className="flex gap-2">
                      <Button 
                        onClick={clearAllNotifications}
@@ -3135,31 +3231,37 @@ export default function Dashboard({ address }: DashboardProps) {
            </div>
 
                  {notifications.map((notification) => (
-                   <Card 
-                     key={notification.id} 
-                     className={`bg-gradient-to-br from-gray-800/90 via-gray-700/80 to-gray-800/90 border-2 ${notification.read ? 'border-green-500/30' : 'border-green-400/70'} backdrop-blur-xl shadow-lg gaming-glow hover:gaming-glow transition-all duration-300`}
-                   >
-                     <CardContent className="p-4">
-                       <div className="flex items-start gap-3">
-                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${notification.read ? 'bg-green-500/30' : 'bg-green-500/60'} gaming-glow`}>
-                           {notification.type === 'like' && <Heart className="w-5 h-5 text-green-100" />}
-                           {notification.type === 'comment' && <MessageSquare className="w-5 h-5 text-green-100" />}
-                           {notification.type === 'repost' && <Share2 className="w-5 h-5 text-green-100" />}
-               </div>
-                         <div className="flex-1">
-                           <p className="text-green-100 font-medium pixelated-text">
-                             {notification.content}
-                           </p>
-                           <p className="text-green-300/70 text-sm pixelated-text">
-                             {new Date(notification.timestamp).toLocaleString()}
-                           </p>
-                         </div>
-                         {!notification.read && (
-                           <div className="w-3 h-3 bg-green-400 rounded-full gaming-glow"></div>
-                         )}
-                       </div>
-             </CardContent>
-           </Card>
+                   <RichNotificationCard
+                     key={notification.id}
+                     notification={{
+                       id: notification.id,
+                       type: notification.type as 'like' | 'comment' | 'repost' | 'follow' | 'mention',
+                       title: notification.type.charAt(0).toUpperCase() + notification.type.slice(1),
+                       message: notification.content,
+                       isRead: notification.read,
+                       dateCreated: new Date(notification.timestamp).toISOString()
+                     }}
+                     onMarkRead={markNotificationAsRead}
+                     onAction={(action, data) => {
+                       switch (action) {
+                         case 'view_post':
+                           openPostModal(data.journalId)
+                           break
+                         case 'reply':
+                           // Open reply modal
+                           console.log('Reply to comment:', data)
+                           break
+                         case 'view_profile':
+                           // Navigate to profile
+                           console.log('View profile:', data.userId)
+                           break
+                         case 'follow_back':
+                           // Follow user back
+                           console.log('Follow back:', data.userId)
+                           break
+                       }
+                     }}
+                   />
                  ))}
                </>
              )}
@@ -3170,6 +3272,46 @@ export default function Dashboard({ address }: DashboardProps) {
      case "settings":
        return (
          <div className="space-y-6">
+           {/* Post Modal */}
+           <Dialog open={isPostModalOpen} onOpenChange={setIsPostModalOpen}>
+             <DialogContent className="max-w-3xl bg-gradient-to-br from-gray-900/95 via-gray-800/90 to-gray-900/95 border border-purple-500/30 text-green-100">
+               <DialogHeader>
+                 <DialogTitle className="pixelated-text text-green-100">Post Preview</DialogTitle>
+               </DialogHeader>
+               {selectedPost ? (
+                 <div className="mt-2">
+                   <TVPostContainer>
+                     <PostHeader
+                       user={{
+                         address: selectedPost.baseUserId,
+                         name: `User_${selectedPost.baseUserId.slice(0,6)}`
+                       }}
+                       date={new Date(selectedPost.dateCreated)}
+                       privacy={selectedPost.privacy}
+                     />
+                     <PostContent
+                       content={selectedPost.journal}
+                       photos={selectedPost.photos}
+                     />
+                     <PostTags tags={selectedPost.tags || []} />
+                     <PostActions
+                       likes={likeCounts[selectedPost.id] || selectedPost.likes || 0}
+                       comments={commentCounts[selectedPost.id] || 0}
+                       reposts={repostCounts[selectedPost.id] || 0}
+                       isLiked={!!userLikes[selectedPost.id]}
+                       loadingLikes={!!loadingLikes[selectedPost.id]}
+                       isOwner={selectedPost.baseUserId === address}
+                       onLike={() => handleLike(selectedPost.id)}
+                       onComment={() => {}}
+                       onRepost={() => {}}
+                     />
+                   </TVPostContainer>
+                 </div>
+               ) : (
+                 <div className="text-green-200">Post not found.</div>
+               )}
+             </DialogContent>
+           </Dialog>
            {/* Settings Header */}
            <div className="text-center mb-6">
              <h1 className="text-3xl font-bold text-white pixelated-text mb-2">
@@ -3180,7 +3322,28 @@ export default function Dashboard({ address }: DashboardProps) {
              </p>
            </div>
 
-
+           {/* Notification Preferences */}
+           <Card className="bg-white/8 border-white/20 text-white backdrop-blur-3xl card-glass shadow-2xl shadow-blue-400/30 border-opacity-30 hover:bg-white/12 hover:border-white/30 transition-all duration-500">
+             <CardHeader>
+               <CardTitle className="text-blue-100 pixelated-text">
+                 Notification Preferences
+               </CardTitle>
+             </CardHeader>
+             <CardContent>
+               {baseUserId ? (
+                 <NotificationPreferences 
+                   userId={baseUserId}
+                   onSave={(preferences) => {
+                     console.log('Notification preferences saved:', preferences)
+                   }}
+                 />
+               ) : (
+                 <p className="text-blue-300 pixelated-text">
+                   Please connect your wallet to manage notification preferences.
+                 </p>
+               )}
+             </CardContent>
+           </Card>
 
            {/* Account Settings */}
            <Card className="bg-white/8 border-white/20 text-white backdrop-blur-3xl card-glass shadow-2xl shadow-blue-400/30 border-opacity-30 hover:bg-white/12 hover:border-white/30 transition-all duration-500">
