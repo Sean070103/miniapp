@@ -8,6 +8,6 @@
     }
   },
   "env": {
-    "DATABASE_URL": "YOUR_ACTUAL_MONGODB_CONNECTION_STRING_HERE"
+    "DATABASE_URL": "mongodb+srv://lornayocor:cXqrgEX74ex576j3@juntos.n0m0ol6.mongodb.net/miniapp?retryWrites=true&w=majority&appName=juntos"
   }
 }

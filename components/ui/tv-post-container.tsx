@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { Badge } from './badge'
 import { Button } from './button'
 import { Avatar, AvatarFallback } from './avatar'
-import { Heart, MessageSquare, Share2, BookOpen, Calendar } from 'lucide-react'
+import { Heart, MessageSquare, Share2, BookOpen, Calendar, MoreHorizontal, Trash2, Archive } from 'lucide-react'
 
 interface TVPostContainerProps {
   children: React.ReactNode
@@ -281,7 +281,10 @@ interface PostActionsProps {
   onLike?: () => void
   onComment?: () => void
   onRepost?: () => void
+  onDelete?: () => void
+  onArchive?: () => void
   loadingLikes?: boolean
+  isOwner?: boolean
   className?: string
 }
 
@@ -293,7 +296,10 @@ export function PostActions({
   onLike, 
   onComment, 
   onRepost,
+  onDelete,
+  onArchive,
   loadingLikes = false,
+  isOwner = false,
   className 
 }: PostActionsProps) {
   return (
@@ -344,6 +350,39 @@ export function PostActions({
           <span className="text-sm font-bold text-green-100 pixel-text-shadow">{reposts}</span>
         </button>
       </div>
+
+      {/* Post Owner Actions */}
+      {isOwner && (
+        <div className="relative group">
+          <button className="pixel-button flex items-center gap-2 px-3 py-2 rounded-lg text-green-300/70 hover:text-green-400 hover:scale-105 transition-all duration-300">
+            <MoreHorizontal className="w-5 h-5 hover:scale-110 transition-transform duration-300" />
+          </button>
+          
+          {/* Dropdown Menu */}
+          <div className="absolute right-0 top-full mt-2 w-48 bg-black/90 backdrop-blur-xl border border-green-500/30 rounded-lg shadow-2xl shadow-green-500/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+            <div className="p-2 space-y-1">
+              {onArchive && (
+                <button
+                  onClick={onArchive}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-green-300 hover:text-green-400 hover:bg-green-500/10 rounded-md transition-all duration-200 pixelated-text text-sm"
+                >
+                  <Archive className="w-4 h-4" />
+                  Archive Post
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={onDelete}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-md transition-all duration-200 pixelated-text text-sm"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Post
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

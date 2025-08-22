@@ -634,7 +634,8 @@ export default function Dashboard({ address }: DashboardProps) {
         // Show success toast
         toast({
           title: "Success",
-          description: data.liked ? 'Post liked!' : 'Post unliked!'
+          description: data.liked ? 'Post liked!' : 'Post unliked!',
+          duration: 3000
         });
         
         // Create notification for like
@@ -659,14 +660,16 @@ export default function Dashboard({ address }: DashboardProps) {
         console.error('Like action failed');
         toast({
           title: "Error",
-          description: "Failed to like post"
+          description: "Failed to like post",
+          duration: 3000
         });
       }
     } catch (error) {
       console.error('Error handling like:', error);
       toast({
           title: "Error",
-          description: "Error liking post"
+          description: "Error liking post",
+          duration: 3000
         });
     } finally {
       setLoadingLikes(prev => ({ ...prev, [journalId]: false }));
@@ -696,7 +699,8 @@ export default function Dashboard({ address }: DashboardProps) {
       console.error('No wallet address available for repost');
       toast({
           title: "Error",
-          description: "Please connect your wallet to repost"
+          description: "Please connect your wallet to repost",
+          duration: 3000
         });
       return;
     }
@@ -727,7 +731,8 @@ export default function Dashboard({ address }: DashboardProps) {
         // Show success toast
         toast({
           title: "Success",
-          description: data.reposted ? 'Post reposted!' : 'Repost removed!'
+          description: data.reposted ? 'Post reposted!' : 'Repost removed!',
+          duration: 3000
         });
         
         // Create notification for repost
@@ -754,7 +759,8 @@ export default function Dashboard({ address }: DashboardProps) {
         console.error('Repost action failed:', response.status, errorData);
         toast({
           title: "Error",
-          description: "Failed to repost"
+          description: "Failed to repost",
+          duration: 3000
         });
       }
     } catch (error) {
@@ -768,7 +774,8 @@ export default function Dashboard({ address }: DashboardProps) {
       }
       toast({
           title: "Error",
-          description: "Error reposting"
+          description: "Error reposting",
+          duration: 3000
         });
     } finally {
       setLoadingReposts(prev => ({ ...prev, [journalId]: false }));
@@ -818,7 +825,8 @@ export default function Dashboard({ address }: DashboardProps) {
         // Show success toast
         toast({
           title: "Success",
-          description: "Post created successfully!"
+          description: "Post created successfully!",
+          duration: 3000
         });
         
         // Update posts list
@@ -832,14 +840,16 @@ export default function Dashboard({ address }: DashboardProps) {
         console.error('Failed to create post');
         toast({
           title: "Error",
-          description: "Failed to create post"
+          description: "Failed to create post",
+          duration: 3000
         });
       }
     } catch (error) {
       console.error('Error creating post:', error);
       toast({
           title: "Error",
-          description: "Error creating post"
+          description: "Error creating post",
+          duration: 3000
         });
     } finally {
       setIsCreatingPost(false);
@@ -857,6 +867,84 @@ export default function Dashboard({ address }: DashboardProps) {
   // Remove tag from new post
   const removeTagFromPost = (tagToRemove: string) => {
     setNewPostTags(prev => prev.filter(tag => tag !== tagToRemove));
+  };
+
+  // Delete post function
+  const handleDeletePost = async (journalId: string) => {
+    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/journal/delete?journalId=${journalId}&userId=${address}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Remove post from local state
+        setAllPosts(prev => prev.filter(post => post.id !== journalId));
+        
+        toast({
+          title: "Success",
+          description: "Post deleted successfully!",
+          duration: 3000
+        });
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.error || "Failed to delete post",
+          duration: 3000
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast({
+        title: "Error",
+        description: "Error deleting post",
+        duration: 3000
+      });
+    }
+  };
+
+  // Archive post function
+  const handleArchivePost = async (journalId: string) => {
+    try {
+      const response = await fetch(`/api/journal/archive?journalId=${journalId}&userId=${address}&action=archive`, {
+        method: 'PUT',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Update post in local state
+        setAllPosts(prev => prev.map(post => 
+          post.id === journalId 
+            ? { ...post, archived: data.archived, archivedAt: data.archived ? new Date() : null }
+            : post
+        ));
+        
+        toast({
+          title: "Success",
+          description: data.archived ? "Post archived successfully!" : "Post unarchived successfully!",
+          duration: 3000
+        });
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.error || "Failed to archive post",
+          duration: 3000
+        });
+      }
+    } catch (error) {
+      console.error('Error archiving post:', error);
+      toast({
+        title: "Error",
+        description: "Error archiving post",
+        duration: 3000
+      });
+    }
   };
 
   // Fetch engagement data for a post
@@ -1586,12 +1674,15 @@ export default function Dashboard({ address }: DashboardProps) {
                           reposts={repostCounts[entry.id] || 0}
                           isLiked={userLikes[entry.id]}
                           loadingLikes={loadingLikes[entry.id]}
+                          isOwner={entry.baseUserId === address}
                           onLike={() => handleLike(entry.id)}
                           onComment={() => {
                                   setCurrentJournalId(entry.id);
                                   setCommentCounts(prev => ({ ...prev, [entry.id]: commentCount }));
                                 }}
                           onRepost={() => handleRepost(entry.id)}
+                          onDelete={() => handleDeletePost(entry.id)}
+                          onArchive={() => handleArchivePost(entry.id)}
                         />
                       </TVPostContainer>
                         

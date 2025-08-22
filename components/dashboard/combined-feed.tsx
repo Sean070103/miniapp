@@ -33,6 +33,7 @@ import {
   Wallet,
   X,
 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import { useEffect, useRef, useState } from "react";
 
 import { ContributionGrid } from "@/components/dashboard/contribution-grid";
@@ -90,6 +91,7 @@ type SidebarItem =
 
 export default function Dashboard({ address }: DashboardProps) {
   const [showProfile, setShowProfile] = useState(false);
+  const { toast } = useToast();
   const [entries, setEntries] = useState<DailyEntry[]>([]);
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -251,6 +253,84 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
       }
     };
   }, [user?.address]); // Re-run when user address changes
+
+  // Delete post function
+  const handleDeletePost = async (journalId: string) => {
+    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/journal/delete?journalId=${journalId}&userId=${address}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Remove post from local state
+        setDbEntries(prev => prev.filter(post => post.id !== journalId));
+        
+        toast({
+          title: "Success",
+          description: "Post deleted successfully!",
+          duration: 3000
+        });
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.error || "Failed to delete post",
+          duration: 3000
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast({
+        title: "Error",
+        description: "Error deleting post",
+        duration: 3000
+      });
+    }
+  };
+
+  // Archive post function
+  const handleArchivePost = async (journalId: string) => {
+    try {
+      const response = await fetch(`/api/journal/archive?journalId=${journalId}&userId=${address}&action=archive`, {
+        method: 'PUT',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Update post in local state
+        setDbEntries(prev => prev.map(post => 
+          post.id === journalId 
+            ? { ...post, archived: data.archived, archivedAt: data.archived ? new Date() : null }
+            : post
+        ));
+        
+        toast({
+          title: "Success",
+          description: data.archived ? "Post archived successfully!" : "Post unarchived successfully!",
+          duration: 3000
+        });
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.error || "Failed to archive post",
+          duration: 3000
+        });
+      }
+    } catch (error) {
+      console.error('Error archiving post:', error);
+      toast({
+        title: "Error",
+        description: "Error archiving post",
+        duration: 3000
+      });
+    }
+  };
 
   // Calculator states
   const [calculatorDisplay, setCalculatorDisplay] = useState("0");
@@ -1111,9 +1191,12 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
                       likes={entry.likes || 0}
                       comments={0}
                       reposts={0}
+                      isOwner={entry.baseUserId === address}
                       onLike={() => {}}
                       onComment={() => {}}
                       onRepost={() => {}}
+                      onDelete={() => handleDeletePost(entry.id)}
+                      onArchive={() => handleArchivePost(entry.id)}
                     />
                   </TVPostContainer>
                   ))}

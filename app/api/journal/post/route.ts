@@ -1,5 +1,5 @@
 
-import { prisma } from '@/lib/prisma'
+import prisma from '@/utils/connect'
 import { NextResponse } from "next/server";
 
 //POST JOURNAL

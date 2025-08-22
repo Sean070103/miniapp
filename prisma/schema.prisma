@@ -59,6 +59,10 @@ model Journal {
  // Moderation
  isFlagged   Boolean  @default(false)
  isHidden    Boolean  @default(false)
+ 
+ // Archive support
+ archived    Boolean  @default(false)
+ archivedAt  DateTime?
 }
 
 model Repost {
