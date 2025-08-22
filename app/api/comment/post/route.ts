@@ -37,6 +37,36 @@ export async function POST(req: Request) {
       }
     })
 
+    // Create notification for the post author (if not commenting on your own post)
+    if (journal.baseUserId !== baseUserId) {
+      try {
+        // Get the user who commented
+        const commenter = await prisma.baseUser.findUnique({
+          where: { walletAddress: baseUserId },
+          select: { username: true, walletAddress: true }
+        });
+
+        await prisma.notification.create({
+          data: {
+            userId: journal.baseUserId,
+            type: 'comment',
+            title: 'New Comment',
+            message: `${commenter?.username || baseUserId.slice(0, 6) + '...' + baseUserId.slice(-4)} commented on your post`,
+            data: JSON.stringify({ 
+              actorId: baseUserId, 
+              journalId, 
+              action: 'comment',
+              actorUsername: commenter?.username,
+              commentText: comment.substring(0, 50) + (comment.length > 50 ? '...' : '')
+            })
+          }
+        });
+      } catch (notificationError) {
+        console.error('Error creating comment notification:', notificationError);
+        // Don't fail the comment operation if notification fails
+      }
+    }
+
     return NextResponse.json(createComment, { status: 201 })
 
   } catch (error) {

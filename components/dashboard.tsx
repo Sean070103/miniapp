@@ -615,6 +615,9 @@ export default function Dashboard({ address }: DashboardProps) {
     
     setLoadingLikes(prev => ({ ...prev, [journalId]: true }));
     
+    // Add a small delay to prevent rapid toggling
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     try {
       const response = await fetch('/api/like/post', {
         method: 'POST',
@@ -638,10 +641,7 @@ export default function Dashboard({ address }: DashboardProps) {
           duration: 3000
         });
         
-        // Create notification for like
-        if (data.liked) {
-          createNotification('like', journalId, 'liked your post');
-        }
+        // Notification is now created server-side in the like API
         
         // Update local state
         setUserLikes(prev => ({
@@ -680,8 +680,7 @@ export default function Dashboard({ address }: DashboardProps) {
     try {
       const newComment = await postComment(journalId, commentText);
       
-      // Create notification for comment
-      createNotification('comment', journalId, `commented: "${commentText.substring(0, 50)}${commentText.length > 50 ? '...' : ''}"`);
+      // Notification is now created server-side in the comment API
       
       // Close comment section
       setCurrentJournalId(null);
@@ -735,10 +734,7 @@ export default function Dashboard({ address }: DashboardProps) {
           duration: 3000
         });
         
-        // Create notification for repost
-        if (data.reposted) {
-          createNotification('repost', journalId, 'reposted your post');
-        }
+        // Notification is now created server-side in the repost API
         
         // Update local state
         if (data.reposted) {
@@ -1264,64 +1260,66 @@ export default function Dashboard({ address }: DashboardProps) {
     { id: 'settings' as SidebarItem, label: 'Settings', icon: Settings },
   ];
 
-  // Notification functions
-  const createNotification = async (type: 'like' | 'comment' | 'repost', journalId: string, content: string) => {
-    const notification = {
-      id: Date.now().toString(),
-      type,
-      userId: address,
-      journalId,
-      content,
-      timestamp: new Date(),
-      read: false
-    };
-    
-    setNotifications(prev => [notification, ...prev]);
-    
-    // Store in localStorage for persistence
-    const storedNotifications = JSON.parse(localStorage.getItem('dailybase-notifications') || '[]');
-    storedNotifications.unshift(notification);
-    localStorage.setItem('dailybase-notifications', JSON.stringify(storedNotifications.slice(0, 50))); // Keep last 50
+  // Notification functions - all notifications now created server-side
 
-    // Also create notification in database
+  const markNotificationAsRead = async (notificationId: string) => {
     try {
-      // Get the post author's ID to send them the notification
-      const post = allPosts.find(p => p.id === journalId);
-      if (post && post.baseUserId !== address) { // Don't notify yourself
+      // First get the user's database ID from their wallet address
+      const userResponse = await fetch(`/api/baseuser/getby/wallet/${address}`);
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        const databaseUserId = userData.id;
+        
         await fetch('/api/notifications', {
-          method: 'POST',
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            userId: post.baseUserId, // Notify the post author
-            type,
-            title: `${type.charAt(0).toUpperCase() + type.slice(1)} Notification`,
-            message: `${address.slice(0, 6)}...${address.slice(-4)} ${content}`,
-            data: {
-              actorId: address,
-              journalId,
-              action: type
-            }
+            userId: databaseUserId,
+            notificationIds: [notificationId]
           }),
         });
+        
+        // Update local state
+        setNotifications(prev => 
+          prev.map(notif => 
+            notif.id === notificationId ? { ...notif, read: true } : notif
+          )
+        );
       }
     } catch (error) {
-      console.error('Error creating notification in database:', error);
+      console.error('Error marking notification read:', error);
     }
   };
 
-  const markNotificationAsRead = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === notificationId ? { ...notif, read: true } : notif
-      )
-    );
-  };
-
-  const clearAllNotifications = () => {
-    setNotifications([]);
-    localStorage.removeItem('dailybase-notifications');
+  const clearAllNotifications = async () => {
+    try {
+      // First get the user's database ID from their wallet address
+      const userResponse = await fetch(`/api/baseuser/getby/wallet/${address}`);
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        const databaseUserId = userData.id;
+        
+        // Mark all notifications as read
+        await fetch('/api/notifications', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: databaseUserId
+            // No notificationIds means mark all as read
+          }),
+        });
+        
+        // Clear local state
+        setNotifications([]);
+        localStorage.removeItem('dailybase-notifications');
+      }
+    } catch (error) {
+      console.error('Error clearing notifications:', error);
+    }
   };
 
   // Load notifications from localStorage and database
@@ -1344,28 +1342,36 @@ export default function Dashboard({ address }: DashboardProps) {
       // Also load from database
       if (address) {
         try {
-          const response = await fetch(`/api/notifications?userId=${address}&limit=50`);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.data) {
-              // Merge database notifications with localStorage
-              const dbNotifications = data.data.map((n: any) => ({
-                id: n.id,
-                type: n.type,
-                userId: n.userId,
-                journalId: n.journalId,
-                content: n.message,
-                timestamp: new Date(n.dateCreated),
-                read: n.isRead
-              }));
-              
-              // Combine and deduplicate
-              const allNotifications = [...dbNotifications, ...notifications];
-              const uniqueNotifications = allNotifications.filter((notification, index, self) => 
-                index === self.findIndex(n => n.id === notification.id)
-              );
-              
-              setNotifications(uniqueNotifications);
+          // First get the user's database ID from their wallet address
+          const userResponse = await fetch(`/api/baseuser/getby/wallet/${address}`);
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            const databaseUserId = userData.id;
+            
+            // Now fetch notifications using the database user ID
+            const response = await fetch(`/api/notifications?userId=${databaseUserId}&limit=50`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data.success && data.data) {
+                // Merge database notifications with localStorage
+                const dbNotifications = data.data.map((n: any) => ({
+                  id: n.id,
+                  type: n.type,
+                  userId: n.userId,
+                  journalId: n.journalId,
+                  content: n.message,
+                  timestamp: new Date(n.dateCreated),
+                  read: n.isRead
+                }));
+                
+                // Combine and deduplicate
+                const allNotifications = [...dbNotifications, ...notifications];
+                const uniqueNotifications = allNotifications.filter((notification, index, self) => 
+                  index === self.findIndex(n => n.id === notification.id)
+                );
+                
+                setNotifications(uniqueNotifications);
+              }
             }
           }
         } catch (error) {
@@ -3115,14 +3121,17 @@ export default function Dashboard({ address }: DashboardProps) {
                    <h2 className="text-xl font-bold text-green-100 pixelated-text">
                      Recent Activity ({notifications.length})
                    </h2>
-                   <Button 
-                     onClick={clearAllNotifications}
-                     variant="outline"
-                     size="sm"
-                     className="text-green-400 hover:text-green-300 hover:bg-green-900/30 border-green-500/50 pixelated-text"
-                   >
-                     Clear All
-                   </Button>
+                   <div className="flex gap-2">
+                     <Button 
+                       onClick={clearAllNotifications}
+                       variant="outline"
+                       size="sm"
+                       className="text-green-400 hover:text-green-300 hover:bg-green-900/30 border-green-500/50 pixelated-text"
+                     >
+                       Clear All
+                     </Button>
+
+                   </div>
            </div>
 
                  {notifications.map((notification) => (
@@ -3170,6 +3179,8 @@ export default function Dashboard({ address }: DashboardProps) {
                Manage your account and preferences
              </p>
            </div>
+
+
 
            {/* Account Settings */}
            <Card className="bg-white/8 border-white/20 text-white backdrop-blur-3xl card-glass shadow-2xl shadow-blue-400/30 border-opacity-30 hover:bg-white/12 hover:border-white/30 transition-all duration-500">

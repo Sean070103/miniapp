@@ -55,6 +55,35 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Create notification for the post author (if not liking your own post)
+      if (journal.baseUserId !== userId) {
+        try {
+          // Get the user who liked the post
+          const liker = await prisma.baseUser.findUnique({
+            where: { walletAddress: userId },
+            select: { username: true, walletAddress: true }
+          });
+
+          await prisma.notification.create({
+            data: {
+              userId: journal.baseUserId,
+              type: 'like',
+              title: 'New Like',
+              message: `${liker?.username || userId.slice(0, 6) + '...' + userId.slice(-4)} liked your post`,
+              data: JSON.stringify({ 
+                actorId: userId, 
+                journalId, 
+                action: 'like',
+                actorUsername: liker?.username
+              })
+            }
+          });
+        } catch (notificationError) {
+          console.error('Error creating like notification:', notificationError);
+          // Don't fail the like operation if notification fails
+        }
+      }
+
       return NextResponse.json({ 
         message: 'Post liked successfully',
         liked: true,

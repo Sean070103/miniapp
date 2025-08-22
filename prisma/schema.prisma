@@ -120,6 +120,10 @@ model Notification {
  dateCreated DateTime @default(now())
  
  user        BaseUser @relation(fields: [userId], references: [id])
+ 
+ // Indexes for better performance
+ @@index([userId, isRead])
+ @@index([userId, dateCreated])
 }
 
 // User Analytics

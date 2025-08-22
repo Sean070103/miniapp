@@ -60,6 +60,35 @@ export async function POST(req: Request) {
         }
       })
 
+      // Create notification for the post author (if not reposting your own post)
+      if (journal.baseUserId !== baseUserId) {
+        try {
+          // Get the user who reposted
+          const reposter = await prisma.baseUser.findUnique({
+            where: { walletAddress: baseUserId },
+            select: { username: true, walletAddress: true }
+          });
+
+          await prisma.notification.create({
+            data: {
+              userId: journal.baseUserId,
+              type: 'repost',
+              title: 'New Repost',
+              message: `${reposter?.username || baseUserId.slice(0, 6) + '...' + baseUserId.slice(-4)} reposted your post`,
+              data: JSON.stringify({ 
+                actorId: baseUserId, 
+                journalId, 
+                action: 'repost',
+                actorUsername: reposter?.username
+              })
+            }
+          });
+        } catch (notificationError) {
+          console.error('Error creating repost notification:', notificationError);
+          // Don't fail the repost operation if notification fails
+        }
+      }
+
       return NextResponse.json({ 
         message: "Repost created successfully",
         reposted: true,

@@ -210,6 +210,7 @@ export function EnhancedFeed({ userId }: EnhancedFeedProps) {
 
   const markNotificationRead = async (notificationId: string) => {
     try {
+      // userId should already be the database ID in this component
       await fetch('/api/notifications', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
