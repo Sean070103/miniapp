@@ -1,7 +1,4 @@
 import { NextRequest } from 'next/server'
-import { Server as NetServer } from 'http'
-import { Server as SocketIOServer } from 'socket.io'
-import { NextApiResponseServerIO } from '@/lib/socket-server'
 
 export async function GET(req: NextRequest) {
   // This is a placeholder for Socket.IO setup

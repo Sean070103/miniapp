@@ -1,6 +1,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { NextResponse, NextRequest } from 'next/server'
+const { sendNotificationToUser } = require('@/lib/socket-server.js')
 
 //POST REPOST - Toggle functionality
 export async function POST(req: Request) {
@@ -69,12 +70,12 @@ export async function POST(req: Request) {
             select: { username: true, walletAddress: true }
           });
 
-          await prisma.notification.create({
+          const notification = await prisma.notification.create({
             data: {
               userId: journal.baseUserId,
               type: 'repost',
               title: 'New Repost',
-              message: `${reposter?.username || baseUserId.slice(0, 6) + '...' + baseUserId.slice(-4)} reposted your post`,
+              message: `User_${baseUserId.slice(0, 6)} reposted your post`,
               data: JSON.stringify({ 
                 actorId: baseUserId, 
                 journalId, 
@@ -83,6 +84,18 @@ export async function POST(req: Request) {
               })
             }
           });
+
+          // Send real-time notification
+          sendNotificationToUser(journal.baseUserId, {
+            id: notification.id,
+            type: 'repost',
+            title: notification.title,
+            message: notification.message,
+            data: notification.data,
+            isRead: false,
+            dateCreated: notification.dateCreated
+          });
+
         } catch (notificationError) {
           console.error('Error creating repost notification:', notificationError);
           // Don't fail the repost operation if notification fails

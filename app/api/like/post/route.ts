@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+const { sendNotificationToUser } = require('@/lib/socket-server.js');
 
 export async function POST(request: NextRequest) {
   try {
-    const { journalId, userId } = await request.json();
+    const body = await request.json();
+    const { journalId, userId } = body;
 
     if (!journalId || !userId) {
       return NextResponse.json(
@@ -12,21 +14,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate that the journal exists
+    // Get the journal to check if it exists and get the author
     const journal = await prisma.journal.findUnique({
-      where: {
-        id: journalId,
-      },
+      where: { id: journalId },
     });
 
     if (!journal) {
       return NextResponse.json(
-        { error: "Journal not found" },
+        { error: 'Journal not found' },
         { status: 404 }
-      )
+      );
     }
 
-    // Check if like already exists
+    // Check if user already liked this journal
     const existingLike = await prisma.like.findFirst({
       where: {
         journalId: journalId,
@@ -64,12 +64,12 @@ export async function POST(request: NextRequest) {
             select: { username: true, walletAddress: true }
           });
 
-          await prisma.notification.create({
+          const notification = await prisma.notification.create({
             data: {
               userId: journal.baseUserId,
               type: 'like',
               title: 'New Like',
-              message: `${liker?.username || userId.slice(0, 6) + '...' + userId.slice(-4)} liked your post`,
+              message: `User_${userId.slice(0, 6)} liked your post`,
               data: JSON.stringify({ 
                 actorId: userId, 
                 journalId, 
@@ -78,6 +78,18 @@ export async function POST(request: NextRequest) {
               })
             }
           });
+
+          // Send real-time notification
+          sendNotificationToUser(journal.baseUserId, {
+            id: notification.id,
+            type: 'like',
+            title: notification.title,
+            message: notification.message,
+            data: notification.data,
+            isRead: false,
+            dateCreated: notification.dateCreated
+          });
+
         } catch (notificationError) {
           console.error('Error creating like notification:', notificationError);
           // Don't fail the like operation if notification fails

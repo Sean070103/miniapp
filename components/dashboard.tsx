@@ -125,6 +125,17 @@ export default function Dashboard({ address }: DashboardProps) {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   
+  // User switching functionality
+  const [availableUsers, setAvailableUsers] = useState<string[]>([]);
+  const [isUserSwitcherOpen, setIsUserSwitcherOpen] = useState(false);
+  const [customBaseUserId, setCustomBaseUserId] = useState<string>('');
+  
+  // Reply functionality
+  const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
+  const [replyToComment, setReplyToComment] = useState<any>(null);
+  const [replyContent, setReplyContent] = useState('');
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  
   // Home feed states
   const [allPosts, setAllPosts] = useState<Journal[]>([]);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
@@ -216,8 +227,17 @@ export default function Dashboard({ address }: DashboardProps) {
   const { isConnected: isSocketConnected } = useSocket({
     userId: baseUserId,
     onNotification: (notification) => {
-      // Add new notification to the list
-      setNotifications(prev => [notification, ...prev])
+      // Add new notification to the list with proper structure
+      const newNotification = {
+        id: notification.id,
+        type: notification.type as 'like' | 'comment' | 'repost',
+        userId: notification.userId,
+        content: notification.message,
+        data: notification.data,
+        timestamp: new Date(notification.dateCreated),
+        read: notification.isRead
+      }
+      setNotifications(prev => [newNotification, ...prev])
       
       // Show toast notification
       toast({
@@ -248,6 +268,98 @@ export default function Dashboard({ address }: DashboardProps) {
     }
     setSelectedPost(post);
     setIsPostModalOpen(true);
+  };
+
+  // User switching functions
+  const switchToUser = async (newUserId: string) => {
+    setCustomBaseUserId(newUserId);
+    // Update the baseUserId for the current session
+    if (user?.account) {
+      user.account.id = newUserId;
+    }
+    // Refresh data for the new user
+    await fetchBaseUserJournal();
+    await fetchAllPosts();
+    toast({
+      title: "User Switched",
+      description: `Now using: ${newUserId.slice(0, 8)}...`,
+      duration: 3000
+    });
+  };
+
+  const addNewUser = () => {
+    if (customBaseUserId && !availableUsers.includes(customBaseUserId)) {
+      setAvailableUsers(prev => [...prev, customBaseUserId]);
+      setCustomBaseUserId('');
+      toast({
+        title: "User Added",
+        description: "New user added to switcher",
+        duration: 2000
+      });
+    }
+  };
+
+  // Enhanced reply functionality
+  const openReplyModal = async (commentData: any) => {
+    setReplyToComment(commentData);
+    setReplyContent('');
+    setIsReplyModalOpen(true);
+  };
+
+  const submitReply = async () => {
+    if (!replyContent.trim() || !replyToComment) return;
+    
+    setIsSubmittingReply(true);
+    try {
+      const response = await fetch('/api/comment/post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          baseUserId: user?.address || address,
+          journalId: replyToComment.journalId,
+          comment: `@${replyToComment.baseUserId.slice(0, 6)} ${replyContent}`
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Reply Posted",
+          description: "Your reply has been posted successfully",
+          duration: 3000
+        });
+        setIsReplyModalOpen(false);
+        setReplyContent('');
+        setReplyToComment(null);
+        // Refresh comments for the post
+        await fetchComments(replyToComment.journalId);
+      } else {
+        throw new Error('Failed to post reply');
+      }
+    } catch (error) {
+      console.error('Error posting reply:', error);
+      toast({
+        title: "Error",
+        description: "Failed to post reply. Please try again.",
+        duration: 3000
+      });
+    } finally {
+      setIsSubmittingReply(false);
+    }
+  };
+
+  const fetchComments = async (journalId: string) => {
+    try {
+      const response = await fetch(`/api/comment/get?journalId=${journalId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setDbComments(prev => ({
+          ...prev,
+          [journalId]: data.data || []
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    }
   };
 
   // Fetch baseuser journal
@@ -1281,10 +1393,10 @@ export default function Dashboard({ address }: DashboardProps) {
     id: string;
     type: 'like' | 'comment' | 'repost';
     userId: string;
-    journalId: string;
     content: string;
     timestamp: Date;
     read: boolean;
+    data?: any;
   }[]>([]);
 
   // Sidebar items configuration
@@ -1399,13 +1511,10 @@ export default function Dashboard({ address }: DashboardProps) {
               if (data.success && data.data) {
                 // Merge database notifications with localStorage
                 const dbNotifications = data.data.map((n: any) => {
-                  let parsed: any = undefined
-                  try { parsed = n.data ? JSON.parse(n.data) : undefined } catch {}
                   return {
                     id: n.id,
                     type: n.type,
                     userId: n.userId,
-                    journalId: parsed?.journalId,
                     content: n.message,
                     data: n.data,
                     timestamp: new Date(n.dateCreated),
@@ -2997,9 +3106,19 @@ export default function Dashboard({ address }: DashboardProps) {
                          <p className="text-slate-300 pixelated-text text-sm">{baseUserId.slice(0, 8)}...</p>
                        </div>
                      </div>
-                     <Badge className="bg-green-500/20 text-green-300 border-green-400/50 pixelated-text">
-                       ACTIVE
-                     </Badge>
+                     <div className="flex items-center gap-2">
+                       <Badge className="bg-green-500/20 text-green-300 border-green-400/50 pixelated-text">
+                         ACTIVE
+                       </Badge>
+                       <Button
+                         onClick={() => setIsUserSwitcherOpen(true)}
+                         size="sm"
+                         variant="outline"
+                         className="bg-blue-500/20 border-blue-500 text-blue-300 hover:bg-blue-500/30 pixelated-text text-xs"
+                       >
+                         Switch User
+                       </Button>
+                     </div>
                    </div>
                  )}
                </div>
@@ -3238,6 +3357,7 @@ export default function Dashboard({ address }: DashboardProps) {
                        type: notification.type as 'like' | 'comment' | 'repost' | 'follow' | 'mention',
                        title: notification.type.charAt(0).toUpperCase() + notification.type.slice(1),
                        message: notification.content,
+                       data: notification.data,
                        isRead: notification.read,
                        dateCreated: new Date(notification.timestamp).toISOString()
                      }}
@@ -3245,11 +3365,20 @@ export default function Dashboard({ address }: DashboardProps) {
                      onAction={(action, data) => {
                        switch (action) {
                          case 'view_post':
-                           openPostModal(data.journalId)
+                           if (data?.journalId) {
+                             openPostModal(data.journalId)
+                           }
                            break
                          case 'reply':
-                           // Open reply modal
-                           console.log('Reply to comment:', data)
+                           // Enhanced reply functionality - open reply modal with comment data
+                           if (data?.journalId) {
+                             const commentData = {
+                               journalId: data.journalId,
+                               baseUserId: data.actorId || data.userId,
+                               commentText: data.commentText || ''
+                             };
+                             openReplyModal(commentData);
+                           }
                            break
                          case 'view_profile':
                            // Navigate to profile
@@ -3583,6 +3712,29 @@ export default function Dashboard({ address }: DashboardProps) {
 
        {/* Gaming-style Content Container */}
        <div className="max-w-2xl mx-auto px-2 sm:px-4 py-4 sm:py-6 lg:py-8">
+         {/* User ID Display */}
+         {baseUserId && (
+           <div className="mb-4 p-3 bg-gradient-to-r from-green-900/20 to-blue-900/20 border border-green-500/30 rounded-lg backdrop-blur-sm">
+             <div className="flex items-center justify-between">
+               <div className="flex items-center gap-2">
+                 <User className="w-4 h-4 text-green-400" />
+                 <span className="text-green-300 text-sm font-semibold">Current User ID:</span>
+                 <span className="text-green-100 font-mono text-sm">
+                   {baseUserId.slice(0, 12)}...{baseUserId.slice(-8)}
+                 </span>
+               </div>
+               <Button
+                 onClick={() => setIsUserSwitcherOpen(true)}
+                 size="sm"
+                 variant="outline"
+                 className="bg-blue-500/20 border-blue-500 text-blue-300 hover:bg-blue-500/30 text-xs"
+               >
+                 Switch
+               </Button>
+             </div>
+           </div>
+         )}
+         
          <div className="space-y-3 sm:space-y-4">
            {renderContent()}
          </div>
@@ -3595,6 +3747,129 @@ export default function Dashboard({ address }: DashboardProps) {
        onClose={() => setShowRegistrationModal(false)}
        walletAddress={address}
      />
+
+     {/* User Switcher Modal */}
+     <Dialog open={isUserSwitcherOpen} onOpenChange={setIsUserSwitcherOpen}>
+       <DialogContent className="max-w-md bg-gradient-to-br from-gray-900/95 via-gray-800/90 to-gray-900/95 border border-purple-500/30 text-green-100">
+         <DialogHeader>
+           <DialogTitle className="pixelated-text text-green-100">Switch User</DialogTitle>
+         </DialogHeader>
+         <div className="space-y-4">
+           {/* Current User Display */}
+           <div className="p-3 bg-green-900/20 rounded-lg border border-green-500/30">
+             <p className="text-sm text-green-300 mb-1">Current User:</p>
+             <p className="text-green-100 font-mono text-sm break-all">
+               {baseUserId || address}
+             </p>
+           </div>
+           
+           {/* Available Users */}
+           <div>
+             <p className="text-sm text-green-300 mb-2">Available Users:</p>
+             <div className="space-y-2 max-h-40 overflow-y-auto">
+               {availableUsers.map((userId, index) => (
+                 <div
+                   key={index}
+                   className="flex items-center justify-between p-2 bg-gray-800/50 rounded border border-gray-600/30 hover:bg-gray-700/50 cursor-pointer"
+                   onClick={() => switchToUser(userId)}
+                 >
+                   <span className="text-green-100 font-mono text-sm">
+                     {userId.slice(0, 8)}...{userId.slice(-6)}
+                   </span>
+                   <Button
+                     size="sm"
+                     variant="ghost"
+                     className="text-green-400 hover:text-green-300"
+                   >
+                     Switch
+                   </Button>
+                 </div>
+               ))}
+             </div>
+           </div>
+           
+           {/* Add New User */}
+           <div className="space-y-2">
+             <p className="text-sm text-green-300">Add New User:</p>
+             <div className="flex gap-2">
+               <input
+                 type="text"
+                 value={customBaseUserId}
+                 onChange={(e) => setCustomBaseUserId(e.target.value)}
+                 placeholder="Enter user ID..."
+                 className="flex-1 px-3 py-2 bg-gray-800/50 border border-gray-600/30 rounded text-green-100 placeholder-green-300/50 focus:outline-none focus:border-green-500/50"
+               />
+               <Button
+                 onClick={addNewUser}
+                 disabled={!customBaseUserId.trim()}
+                 className="bg-green-600 hover:bg-green-700 text-white"
+               >
+                 Add
+               </Button>
+             </div>
+           </div>
+         </div>
+       </DialogContent>
+     </Dialog>
+
+     {/* Reply Modal */}
+     <Dialog open={isReplyModalOpen} onOpenChange={setIsReplyModalOpen}>
+       <DialogContent className="max-w-2xl bg-gradient-to-br from-gray-900/95 via-gray-800/90 to-gray-900/95 border border-purple-500/30 text-green-100">
+         <DialogHeader>
+           <DialogTitle className="pixelated-text text-green-100">
+             Reply to Comment
+           </DialogTitle>
+         </DialogHeader>
+         {replyToComment && (
+           <div className="space-y-4">
+             {/* Original Comment */}
+             <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-600/30">
+               <p className="text-sm text-green-300 mb-1">Replying to:</p>
+               <p className="text-green-100 text-sm">
+                 <span className="font-mono">@{replyToComment.baseUserId.slice(0, 6)}</span>
+                 {replyToComment.commentText && (
+                   <span className="ml-2 text-gray-300">"{replyToComment.commentText}"</span>
+                 )}
+               </p>
+             </div>
+             
+             {/* Reply Input */}
+             <div className="space-y-2">
+               <label className="text-sm text-green-300">Your Reply:</label>
+               <textarea
+                 value={replyContent}
+                 onChange={(e) => setReplyContent(e.target.value)}
+                 placeholder="Write your reply..."
+                 rows={4}
+                 className="w-full px-3 py-2 bg-gray-800/50 border border-gray-600/30 rounded text-green-100 placeholder-green-300/50 focus:outline-none focus:border-green-500/50 resize-none"
+                 maxLength={500}
+               />
+               <div className="flex justify-between items-center">
+                 <span className="text-xs text-gray-400">
+                   {replyContent.length}/500
+                 </span>
+                 <div className="flex gap-2">
+                   <Button
+                     variant="outline"
+                     onClick={() => setIsReplyModalOpen(false)}
+                     className="border-gray-600/30 text-gray-300 hover:text-green-300"
+                   >
+                     Cancel
+                   </Button>
+                   <Button
+                     onClick={submitReply}
+                     disabled={!replyContent.trim() || isSubmittingReply}
+                     className="bg-green-600 hover:bg-green-700 text-white"
+                   >
+                     {isSubmittingReply ? 'Posting...' : 'Post Reply'}
+                   </Button>
+                 </div>
+               </div>
+             </div>
+           </div>
+         )}
+       </DialogContent>
+     </Dialog>
    </div>
  )
 }

@@ -212,13 +212,13 @@ export function RichNotificationCard({
                 {/* User Avatar and Name */}
                 <div className="flex items-center gap-2 mb-1">
                   <Avatar className="w-6 h-6">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${notificationData.actorUsername || 'user'}`} />
+                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${notificationData.actorId || notificationData.actorUsername || 'user'}`} />
                     <AvatarFallback className="text-xs">
-                      {notificationData.actorUsername?.charAt(0) || 'U'}
+                      {notificationData.actorId ? notificationData.actorId.slice(0, 2).toUpperCase() : (notificationData.actorUsername?.charAt(0) || 'U')}
                     </AvatarFallback>
                   </Avatar>
                   <span className="font-bold text-sm text-green-100 pixelated-text">
-                    {notificationData.actorUsername || 'Someone'}
+                    {notificationData.actorId ? `User_${notificationData.actorId.slice(0, 6)}` : (notificationData.actorUsername || 'Someone')}
                   </span>
                   {!notification.isRead && (
                     <Badge variant="secondary" className="text-[10px] px-1 py-0 bg-purple-600/30 text-purple-200 border border-purple-400/40">
