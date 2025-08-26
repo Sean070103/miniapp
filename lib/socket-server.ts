@@ -1,4 +1,5 @@
 import { Server as SocketIOServer } from 'socket.io'
+import { getPusher } from './pusher'
 import type { Server as HTTPServer } from 'http'
 
 // Store user connections
@@ -7,6 +8,7 @@ const userConnections = new Map<string, string>()
 function initSocketServer(server: HTTPServer) {
   // Get the correct origin for CORS
   const allowedOrigins: (string | RegExp)[] = [
+    process.env.NEXT_PUBLIC_SOCKET_URL,
     process.env.NEXT_PUBLIC_APP_URL,
     process.env.NEXT_PUBLIC_URL,
     'http://localhost:3000',
@@ -86,7 +88,7 @@ interface NotificationData {
 }
 
 // Function to send notification to specific user
-function sendNotificationToUser(userId: string, notification: NotificationData) {
+async function sendNotificationToUser(userId: string, notification: NotificationData) {
   const io = (global as { io?: any }).io
   if (io && userId) {
     try {
@@ -95,10 +97,42 @@ function sendNotificationToUser(userId: string, notification: NotificationData) 
       return true
     } catch (error) {
       console.error('Error sending notification to user:', error)
+    }
+  }
+  // Try Pusher in serverless
+  const pusher = getPusher()
+  if (pusher) {
+    try {
+      await pusher.trigger(`user-${userId}`, 'notification', notification)
+      return true
+    } catch (e) {
+      console.error('Pusher trigger error', e)
+    }
+  }
+  // If running in serverless where io is not present, forward to external socket server
+  const forwardUrl = process.env.SOCKET_FORWARD_URL
+  const forwardSecret = process.env.SOCKET_FORWARD_SECRET
+  if (forwardUrl && forwardSecret && userId) {
+    try {
+      const resp = await fetch(`${forwardUrl.replace(/\/$/, '')}/notify`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'authorization': `Bearer ${forwardSecret}`
+        },
+        body: JSON.stringify({ userId, notification })
+      })
+      if (!resp.ok) {
+        console.warn('Socket forward failed', resp.status)
+        return false
+      }
+      return true
+    } catch (e) {
+      console.error('Socket forward error', e)
       return false
     }
   }
-  console.warn('Socket.IO not available or userId missing for notification')
+  console.warn('Socket.IO not available and no forward URL configured')
   return false
 }
 

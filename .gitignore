@@ -1,3 +1,9 @@
+# Ignore environment files (secrets)
+.env
+.env.local
+.env.*
+!.env.example
+
 # Dependencies
 node_modules/
 npm-debug.log*

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from 'react'
-import { io, Socket } from 'socket.io-client'
+import Pusher, { type Channel } from 'pusher-js'
 
 interface UseSocketOptions {
   userId?: string
@@ -18,106 +18,59 @@ export function useSocket({
 }: UseSocketOptions = {}) {
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
-  const socketRef = useRef<Socket | null>(null)
+  const pusherRef = useRef<Pusher | null>(null)
+  const channelRef = useRef<Channel | null>(null)
 
   useEffect(() => {
     if (!userId) return
 
     setIsConnecting(true)
 
-    // Get the correct server URL for production/development
-    const getServerUrl = () => {
-      // In production, use the same origin if NEXT_PUBLIC_APP_URL is not set
-      if (typeof window !== 'undefined') {
-        return process.env.NEXT_PUBLIC_APP_URL || 
-               process.env.NEXT_PUBLIC_URL || 
-               window.location.origin
-      }
-      return process.env.NEXT_PUBLIC_APP_URL || 
-             process.env.NEXT_PUBLIC_URL || 
-             'http://localhost:3000'
-    }
+    // Initialize Pusher
+    const key = process.env.NEXT_PUBLIC_PUSHER_KEY
+    const cluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER
+    if (!key || !cluster) return
 
-    const serverUrl = getServerUrl()
-    console.log('Connecting to Socket.IO server:', serverUrl)
+    setIsConnecting(true)
+    const pusher = new Pusher(key, { cluster, forceTLS: true })
+    pusherRef.current = pusher
 
-    // Initialize socket connection
-    const socket = io(serverUrl, {
-      path: '/api/socketio',
-      autoConnect: true,
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
-      timeout: 20000,
-      transports: ['websocket', 'polling']
-    })
+    const channelName = `user-${userId}`
+    const channel = pusher.subscribe(channelName)
+    channelRef.current = channel
 
-    socketRef.current = socket
-
-    // Connection events
-    socket.on('connect', () => {
-      console.log('Socket connected successfully')
+    channel.bind('pusher:subscription_succeeded', () => {
       setIsConnected(true)
       setIsConnecting(false)
       onConnect?.()
-
-      // Authenticate user
-      socket.emit('authenticate', userId)
     })
 
-    socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason)
-      setIsConnected(false)
-      onDisconnect?.()
-    })
-
-    socket.on('authenticated', (data) => {
-      console.log('User authenticated with socket:', data)
-    })
-
-    // Notification events
-    socket.on('notification', (notification) => {
-      console.log('Received notification:', notification)
+    channel.bind('notification', (notification: any) => {
       onNotification?.(notification)
     })
 
-    // Error handling
-    socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error)
+    pusher.connection.bind('error', () => {
       setIsConnecting(false)
-    })
-
-    socket.on('error', (error) => {
-      console.error('Socket error:', error)
     })
 
     // Cleanup on unmount
     return () => {
-      if (socket) {
-        console.log('Cleaning up socket connection')
-        socket.disconnect()
+      if (channelRef.current) {
+        try { pusherRef.current?.unsubscribe(`user-${userId}`) } catch {}
+      }
+      if (pusherRef.current) {
+        try { pusherRef.current.disconnect() } catch {}
       }
     }
   }, [userId, onNotification, onConnect, onDisconnect])
 
   // Send ping to keep connection alive
   useEffect(() => {
-    if (!isConnected || !socketRef.current) return
-
-    const pingInterval = setInterval(() => {
-      if (socketRef.current?.connected) {
-        socketRef.current.emit('ping')
-      }
-    }, 30000) // Ping every 30 seconds
-
-    return () => clearInterval(pingInterval)
+    // no-op for Pusher
+    return
   }, [isConnected])
 
   const sendMessage = (event: string, data: any) => {
-    if (socketRef.current?.connected) {
-      socketRef.current.emit(event, data)
-      return true
-    }
     return false
   }
 
@@ -125,7 +78,7 @@ export function useSocket({
     isConnected,
     isConnecting,
     sendMessage,
-    socket: socketRef.current
+    socket: pusherRef.current
   }
 }
 
