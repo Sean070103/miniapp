@@ -213,7 +213,14 @@ async function calculatePeriodAnalytics(userId: string, period: string) {
   }
 }
 
-function calculateEngagementRate(analytics: any): number {
+interface UserAnalytics {
+  totalLikes: number;
+  totalComments: number;
+  totalReposts: number;
+  totalPosts: number;
+}
+
+function calculateEngagementRate(analytics: UserAnalytics): number {
   const totalInteractions = analytics.totalLikes + analytics.totalComments + analytics.totalReposts
   const totalPosts = analytics.totalPosts || 1
   return totalInteractions / totalPosts

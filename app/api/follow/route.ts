@@ -128,11 +128,22 @@ export async function POST(request: NextRequest) {
     // Create notification
     await prisma.notification.create({
       data: {
-        userId: followingId,
+        senderId: followerId,
+        receiverId: followingId,
         type: 'follow',
         title: 'New Follower',
         message: `${follow.follower.username || 'Someone'} started following you`,
         data: JSON.stringify({ followerId, followerUsername: follow.follower.username })
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            walletAddress: true,
+            profilePicture: true
+          }
+        }
       }
     })
 

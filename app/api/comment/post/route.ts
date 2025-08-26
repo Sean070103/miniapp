@@ -1,7 +1,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { NextResponse, NextRequest } from 'next/server'
-const { sendNotificationToUser } = require('@/lib/socket-server.js')
+import { sendNotificationToUser } from '@/lib/socket-server'
 
 //POST comment
 export async function POST(req: Request) {
@@ -49,10 +49,12 @@ export async function POST(req: Request) {
 
         const notification = await prisma.notification.create({
           data: {
-            userId: journal.baseUserId,
+            senderId: baseUserId,
+            receiverId: journal.baseUserId,
             type: 'comment',
+            postId: journalId,
             title: 'New Comment',
-            message: `User_${baseUserId.slice(0, 6)} commented on your post`,
+            message: `${commenter?.username || `User_${baseUserId.slice(0, 6)}`} commented on your post`,
             data: JSON.stringify({ 
               actorId: baseUserId, 
               journalId, 
@@ -60,6 +62,16 @@ export async function POST(req: Request) {
               actorUsername: commenter?.username,
               commentText: comment.substring(0, 50) + (comment.length > 50 ? '...' : '')
             })
+          },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                username: true,
+                walletAddress: true,
+                profilePicture: true
+              }
+            }
           }
         });
 
@@ -71,7 +83,8 @@ export async function POST(req: Request) {
           message: notification.message,
           data: notification.data,
           isRead: false,
-          dateCreated: notification.dateCreated
+          dateCreated: notification.dateCreated,
+          sender: notification.sender
         });
 
       } catch (notificationError) {

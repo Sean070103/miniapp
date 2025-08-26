@@ -72,10 +72,10 @@ interface Journal {
 
 //ito gagamtin pag sa commnets(blueprint)
 interface Comment {
-  id: String;
-  baseUserId: String;
-  journalId: String;
-  comment: String;
+  id: string;
+  baseUserId: string;
+  journalId: string;
+  comment: string;
   dateCreated: Date;
 }
 

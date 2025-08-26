@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -29,6 +29,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { RichNotificationCard } from "@/components/ui/rich-notification-card"
 import { NotificationPreferences } from "@/components/ui/notification-preferences"
 import { useSocket } from "@/hooks/use-socket"
+import { useNotifications } from "@/hooks/use-notifications"
+import { NotificationsDropdown } from "@/components/ui/notifications-dropdown"
+import { RetroNotificationToast } from "@/components/ui/retro-notification-toast"
 
 interface DailyEntry {
   id: string
@@ -223,36 +226,28 @@ export default function Dashboard({ address }: DashboardProps) {
   // Get baseuser ID from user account
   const baseUserId = user?.account?.id;
 
-  // Real-time notifications
-  const { isConnected: isSocketConnected } = useSocket({
-    userId: baseUserId,
-    onNotification: (notification) => {
-      // Add new notification to the list with proper structure
-      const newNotification = {
-        id: notification.id,
-        type: notification.type as 'like' | 'comment' | 'repost',
-        userId: notification.userId,
-        content: notification.message,
-        data: notification.data,
-        timestamp: new Date(notification.dateCreated),
-        read: notification.isRead
-      }
-      setNotifications(prev => [newNotification, ...prev])
-      
-      // Show toast notification
-      toast({
-        title: notification.title,
-        description: notification.message,
-        duration: 5000
-      })
-    },
-    onConnect: () => {
-      console.log('Real-time notifications connected')
-    },
-    onDisconnect: () => {
-      console.log('Real-time notifications disconnected')
-    }
-  })
+  // Notification system
+  const {
+    notifications: newNotifications,
+    unreadCount,
+    isLoading: notificationsLoading,
+    error: notificationsError,
+    markAsRead,
+    fetchNotifications,
+    addNotification
+  } = useNotifications()
+
+  // Show retro toast for new notifications
+  const [toastNotifications, setToastNotifications] = useState<any[]>([])
+
+  const showNotificationToast = useCallback((notification: any) => {
+    const toastId = `toast-${notification.id}-${Date.now()}`
+    setToastNotifications(prev => [...prev, { ...notification, toastId }])
+  }, [])
+
+  const dismissToast = useCallback((toastId: string) => {
+    setToastNotifications(prev => prev.filter(t => t.toastId !== toastId))
+  }, [])
 
   const openPostModal = async (journalId: string) => {
     let post = allPosts.find(p => p.id === journalId) || dbEntries.find(p => p.id === journalId) || null;
@@ -659,7 +654,7 @@ export default function Dashboard({ address }: DashboardProps) {
     today.setHours(0, 0, 0, 0);
     
     let streak = 0;
-    let currentDate = today;
+    const currentDate = new Date(today);
     
     for (let i = 0; i < 365; i++) { // Check up to a year back
       const dateString = currentDate.toISOString().split('T')[0];
@@ -1388,8 +1383,8 @@ export default function Dashboard({ address }: DashboardProps) {
     currencySwap.toCurrency
   );
 
-  // Notification states
-  const [notifications, setNotifications] = useState<{
+  // Legacy notification states (for backward compatibility)
+  const [legacyNotifications, setLegacyNotifications] = useState<{
     id: string;
     type: 'like' | 'comment' | 'repost';
     userId: string;
@@ -1410,7 +1405,7 @@ export default function Dashboard({ address }: DashboardProps) {
       id: 'notifications' as SidebarItem, 
       label: 'Notifications', 
       icon: Bell,
-      badge: notifications.filter(n => !n.read).length > 0 ? notifications.filter(n => !n.read).length : undefined
+      badge: newNotifications.filter(n => !n.isRead).length > 0 ? newNotifications.filter(n => !n.isRead).length : undefined
     },
     { id: 'profile' as SidebarItem, label: 'Profile', icon: User },
     { id: 'settings' as SidebarItem, label: 'Settings', icon: Settings },
@@ -1420,30 +1415,7 @@ export default function Dashboard({ address }: DashboardProps) {
 
   const markNotificationAsRead = async (notificationId: string) => {
     try {
-      // First get the user's database ID from their wallet address
-      const userResponse = await fetch(`/api/baseuser/getby/wallet/${address}`);
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        const databaseUserId = userData.id;
-        
-        await fetch('/api/notifications', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: databaseUserId,
-            notificationIds: [notificationId]
-          }),
-        });
-        
-        // Update local state
-        setNotifications(prev => 
-          prev.map(notif => 
-            notif.id === notificationId ? { ...notif, read: true } : notif
-          )
-        );
-      }
+      await markAsRead([notificationId]);
     } catch (error) {
       console.error('Error marking notification read:', error);
     }
@@ -1451,95 +1423,14 @@ export default function Dashboard({ address }: DashboardProps) {
 
   const clearAllNotifications = async () => {
     try {
-      // First get the user's database ID from their wallet address
-      const userResponse = await fetch(`/api/baseuser/getby/wallet/${address}`);
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        const databaseUserId = userData.id;
-        
-        // Mark all notifications as read
-        await fetch('/api/notifications', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: databaseUserId
-            // No notificationIds means mark all as read
-          }),
-        });
-        
-        // Clear local state
-        setNotifications([]);
-        localStorage.removeItem('dailybase-notifications');
-      }
+      await markAsRead(); // Mark all as read
+      localStorage.removeItem('dailybase-notifications');
     } catch (error) {
       console.error('Error clearing notifications:', error);
     }
   };
 
-  // Load notifications from localStorage and database
-  useEffect(() => {
-    const loadNotifications = async () => {
-      // Load from localStorage first
-    const storedNotifications = localStorage.getItem('dailybase-notifications');
-    if (storedNotifications) {
-      try {
-        const parsed = JSON.parse(storedNotifications);
-        setNotifications(parsed.map((n: any) => ({
-          ...n,
-          timestamp: new Date(n.timestamp)
-        })));
-      } catch (error) {
-          console.error('Error loading notifications from localStorage:', error);
-        }
-      }
-
-      // Also load from database
-      if (address) {
-        try {
-          // First get the user's database ID from their wallet address
-          const userResponse = await fetch(`/api/baseuser/getby/wallet/${address}`);
-          if (userResponse.ok) {
-            const userData = await userResponse.json();
-            const databaseUserId = userData.id;
-            
-            // Now fetch notifications using the database user ID
-            const response = await fetch(`/api/notifications?userId=${databaseUserId}&limit=50`);
-            if (response.ok) {
-              const data = await response.json();
-              if (data.success && data.data) {
-                // Merge database notifications with localStorage
-                const dbNotifications = data.data.map((n: any) => {
-                  return {
-                    id: n.id,
-                    type: n.type,
-                    userId: n.userId,
-                    content: n.message,
-                    data: n.data,
-                    timestamp: new Date(n.dateCreated),
-                    read: n.isRead
-                  }
-                })
-                
-                // Combine and deduplicate
-                const allNotifications = [...dbNotifications, ...notifications]
-                const uniqueNotifications = allNotifications.filter((notification, index, self) => 
-                  index === self.findIndex(n => n.id === notification.id)
-                )
-                
-                setNotifications(uniqueNotifications)
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error loading notifications from database:', error);
-        }
-      }
-    };
-
-    loadNotifications();
-  }, [address]);
+  // Legacy notification loading is now handled by useNotifications hook
 
   const renderContent = () => {
     switch (activeSidebarItem) {
@@ -3301,7 +3192,7 @@ export default function Dashboard({ address }: DashboardProps) {
 
            {/* Notifications List */}
            <div className="space-y-4">
-             {notifications.length === 0 ? (
+             {newNotifications.length === 0 ? (
                /* Empty State */
                <Card className="bg-gradient-to-br from-gray-800/90 via-gray-700/80 to-gray-800/90 border-2 border-green-500/50 text-white backdrop-blur-xl shadow-lg gaming-glow">
                <CardContent className="flex flex-col items-center justify-center py-16">
@@ -3329,11 +3220,11 @@ export default function Dashboard({ address }: DashboardProps) {
                  <div className="flex justify-between items-center mb-4">
                    <div className="flex items-center gap-2">
                      <h2 className="text-xl font-bold text-green-100 pixelated-text">
-                       Recent Activity ({notifications.length})
+                       Recent Activity ({newNotifications.length})
                      </h2>
-                     <div className={`w-2 h-2 rounded-full ${isSocketConnected ? 'bg-green-400' : 'bg-red-400'} gaming-glow`}></div>
+                     <div className={`w-2 h-2 rounded-full ${notificationsLoading ? 'bg-yellow-400' : 'bg-green-400'} gaming-glow`}></div>
                      <span className="text-xs text-green-300 pixelated-text">
-                       {isSocketConnected ? 'Live' : 'Offline'}
+                       {notificationsLoading ? 'Loading' : 'Live'}
                      </span>
                    </div>
                    <div className="flex gap-2">
@@ -3349,17 +3240,16 @@ export default function Dashboard({ address }: DashboardProps) {
                    </div>
            </div>
 
-                 {notifications.map((notification) => (
+                 {newNotifications.map((notification) => (
                    <RichNotificationCard
                      key={notification.id}
                      notification={{
                        id: notification.id,
                        type: notification.type as 'like' | 'comment' | 'repost' | 'follow' | 'mention',
-                       title: notification.type.charAt(0).toUpperCase() + notification.type.slice(1),
-                       message: notification.content,
-                       data: notification.data,
-                       isRead: notification.read,
-                       dateCreated: new Date(notification.timestamp).toISOString()
+                       title: notification.title,
+                       message: notification.message,
+                       isRead: notification.isRead,
+                       dateCreated: notification.dateCreated.toISOString()
                      }}
                      onMarkRead={markNotificationAsRead}
                      onAction={(action, data) => {
@@ -3693,6 +3583,16 @@ export default function Dashboard({ address }: DashboardProps) {
            </button>
          </div>
        </div>
+     ))}
+
+     {/* Retro Notification Toasts */}
+     {toastNotifications.map((toast) => (
+       <RetroNotificationToast
+         key={toast.toastId}
+         notification={toast}
+         onDismiss={() => dismissToast(toast.toastId)}
+         duration={4000}
+       />
      ))}
 
      {/* Enhanced Responsive Sidebar with Gaming Theme */}

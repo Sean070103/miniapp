@@ -27,7 +27,8 @@ model BaseUser {
  followers      Follow[] @relation("UserFollowers")
  
  // Notifications
- notifications  Notification[]
+ sentNotifications     Notification[] @relation("NotificationSender")
+ receivedNotifications Notification[] @relation("NotificationReceiver")
  notificationPreferences NotificationPreferences?
  
  // Analytics
@@ -112,19 +113,23 @@ model Follow {
 // Notifications system
 model Notification {
  id          String   @id @default(auto()) @map("_id") @db.ObjectId
- userId      String
- type        String   // 'follow', 'like', 'comment', 'repost', 'mention'
+ senderId    String   // ID of the user who triggered the notification
+ receiverId  String   // ID of the user who receives the notification
+ type        String   // 'like', 'repost', 'comment', 'follow'
+ postId      String?  // ID of the post being liked/reposted
  title       String
  message     String
  data        String?  // JSON string for additional data
  isRead      Boolean  @default(false)
  dateCreated DateTime @default(now())
  
- user        BaseUser @relation(fields: [userId], references: [id])
+ sender      BaseUser @relation("NotificationSender", fields: [senderId], references: [id])
+ receiver    BaseUser @relation("NotificationReceiver", fields: [receiverId], references: [id])
  
  // Indexes for better performance
- @@index([userId, isRead])
- @@index([userId, dateCreated])
+ @@index([receiverId, isRead])
+ @@index([receiverId, dateCreated])
+ @@index([senderId, dateCreated])
 }
 
 // Notification preferences

@@ -1,7 +1,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { NextResponse, NextRequest } from 'next/server'
-const { sendNotificationToUser } = require('@/lib/socket-server.js')
+import { sendNotificationToUser } from '@/lib/socket-server'
 
 //POST REPOST - Toggle functionality
 export async function POST(req: Request) {
@@ -72,17 +72,19 @@ export async function POST(req: Request) {
 
           const notification = await prisma.notification.create({
             data: {
-              userId: journal.baseUserId,
+              senderId: baseUserId,
+              receiverId: journal.baseUserId,
               type: 'repost',
+              postId: journalId,
               title: 'New Repost',
-              message: `User_${baseUserId.slice(0, 6)} reposted your post`,
+              message: `${reposter?.username || `User_${baseUserId.slice(0, 6)}`} reposted your post`,
               data: JSON.stringify({ 
                 actorId: baseUserId, 
                 journalId, 
                 action: 'repost',
                 actorUsername: reposter?.username
               })
-            }
+            } as any
           });
 
           // Send real-time notification

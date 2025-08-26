@@ -32,16 +32,18 @@ export function StreakTracker({ entries }: StreakTrackerProps) {
     let tempStreak = 0
     
     // Calculate current streak (consecutive days from today backwards)
-    const today = new Date().toISOString().split('T')[0]
-    let checkDate = new Date()
+    const today = new Date()
+    let daysBack = 0
     
     while (true) {
+      const checkDate = new Date(today)
+      checkDate.setDate(today.getDate() - daysBack)
       const dateString = checkDate.toISOString().split('T')[0]
       
       // Check if there's a post on this date
       if (postedDates.includes(dateString)) {
         currentStreak++
-        checkDate.setDate(checkDate.getDate() - 1) // Go to previous day
+        daysBack++
       } else {
         break // Streak broken
       }
@@ -70,7 +72,7 @@ export function StreakTracker({ entries }: StreakTrackerProps) {
     // Don't forget the last streak
     longestStreak = Math.max(longestStreak, tempStreak)
     
-    return { current: currentStreak, longest: longestStreak, consecutive: currentStreak }
+    return { current: currentStreak, longest: longestStreak }
   }
 
   const calculateWeeklyProgress = () => {
@@ -91,7 +93,6 @@ export function StreakTracker({ entries }: StreakTrackerProps) {
 
   const calculateMonthlyProgress = () => {
     const today = new Date()
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
     const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
     
     const monthDays: string[] = []
@@ -104,7 +105,7 @@ export function StreakTracker({ entries }: StreakTrackerProps) {
     return (monthEntries.length / daysInMonth) * 100
   }
 
-  const { current, longest, consecutive } = calculateStreak()
+  const { current, longest } = calculateStreak()
   const weeklyProgress = calculateWeeklyProgress()
   const monthlyProgress = calculateMonthlyProgress()
 
@@ -189,7 +190,7 @@ export function StreakTracker({ entries }: StreakTrackerProps) {
           Recent Activity
         </h4>
         <div className="space-y-2">
-          {entries.slice(0, 3).map((entry, index) => (
+          {entries.slice(0, 3).map((entry) => (
             <div key={entry.id} className="flex items-center gap-3 p-3 bg-slate-700/50 rounded-xl border border-slate-600">
               <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
                 <Calendar className="w-4 h-4 text-white" />

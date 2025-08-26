@@ -183,7 +183,15 @@ export async function POST(request: NextRequest) {
 
 // NOTE: Trending endpoint moved to /api/analytics/content/trending
 
-function calculateContentEngagementRate(analytics: any): number {
+interface ContentAnalytics {
+  likes: number;
+  comments: number;
+  reposts: number;
+  shares: number;
+  views: number;
+}
+
+function calculateContentEngagementRate(analytics: ContentAnalytics): number {
   const totalInteractions = analytics.likes + analytics.comments + analytics.reposts + analytics.shares
   const totalViews = analytics.views || 1
   return (totalInteractions / totalViews) * 100

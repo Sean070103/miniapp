@@ -25,20 +25,38 @@ export function useSocket({
 
     setIsConnecting(true)
 
+    // Get the correct server URL for production/development
+    const getServerUrl = () => {
+      // In production, use the same origin if NEXT_PUBLIC_APP_URL is not set
+      if (typeof window !== 'undefined') {
+        return process.env.NEXT_PUBLIC_APP_URL || 
+               process.env.NEXT_PUBLIC_URL || 
+               window.location.origin
+      }
+      return process.env.NEXT_PUBLIC_APP_URL || 
+             process.env.NEXT_PUBLIC_URL || 
+             'http://localhost:3000'
+    }
+
+    const serverUrl = getServerUrl()
+    console.log('Connecting to Socket.IO server:', serverUrl)
+
     // Initialize socket connection
-    const socket = io(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000', {
+    const socket = io(serverUrl, {
       path: '/api/socketio',
       autoConnect: true,
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionAttempts: 5
+      reconnectionAttempts: 5,
+      timeout: 20000,
+      transports: ['websocket', 'polling']
     })
 
     socketRef.current = socket
 
     // Connection events
     socket.on('connect', () => {
-      console.log('Socket connected')
+      console.log('Socket connected successfully')
       setIsConnected(true)
       setIsConnecting(false)
       onConnect?.()
@@ -47,8 +65,8 @@ export function useSocket({
       socket.emit('authenticate', userId)
     })
 
-    socket.on('disconnect', () => {
-      console.log('Socket disconnected')
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason)
       setIsConnected(false)
       onDisconnect?.()
     })
@@ -69,9 +87,14 @@ export function useSocket({
       setIsConnecting(false)
     })
 
+    socket.on('error', (error) => {
+      console.error('Socket error:', error)
+    })
+
     // Cleanup on unmount
     return () => {
       if (socket) {
+        console.log('Cleaning up socket connection')
         socket.disconnect()
       }
     }
@@ -82,30 +105,28 @@ export function useSocket({
     if (!isConnected || !socketRef.current) return
 
     const pingInterval = setInterval(() => {
-      socketRef.current?.emit('ping')
+      if (socketRef.current?.connected) {
+        socketRef.current.emit('ping')
+      }
     }, 30000) // Ping every 30 seconds
 
     return () => clearInterval(pingInterval)
   }, [isConnected])
 
   const sendMessage = (event: string, data: any) => {
-    if (socketRef.current && isConnected) {
+    if (socketRef.current?.connected) {
       socketRef.current.emit(event, data)
+      return true
     }
-  }
-
-  const disconnect = () => {
-    if (socketRef.current) {
-      socketRef.current.disconnect()
-    }
+    return false
   }
 
   return {
     isConnected,
     isConnecting,
     sendMessage,
-    disconnect,
     socket: socketRef.current
   }
 }
+
 

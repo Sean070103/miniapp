@@ -18,23 +18,33 @@ export async function GET(request: NextRequest) {
     }
 
     const whereClause = {
-      userId,
+      receiverId: userId,
       ...(unreadOnly && { isRead: false })
     }
 
     const notifications = await prisma.notification.findMany({
       where: whereClause,
+      include: {
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            walletAddress: true,
+            profilePicture: true
+          }
+        }
+      },
       orderBy: { dateCreated: 'desc' },
       take: limit,
       skip: offset
     })
 
     const totalCount = await prisma.notification.count({
-      where: { userId }
+      where: { receiverId: userId }
     })
 
     const unreadCount = await prisma.notification.count({
-      where: { userId, isRead: false }
+      where: { receiverId: userId, isRead: false }
     })
 
     return NextResponse.json({
@@ -60,22 +70,34 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { userId, type, title, message, data } = body
+    const { senderId, receiverId, type, postId, title, message, data } = body
 
-    if (!userId || !type || !title || !message) {
+    if (!senderId || !receiverId || !type || !title || !message) {
       return NextResponse.json(
-        { success: false, error: 'User ID, type, title, and message are required' },
+        { success: false, error: 'Sender ID, receiver ID, type, title, and message are required' },
         { status: 400 }
       )
     }
 
     const notification = await prisma.notification.create({
       data: {
-        userId,
+        senderId,
+        receiverId,
         type,
+        postId,
         title,
         message,
         data: data ? JSON.stringify(data) : null
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            walletAddress: true,
+            profilePicture: true
+          }
+        }
       }
     })
 
@@ -107,14 +129,14 @@ export async function PUT(request: NextRequest) {
       await prisma.notification.updateMany({
         where: {
           id: { in: notificationIds },
-          userId
+          receiverId: userId
         },
         data: { isRead: true }
       })
     } else {
       // Mark all notifications as read
       await prisma.notification.updateMany({
-        where: { userId },
+        where: { receiverId: userId },
         data: { isRead: true }
       })
     }
@@ -148,14 +170,14 @@ export async function DELETE(request: NextRequest) {
       await prisma.notification.deleteMany({
         where: {
           id: notificationId,
-          userId
+          receiverId: userId
         }
       })
     } else {
       // Delete all read notifications
       await prisma.notification.deleteMany({
         where: {
-          userId,
+          receiverId: userId,
           isRead: true
         }
       })

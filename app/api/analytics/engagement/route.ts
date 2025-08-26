@@ -281,7 +281,15 @@ async function getEngagementOverTime(userId: string, startDate: Date, endDate: D
   })
 
   // Group by date
-  const dailyData: { [key: string]: any } = {}
+  interface DailyData {
+    posts: number;
+    likes: number;
+    comments: number;
+    reposts: number;
+    views: number;
+  }
+  
+  const dailyData: { [key: string]: DailyData } = {}
   
   posts.forEach(post => {
     const date = post.dateCreated.toISOString().split('T')[0]
@@ -368,7 +376,7 @@ async function getTrendingTopics(startDate: Date, endDate: Date) {
     .map(([tag, count]) => ({ tag, count }))
 }
 
-async function getTopPerformingUsers(startDate: Date, endDate: Date) {
+async function getTopPerformingUsers(_startDate: Date, _endDate: Date) {
   // Get users with highest engagement
   const users = await prisma.baseUser.findMany({
     include: {

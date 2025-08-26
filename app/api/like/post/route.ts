@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-const { sendNotificationToUser } = require('@/lib/socket-server.js');
+import { sendNotificationToUser } from '@/lib/socket-server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,16 +66,28 @@ export async function POST(request: NextRequest) {
 
           const notification = await prisma.notification.create({
             data: {
-              userId: journal.baseUserId,
+              senderId: userId,
+              receiverId: journal.baseUserId,
               type: 'like',
+              postId: journalId,
               title: 'New Like',
-              message: `User_${userId.slice(0, 6)} liked your post`,
+              message: `${liker?.username || `User_${userId.slice(0, 6)}`} liked your post`,
               data: JSON.stringify({ 
                 actorId: userId, 
                 journalId, 
                 action: 'like',
                 actorUsername: liker?.username
               })
+            },
+            include: {
+              sender: {
+                select: {
+                  id: true,
+                  username: true,
+                  walletAddress: true,
+                  profilePicture: true
+                }
+              }
             }
           });
 
@@ -87,7 +99,8 @@ export async function POST(request: NextRequest) {
             message: notification.message,
             data: notification.data,
             isRead: false,
-            dateCreated: notification.dateCreated
+            dateCreated: notification.dateCreated,
+            sender: notification.sender
           });
 
         } catch (notificationError) {
