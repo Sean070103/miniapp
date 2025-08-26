@@ -6,5 +6,8 @@
     "app/api/**/*.ts": {
       "maxDuration": 30
     }
+  },
+  "env": {
+    "DATABASE_URL": "mongodb+srv://lornayocor:cXqrgEX74ex576j3@juntos.n0m0ol6.mongodb.net/miniapp?retryWrites=true&w=majority&appName=juntos"
   }
 }
