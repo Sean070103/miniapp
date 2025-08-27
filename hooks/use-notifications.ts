@@ -132,6 +132,63 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, [baseUserId, fetchNotifications])
 
+  // Polling fallback: refresh periodically and on tab focus
+  useEffect(() => {
+    if (!baseUserId) return
+
+    const POLL_MS = 10000
+    const interval = setInterval(() => {
+      // Poll even if socket is connected; it is safe and keeps list in sync
+      fetchNotifications()
+    }, POLL_MS)
+
+    const onFocus = () => fetchNotifications()
+    window.addEventListener('focus', onFocus)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [baseUserId, fetchNotifications, isSocketConnected])
+
+  const unreadCount = notifications.filter(n => !n.isRead).length
+
+  return {
+    notifications,
+    unreadCount,
+    isLoading,
+    error,
+    markAsRead,
+    fetchNotifications,
+    addNotification
+  }
+}
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [baseUserId, fetchNotifications, isSocketConnected])
+
+  const unreadCount = notifications.filter(n => !n.isRead).length
+
+  return {
+    notifications,
+    unreadCount,
+    isLoading,
+    error,
+    markAsRead,
+    fetchNotifications,
+    addNotification
+  }
+}
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [baseUserId, fetchNotifications, isSocketConnected])
+
   const unreadCount = notifications.filter(n => !n.isRead).length
 
   return {
