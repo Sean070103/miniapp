@@ -1,44 +1,54 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { sendNotificationToUser } from '@/lib/socket-server'
+import { NextRequest, NextResponse } from 'next/server';
+import { getPusher } from '@/lib/pusher';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { userId, testType = 'test' } = body
+    const body = await request.json();
+    const { recipientId, senderId, postId } = body;
 
-    if (!userId) {
+    if (!recipientId || !senderId || !postId) {
       return NextResponse.json(
-        { success: false, error: 'User ID is required' },
+        { error: 'recipientId, senderId, and postId are required' },
         { status: 400 }
-      )
+      );
     }
 
-    const testNotification = {
-      id: `test-${Date.now()}`,
-      type: testType,
-      title: 'Test Notification',
-      message: `This is a test notification sent at ${new Date().toISOString()}`,
-      data: JSON.stringify({ test: true, timestamp: Date.now() }),
-      isRead: false,
-      dateCreated: new Date()
+    // Trigger Pusher event on the "notifications" channel
+    const pusher = getPusher();
+    if (pusher) {
+      try {
+        await pusher.trigger('notifications', 'like', {
+          recipientId,
+          senderId,
+          postId
+        });
+        
+        console.log('Test Pusher event triggered:', { recipientId, senderId, postId });
+        
+        return NextResponse.json({ 
+          success: true,
+          message: 'Pusher event triggered successfully',
+          data: { recipientId, senderId, postId }
+        });
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+        return NextResponse.json(
+          { error: 'Failed to trigger Pusher event' },
+          { status: 500 }
+        );
+      }
+    } else {
+      return NextResponse.json(
+        { error: 'Pusher not configured' },
+        { status: 500 }
+      );
     }
-
-    // Try to send real-time notification
-    const socketResult = sendNotificationToUser(userId, testNotification)
-
-    return NextResponse.json({
-      success: true,
-      message: 'Test notification sent',
-      socketResult,
-      notification: testNotification,
-      timestamp: new Date().toISOString()
-    })
   } catch (error) {
-    console.error('Error in test notifications:', error)
+    console.error('Error in test notifications:', error);
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Failed to process test notification' },
       { status: 500 }
-    )
+    );
   }
 }
 

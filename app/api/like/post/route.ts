@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { sendNotificationToUser } from '@/lib/socket-server';
+import { getPusher } from '@/lib/pusher';
 
 export async function POST(request: NextRequest) {
   try {
@@ -91,17 +91,20 @@ export async function POST(request: NextRequest) {
             }
           });
 
-          // Send real-time notification
-          sendNotificationToUser(journal.baseUserId, {
-            id: notification.id,
-            type: 'like',
-            title: notification.title,
-            message: notification.message,
-            data: notification.data,
-            isRead: false,
-            dateCreated: notification.dateCreated,
-            sender: notification.sender
-          });
+          // Trigger Pusher event on the "notifications" channel
+          const pusher = getPusher();
+          if (pusher) {
+            try {
+              await pusher.trigger('notifications', 'like', {
+                recipientId: journal.baseUserId,
+                senderId: userId,
+                postId: journalId
+              });
+              console.log('Pusher event triggered for like notification');
+            } catch (pusherError) {
+              console.error('Error triggering Pusher event:', pusherError);
+            }
+          }
 
         } catch (notificationError) {
           console.error('Error creating like notification:', notificationError);

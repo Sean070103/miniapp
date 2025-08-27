@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/auth-context'
 import { useSocket } from '@/hooks/use-socket'
 import { useToast } from '@/components/ui/use-toast'
+import { RealTimeNotificationTest } from '@/components/ui/real-time-notification-test'
 
 export default function TestNotificationsPage() {
   const { user, createAccount } = useAuth()
@@ -83,8 +84,9 @@ export default function TestNotificationsPage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          userId: baseUserId,
-          testType: 'manual_test'
+          recipientId: baseUserId,
+          senderId: 'test-sender-id',
+          postId: 'test-post-id'
         })
       })
       const data = await response.json()
@@ -116,13 +118,15 @@ export default function TestNotificationsPage() {
           <CardHeader>
             <CardTitle>Notification Test</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p>Please connect your wallet to test notifications.</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+                  <CardContent>
+          <p>Please connect your wallet to test notifications.</p>
+        </CardContent>
+      </Card>
+
+      <RealTimeNotificationTest />
+    </div>
+  )
+}
 
   return (
     <div className="container mx-auto p-4 space-y-4">

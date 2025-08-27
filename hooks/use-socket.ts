@@ -35,8 +35,8 @@ export function useSocket({
     const pusher = new Pusher(key, { cluster, forceTLS: true })
     pusherRef.current = pusher
 
-    const channelName = `user-${userId}`
-    const channel = pusher.subscribe(channelName)
+    // Subscribe to the "notifications" channel
+    const channel = pusher.subscribe('notifications')
     channelRef.current = channel
 
     channel.bind('pusher:subscription_succeeded', () => {
@@ -45,8 +45,21 @@ export function useSocket({
       onConnect?.()
     })
 
-    channel.bind('notification', (notification: any) => {
-      onNotification?.(notification)
+    // Listen for "like" events
+    channel.bind('like', (data: any) => {
+      console.log('Received like event:', data);
+      // Only show notification if it's for the current user
+      if (data.recipientId === userId) {
+        onNotification?.({
+          id: `like-${Date.now()}`,
+          type: 'like',
+          title: 'New Like',
+          message: 'Someone liked your post',
+          isRead: false,
+          dateCreated: new Date(),
+          data: data
+        });
+      }
     })
 
     pusher.connection.bind('error', () => {
@@ -56,7 +69,7 @@ export function useSocket({
     // Cleanup on unmount
     return () => {
       if (channelRef.current) {
-        try { pusherRef.current?.unsubscribe(`user-${userId}`) } catch {}
+        try { pusherRef.current?.unsubscribe('notifications') } catch {}
       }
       if (pusherRef.current) {
         try { pusherRef.current.disconnect() } catch {}
