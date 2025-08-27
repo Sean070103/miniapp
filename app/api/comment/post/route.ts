@@ -76,7 +76,7 @@ export async function POST(req: Request) {
           const pusher = getPusher();
           if (pusher) {
             try {
-              await pusher.trigger(`user-${postAuthor.id}`, 'notification', {
+              await pusher.trigger(`user-${postAuthor.walletAddress}`, 'notification', {
                 id: notification.id,
                 type: 'comment',
                 title: notification.title,
