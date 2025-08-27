@@ -1,7 +1,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { NextResponse, NextRequest } from 'next/server'
-import { sendNotificationToUser } from '@/lib/socket-server'
+import { getPusher } from '@/lib/pusher'
 
 //POST comment
 export async function POST(req: Request) {
@@ -75,17 +75,20 @@ export async function POST(req: Request) {
           }
         });
 
-        // Send real-time notification
-        sendNotificationToUser(journal.baseUserId, {
-          id: notification.id,
-          type: 'comment',
-          title: notification.title,
-          message: notification.message,
-          data: notification.data,
-          isRead: false,
-          dateCreated: notification.dateCreated,
-          sender: notification.sender
-        });
+        // Trigger Pusher event on the "notifications" channel
+        const pusher = getPusher();
+        if (pusher) {
+          try {
+            await pusher.trigger('notifications', 'comment', {
+              recipientId: journal.baseUserId,
+              senderId: baseUserId,
+              postId: journalId
+            });
+            console.log('Pusher event triggered for comment notification');
+          } catch (pusherError) {
+            console.error('Error triggering Pusher event:', pusherError);
+          }
+        }
 
       } catch (notificationError) {
         console.error('Error creating comment notification:', notificationError);
