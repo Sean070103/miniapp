@@ -35,7 +35,7 @@ export function useSocket({
     const pusher = new Pusher(key, { cluster, forceTLS: true })
     pusherRef.current = pusher
 
-    const channelName = `user-${userId}`
+    const channelName = `user-${userId.toLowerCase()}`
     const channel = pusher.subscribe(channelName)
     channelRef.current = channel
 

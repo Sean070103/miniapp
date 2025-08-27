@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
           const pusher = getPusher();
           if (pusher) {
             try {
-              await pusher.trigger(`user-${postAuthor.walletAddress}`, 'notification', {
+              await pusher.trigger(`user-${postAuthor.walletAddress.toLowerCase()}`, 'notification', {
                 id: notification.id,
                 type: 'like',
                 title: notification.title,

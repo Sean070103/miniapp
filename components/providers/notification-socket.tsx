@@ -7,10 +7,10 @@ import { useSocket } from '@/hooks/use-socket'
 export default function NotificationSocket() {
   const { user } = useAuth()
   const { toast } = useToast()
-  const baseUserId = user?.account?.id
+  const walletAddress = user?.account?.walletAddress
 
   useSocket({
-    userId: baseUserId,
+    userId: walletAddress,
     onNotification: (notification: any) => {
       toast({
         title: notification?.title || 'Notification',
