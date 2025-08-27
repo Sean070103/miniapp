@@ -128,3 +128,6 @@ public/uploads/
 
 # Local development
 .local
+.env
+.env.local
+.env.local
