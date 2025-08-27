@@ -1221,14 +1221,19 @@ export default function Dashboard({ address }: DashboardProps) {
   const fetchAllPosts = async () => {
     setIsLoadingFeed(true);
     try {
+      console.log("Fetching all posts...");
       const response = await fetch("/api/journal/get", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
+      console.log("Response status:", response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log("Fetched posts:", data);
         setAllPosts(data || []);
         extractTrendingTopics(data || []);
+      } else {
+        console.error("Failed to fetch posts:", response.status, response.statusText);
       }
     } catch (error) {
       console.error("Error fetching all posts:", error);
@@ -1255,15 +1260,23 @@ export default function Dashboard({ address }: DashboardProps) {
   };
 
   const getFilteredPosts = () => {
+    console.log("getFilteredPosts called, allPosts length:", allPosts.length);
+    console.log("feedFilter:", feedFilter);
+    console.log("allPosts:", allPosts);
+    
     switch (feedFilter) {
       case 'trending':
-        return allPosts.filter(post => 
+        const trendingPosts = allPosts.filter(post => 
           post.tags?.some(tag => trendingTopics.includes(tag))
         );
+        console.log("trending posts:", trendingPosts);
+        return trendingPosts;
       case 'following':
         // For now, show all posts. In the future, implement following logic
+        console.log("following posts (all):", allPosts);
         return allPosts;
       default:
+        console.log("default posts (all):", allPosts);
         return allPosts;
     }
   };
