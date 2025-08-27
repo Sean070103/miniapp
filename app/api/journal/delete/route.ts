@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/utils/connect'
+import { prisma } from '@/lib/prisma'
 
 export async function DELETE(request: NextRequest) {
   try {

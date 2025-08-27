@@ -1,42 +1,43 @@
-import prisma from '../../../utils/connect'
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
-    // Test the database connection by trying to count records
-    const userCount = await prisma.baseUser.count()
+    // Test database connection
     const journalCount = await prisma.journal.count()
-    const commentCount = await prisma.comment.count()
-    const repostCount = await prisma.repost.count()
-    const chainCommentCount = await prisma.chaincomments.count()
+    const userCount = await prisma.baseUser.count()
+    
+    // Get a few sample journals
+    const sampleJournals = await prisma.journal.findMany({
+      take: 5,
+      orderBy: { dateCreated: 'desc' },
+      select: {
+        id: true,
+        baseUserId: true,
+        journal: true,
+        dateCreated: true,
+        privacy: true,
+        isHidden: true,
+        archived: true
+      }
+    })
 
-    return new Response(
-      JSON.stringify({
-        status: 'success',
-        message: 'Database connection successful',
-        counts: {
-          users: userCount,
-          journals: journalCount,
-          comments: commentCount,
-          reposts: repostCount,
-          chainComments: chainCommentCount
-        }
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" }
-      }
-    )
+    return NextResponse.json({
+      success: true,
+      message: 'Database connection successful',
+      stats: {
+        totalJournals: journalCount,
+        totalUsers: userCount
+      },
+      sampleJournals,
+      timestamp: new Date().toISOString()
+    })
   } catch (error) {
-    return new Response(
-      JSON.stringify({
-        status: 'error',
-        message: 'Database connection failed',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-      }
-    )
+    console.error('Database test error:', error)
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown database error',
+      timestamp: new Date().toISOString()
+    }, { status: 500 })
   }
 }

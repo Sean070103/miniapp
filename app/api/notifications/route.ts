@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/utils/connect'
+import { prisma } from '@/lib/prisma'
 
 // GET /api/notifications - Get user notifications
 export async function GET(request: NextRequest) {
