@@ -58,17 +58,31 @@ export async function POST(request: NextRequest) {
       // Create notification for the post author (if not liking your own post)
       if (journal.baseUserId !== userId) {
         try {
-          // Get the user who liked the post
-          const liker = await prisma.baseUser.findUnique({
+          // Get or create the user who liked the post
+          let liker = await prisma.baseUser.findUnique({
             where: { walletAddress: userId },
             select: { id: true, username: true, walletAddress: true }
           });
+          if (!liker) {
+            await prisma.baseUser.create({ data: { walletAddress: userId } });
+            liker = await prisma.baseUser.findUnique({
+              where: { walletAddress: userId },
+              select: { id: true, username: true, walletAddress: true }
+            });
+          }
 
-          // Get the post author
-          const postAuthor = await prisma.baseUser.findUnique({
+          // Get or create the post author
+          let postAuthor = await prisma.baseUser.findUnique({
             where: { walletAddress: journal.baseUserId },
             select: { id: true, username: true, walletAddress: true }
           });
+          if (!postAuthor) {
+            await prisma.baseUser.create({ data: { walletAddress: journal.baseUserId } });
+            postAuthor = await prisma.baseUser.findUnique({
+              where: { walletAddress: journal.baseUserId },
+              select: { id: true, username: true, walletAddress: true }
+            });
+          }
 
           if (liker && postAuthor) {
             const notification = await prisma.notification.create({

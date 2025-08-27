@@ -65,16 +65,30 @@ export async function POST(req: Request) {
       if (journal.baseUserId !== baseUserId) {
         try {
           // Get the user who reposted
-          const reposter = await prisma.baseUser.findUnique({
+          let reposter = await prisma.baseUser.findUnique({
             where: { walletAddress: baseUserId },
             select: { id: true, username: true, walletAddress: true }
           });
+          if (!reposter) {
+            await prisma.baseUser.create({ data: { walletAddress: baseUserId } });
+            reposter = await prisma.baseUser.findUnique({
+              where: { walletAddress: baseUserId },
+              select: { id: true, username: true, walletAddress: true }
+            });
+          }
 
           // Get the post author
-          const postAuthor = await prisma.baseUser.findUnique({
+          let postAuthor = await prisma.baseUser.findUnique({
             where: { walletAddress: journal.baseUserId },
             select: { id: true, username: true, walletAddress: true }
           });
+          if (!postAuthor) {
+            await prisma.baseUser.create({ data: { walletAddress: journal.baseUserId } });
+            postAuthor = await prisma.baseUser.findUnique({
+              where: { walletAddress: journal.baseUserId },
+              select: { id: true, username: true, walletAddress: true }
+            });
+          }
 
           if (reposter && postAuthor) {
             const notification = await prisma.notification.create({
