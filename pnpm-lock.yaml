@@ -17,6 +17,18 @@ importers:
       '@hookform/resolvers':
         specifier: ^3.10.0
         version: 3.10.0(react-hook-form@7.62.0(react@18.3.1))
+      '@liveblocks/client':
+        specifier: ^3.4.1
+        version: 3.4.1(@types/json-schema@7.0.15)
+      '@liveblocks/node':
+        specifier: ^3.4.1
+        version: 3.4.1(@types/json-schema@7.0.15)
+      '@liveblocks/react':
+        specifier: ^3.4.1
+        version: 3.4.1(@types/json-schema@7.0.15)(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react@18.3.1)
+      '@liveblocks/zustand':
+        specifier: ^3.4.1
+        version: 3.4.1(@types/json-schema@7.0.15)(zustand@5.0.3(@types/react@18.3.23)(react@18.3.1)(use-sync-external-store@1.4.0(react@18.3.1)))
       '@prisma/client':
         specifier: 6.13.0
         version: 6.13.0(prisma@6.13.0(typescript@5.9.2))(typescript@5.9.2)
@@ -733,6 +745,34 @@ packages:
 
   '@lit/reactive-element@2.1.1':
     resolution: {integrity: sha512-N+dm5PAYdQ8e6UlywyyrgI2t++wFGXfHx+dSJ1oBrg6FAxUj40jId++EaRm80MKX5JnlH1sBsyZ5h0bcZKemCg==}
+
+  '@liveblocks/client@3.4.1':
+    resolution: {integrity: sha512-uNgpttVxrlPll1obEWdt6ErGVjuQ2wvVjr4m36709WQ2+o0RWvZ/XyYtnIRdRc/6BJvQwEeNJwFSY+ADjpQPow==}
+
+  '@liveblocks/core@3.4.1':
+    resolution: {integrity: sha512-v7SOjT/YyZvkGArf108WWhADonTrjBAbpUabf355SF84tvy2n/cH38PLijYxBPZpdMv1kJaN2heM8JFF7AYkQw==}
+    peerDependencies:
+      '@types/json-schema': ^7
+
+  '@liveblocks/node@3.4.1':
+    resolution: {integrity: sha512-AwyXDwYbX4+Ejq02Bcurow+zFt9wR5Pcw0Hug1kOZ9+z2DQvnycWUbK38CIzl5Ys+xVA/5o6EfASoSdc2ZJI8A==}
+
+  '@liveblocks/react@3.4.1':
+    resolution: {integrity: sha512-os6M5/8l3ZsXYz0CD2wm9aRWtxHwn8zet6rL1Y8oqwzjaxEkzCksiBWrsSZfYpLmboQu9gkQuJ/qCG8V7oVg3A==}
+    peerDependencies:
+      '@types/react': '*'
+      '@types/react-dom': '*'
+      react: ^18 || ^19 || ^19.0.0-rc
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      '@types/react-dom':
+        optional: true
+
+  '@liveblocks/zustand@3.4.1':
+    resolution: {integrity: sha512-zYY+AvZqkhKozr8c0UHqu5T2zjR+hXNRhj/b35PFs32IocCx/r8qsDfXGc4jocM/dSLXm1762lxMXXjoxsPqsA==}
+    peerDependencies:
+      zustand: ^5.0.1
 
   '@metamask/eth-json-rpc-provider@1.0.1':
     resolution: {integrity: sha512-whiUMPlAOrVGmX8aKYVPvlKyG4CpQXiNNyt74vE1xb5sPvmx5oA7B/kOi/JdBvhGQq97U1/AVdXEdk2zkP8qyA==}
@@ -1801,6 +1841,9 @@ packages:
 
   '@solana/web3.js@1.98.4':
     resolution: {integrity: sha512-vv9lfnvjUsRiq//+j5pBdXig0IQdtzA0BRZ3bXEP4KaIyF1CcaydWqgyzQgfZMNIsWNWmG+AUHwPy4AHOD6gpw==}
+
+  '@stablelib/base64@1.0.1':
+    resolution: {integrity: sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ==}
 
   '@standard-schema/spec@1.0.0':
     resolution: {integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==}
@@ -3102,6 +3145,9 @@ packages:
 
   fast-safe-stringify@2.1.1:
     resolution: {integrity: sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==}
+
+  fast-sha256@1.3.0:
+    resolution: {integrity: sha512-n11RGP/lrWEFI/bWdygLxhI+pVeo1ZYIVwvvPkW7azl/rOy+F3HYRZ2K5zeE9mmkhQppyv9sQFx0JM9UabnpPQ==}
 
   fast-stable-stringify@1.0.0:
     resolution: {integrity: sha512-wpYMUmFu5f00Sm0cj2pfivpmawLZ0NKdviQ4w9zJeR8JVtOpOxHmLaJuj0vxvGqMJQWyP/COUkF75/57OKyRag==}
@@ -5593,6 +5639,45 @@ snapshots:
     dependencies:
       '@lit-labs/ssr-dom-shim': 1.4.0
 
+  '@liveblocks/client@3.4.1(@types/json-schema@7.0.15)':
+    dependencies:
+      '@liveblocks/core': 3.4.1(@types/json-schema@7.0.15)
+    transitivePeerDependencies:
+      - '@types/json-schema'
+
+  '@liveblocks/core@3.4.1(@types/json-schema@7.0.15)':
+    dependencies:
+      '@types/json-schema': 7.0.15
+
+  '@liveblocks/node@3.4.1(@types/json-schema@7.0.15)':
+    dependencies:
+      '@liveblocks/core': 3.4.1(@types/json-schema@7.0.15)
+      '@stablelib/base64': 1.0.1
+      fast-sha256: 1.3.0
+      node-fetch: 2.7.0
+    transitivePeerDependencies:
+      - '@types/json-schema'
+      - encoding
+
+  '@liveblocks/react@3.4.1(@types/json-schema@7.0.15)(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react@18.3.1)':
+    dependencies:
+      '@liveblocks/client': 3.4.1(@types/json-schema@7.0.15)
+      '@liveblocks/core': 3.4.1(@types/json-schema@7.0.15)
+      react: 18.3.1
+    optionalDependencies:
+      '@types/react': 18.3.23
+      '@types/react-dom': 18.3.7(@types/react@18.3.23)
+    transitivePeerDependencies:
+      - '@types/json-schema'
+
+  '@liveblocks/zustand@3.4.1(@types/json-schema@7.0.15)(zustand@5.0.3(@types/react@18.3.23)(react@18.3.1)(use-sync-external-store@1.4.0(react@18.3.1)))':
+    dependencies:
+      '@liveblocks/client': 3.4.1(@types/json-schema@7.0.15)
+      '@liveblocks/core': 3.4.1(@types/json-schema@7.0.15)
+      zustand: 5.0.3(@types/react@18.3.23)(react@18.3.1)(use-sync-external-store@1.4.0(react@18.3.1))
+    transitivePeerDependencies:
+      - '@types/json-schema'
+
   '@metamask/eth-json-rpc-provider@1.0.1':
     dependencies:
       '@metamask/json-rpc-engine': 7.3.3
@@ -7004,6 +7089,8 @@ snapshots:
       - encoding
       - typescript
       - utf-8-validate
+
+  '@stablelib/base64@1.0.1': {}
 
   '@standard-schema/spec@1.0.0': {}
 
@@ -8971,6 +9058,8 @@ snapshots:
   fast-redact@3.5.0: {}
 
   fast-safe-stringify@2.1.1: {}
+
+  fast-sha256@1.3.0: {}
 
   fast-stable-stringify@1.0.0: {}
 

@@ -4,9 +4,11 @@ import { WalletProvider } from '@/components/providers/wallet-provider'
 import { AuthProvider } from '@/contexts/auth-context'
 import { WalletSync } from '@/components/providers/wallet-sync'
 import { MiniKitContextProvider } from '@/components/providers/MiniKitProvider'
+import LBProvider from '@/components/providers/liveblocks-provider'
 import { HydrationProvider } from '@/components/providers/hydration-provider'
 import { ErrorBoundary } from '@/components/providers/error-boundary'
 import { ChunkErrorHandler } from '@/components/providers/chunk-error-handler'
+import NotificationSocket from '@/components/providers/notification-socket'
 
 export async function generateMetadata(): Promise<Metadata> {
   const URL = process.env.NEXT_PUBLIC_URL || 'https://your-domain.com';
@@ -55,12 +57,15 @@ export default function RootLayout({
           <ErrorBoundary>
             <HydrationProvider>
               <MiniKitContextProvider>
-                <WalletProvider>
-                  <AuthProvider>
-                    <WalletSync />
-                    {children}
-                  </AuthProvider>
-                </WalletProvider>
+                <LBProvider>
+                  <WalletProvider>
+                    <AuthProvider>
+                      <WalletSync />
+                      <NotificationSocket />
+                      {children}
+                    </AuthProvider>
+                  </WalletProvider>
+                </LBProvider>
               </MiniKitContextProvider>
             </HydrationProvider>
           </ErrorBoundary>

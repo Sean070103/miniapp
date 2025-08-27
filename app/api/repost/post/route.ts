@@ -67,40 +67,52 @@ export async function POST(req: Request) {
           // Get the user who reposted
           const reposter = await prisma.baseUser.findUnique({
             where: { walletAddress: baseUserId },
-            select: { username: true, walletAddress: true }
+            select: { id: true, username: true, walletAddress: true }
           });
 
-          const notification = await prisma.notification.create({
-            data: {
-              senderId: baseUserId,
-              receiverId: journal.baseUserId,
-              type: 'repost',
-              postId: journalId,
-              title: 'New Repost',
-              message: `${reposter?.username || `User_${baseUserId.slice(0, 6)}`} reposted your post`,
-              data: JSON.stringify({ 
-                actorId: baseUserId, 
-                journalId, 
-                action: 'repost',
-                actorUsername: reposter?.username
-              })
-            } as any
+          // Get the post author
+          const postAuthor = await prisma.baseUser.findUnique({
+            where: { walletAddress: journal.baseUserId },
+            select: { id: true, username: true, walletAddress: true }
           });
+
+          if (reposter && postAuthor) {
+            const notification = await prisma.notification.create({
+              data: {
+                senderId: reposter.id,
+                receiverId: postAuthor.id,
+                type: 'repost',
+                postId: journalId,
+                title: 'New Repost',
+                message: `${reposter.username || `User_${baseUserId.slice(0, 6)}`} reposted your post`,
+                data: JSON.stringify({ 
+                  actorId: reposter.id, 
+                  journalId, 
+                  action: 'repost',
+                  actorUsername: reposter.username
+                })
+              } as any
+            });
 
           // Trigger Pusher event on the "notifications" channel
           const pusher = getPusher();
           if (pusher) {
             try {
-              await pusher.trigger('notifications', 'repost', {
-                recipientId: journal.baseUserId,
-                senderId: baseUserId,
-                postId: journalId
+              await pusher.trigger(`user-${postAuthor.id}`, 'notification', {
+                id: notification.id,
+                type: 'repost',
+                title: notification.title,
+                message: notification.message,
+                data: notification.data,
+                isRead: notification.isRead,
+                dateCreated: notification.dateCreated
               });
               console.log('Pusher event triggered for repost notification');
             } catch (pusherError) {
               console.error('Error triggering Pusher event:', pusherError);
             }
           }
+        }
 
         } catch (notificationError) {
           console.error('Error creating repost notification:', notificationError);

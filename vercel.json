@@ -6,5 +6,13 @@
     "app/api/**/*.ts": {
       "maxDuration": 30
     }
+  },
+  "env": {
+    "PUSHER_APP_ID": "2042361",
+    "PUSHER_KEY": "8676774bd4a6cbf36ea1",
+    "PUSHER_SECRET": "61b1b054666573688710",
+    "PUSHER_CLUSTER": "ap1",
+    "NEXT_PUBLIC_PUSHER_KEY": "8676774bd4a6cbf36ea1",
+    "NEXT_PUBLIC_PUSHER_CLUSTER": "ap1"
   }
 }

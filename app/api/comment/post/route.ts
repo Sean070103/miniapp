@@ -44,49 +44,51 @@ export async function POST(req: Request) {
         // Get the user who commented
         const commenter = await prisma.baseUser.findUnique({
           where: { walletAddress: baseUserId },
-          select: { username: true, walletAddress: true }
+          select: { id: true, username: true, walletAddress: true }
         });
 
-        const notification = await prisma.notification.create({
-          data: {
-            senderId: baseUserId,
-            receiverId: journal.baseUserId,
-            type: 'comment',
-            postId: journalId,
-            title: 'New Comment',
-            message: `${commenter?.username || `User_${baseUserId.slice(0, 6)}`} commented on your post`,
-            data: JSON.stringify({ 
-              actorId: baseUserId, 
-              journalId, 
-              action: 'comment',
-              actorUsername: commenter?.username,
-              commentText: comment.substring(0, 50) + (comment.length > 50 ? '...' : '')
-            })
-          },
-          include: {
-            sender: {
-              select: {
-                id: true,
-                username: true,
-                walletAddress: true,
-                profilePicture: true
-              }
+        // Get the post author
+        const postAuthor = await prisma.baseUser.findUnique({
+          where: { walletAddress: journal.baseUserId },
+          select: { id: true, username: true, walletAddress: true }
+        });
+
+        if (commenter && postAuthor) {
+          const notification = await prisma.notification.create({
+            data: {
+              senderId: commenter.id,
+              receiverId: postAuthor.id,
+              type: 'comment',
+              postId: journalId,
+              title: 'New Comment',
+              message: `${commenter.username || `User_${baseUserId.slice(0, 6)}`} commented on your post`,
+              data: JSON.stringify({ 
+                actorId: commenter.id, 
+                journalId, 
+                action: 'comment',
+                actorUsername: commenter.username,
+                commentText: comment.substring(0, 50) + (comment.length > 50 ? '...' : '')
+              })
+            } as any
+          });
+
+          // Trigger Pusher event on the "notifications" channel
+          const pusher = getPusher();
+          if (pusher) {
+            try {
+              await pusher.trigger(`user-${postAuthor.id}`, 'notification', {
+                id: notification.id,
+                type: 'comment',
+                title: notification.title,
+                message: notification.message,
+                data: notification.data,
+                isRead: notification.isRead,
+                dateCreated: notification.dateCreated
+              });
+              console.log('Pusher event triggered for comment notification');
+            } catch (pusherError) {
+              console.error('Error triggering Pusher event:', pusherError);
             }
-          }
-        });
-
-        // Trigger Pusher event on the "notifications" channel
-        const pusher = getPusher();
-        if (pusher) {
-          try {
-            await pusher.trigger('notifications', 'comment', {
-              recipientId: journal.baseUserId,
-              senderId: baseUserId,
-              postId: journalId
-            });
-            console.log('Pusher event triggered for comment notification');
-          } catch (pusherError) {
-            console.error('Error triggering Pusher event:', pusherError);
           }
         }
 

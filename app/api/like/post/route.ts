@@ -61,49 +61,52 @@ export async function POST(request: NextRequest) {
           // Get the user who liked the post
           const liker = await prisma.baseUser.findUnique({
             where: { walletAddress: userId },
-            select: { username: true, walletAddress: true }
+            select: { id: true, username: true, walletAddress: true }
           });
 
-          const notification = await prisma.notification.create({
-            data: {
-              senderId: userId,
-              receiverId: journal.baseUserId,
-              type: 'like',
-              postId: journalId,
-              title: 'New Like',
-              message: `${liker?.username || `User_${userId.slice(0, 6)}`} liked your post`,
-              data: JSON.stringify({ 
-                actorId: userId, 
-                journalId, 
-                action: 'like',
-                actorUsername: liker?.username
-              })
-            },
-            include: {
-              sender: {
-                select: {
-                  id: true,
-                  username: true,
-                  walletAddress: true,
-                  profilePicture: true
-                }
-              }
-            }
+          // Get the post author
+          const postAuthor = await prisma.baseUser.findUnique({
+            where: { walletAddress: journal.baseUserId },
+            select: { id: true, username: true, walletAddress: true }
           });
+
+          if (liker && postAuthor) {
+            const notification = await prisma.notification.create({
+              data: {
+                senderId: liker.id,
+                receiverId: postAuthor.id,
+                type: 'like',
+                postId: journalId,
+                title: 'New Like',
+                message: `${liker.username || `User_${userId.slice(0, 6)}`} liked your post`,
+                data: JSON.stringify({ 
+                  actorId: liker.id, 
+                  journalId, 
+                  action: 'like',
+                  actorUsername: liker.username
+                })
+              }
+            });
 
           // Trigger Pusher event on the "notifications" channel
           const pusher = getPusher();
           if (pusher) {
             try {
-              await pusher.trigger('notifications', 'like', {
-                recipientId: journal.baseUserId,
-                senderId: userId,
-                postId: journalId
+              await pusher.trigger(`user-${postAuthor.id}`, 'notification', {
+                id: notification.id,
+                type: 'like',
+                title: notification.title,
+                message: notification.message,
+                data: notification.data,
+                isRead: notification.isRead,
+                dateCreated: notification.dateCreated
               });
               console.log('Pusher event triggered for like notification');
             } catch (pusherError) {
               console.error('Error triggering Pusher event:', pusherError);
             }
+          }
+
           }
 
         } catch (notificationError) {

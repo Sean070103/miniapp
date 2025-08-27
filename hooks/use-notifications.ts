@@ -35,7 +35,8 @@ export function useNotifications(): UseNotificationsReturn {
   const [error, setError] = useState<string | null>(null)
   const { user } = useAuth()
   
-  const baseUserId = user?.account?.id
+  // Prefer wallet address; fall back to internal id
+  const baseUserId = (user as any)?.account?.walletAddress || (user as any)?.account?.id
 
   // Socket connection for real-time notifications
   const { isConnected: isSocketConnected } = useSocket({
