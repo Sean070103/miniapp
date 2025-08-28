@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { NotificationService } from '@/lib/notification-service'
 
 // GET /api/follow - Get follow relationships
 export async function GET(request: NextRequest) {
@@ -126,26 +127,11 @@ export async function POST(request: NextRequest) {
     })
 
     // Create notification
-    await prisma.notification.create({
-      data: {
-        senderId: followerId,
-        receiverId: followingId,
-        type: 'follow',
-        title: 'New Follower',
-        message: `${follow.follower.username || 'Someone'} started following you`,
-        data: JSON.stringify({ followerId, followerUsername: follow.follower.username })
-      },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            username: true,
-            walletAddress: true,
-            profilePicture: true
-          }
-        }
-      }
-    })
+    await NotificationService.createFollowNotification(
+      followerId,
+      followingId,
+      follow.follower.username || 'Someone'
+    )
 
     // Update analytics
     await updateFollowAnalytics(followerId, followingId, 1)

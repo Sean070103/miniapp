@@ -1,7 +1,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { NextResponse, NextRequest } from 'next/server'
-import { pusherServer } from '@/lib/pusher'
+import { NotificationService } from '@/lib/notification-service'
 
 //POST comment
 export async function POST(req: Request) {
@@ -68,43 +68,13 @@ export async function POST(req: Request) {
         }
 
         if (commenter && postAuthor) {
-          const notification = await prisma.notification.create({
-            data: {
-              senderId: commenter.id,
-              receiverId: postAuthor.id,
-              type: 'comment',
-              postId: journalId,
-              title: 'New Comment',
-              message: `${commenter.username || `User_${baseUserId.slice(0, 6)}`} commented on your post`,
-              data: JSON.stringify({ 
-                actorId: commenter.id, 
-                journalId, 
-                action: 'comment',
-                actorUsername: commenter.username,
-                commentText: comment.substring(0, 50) + (comment.length > 50 ? '...' : '')
-              })
-            } as any
-          });
-
-          // Trigger Pusher event for real-time notification
-          try {
-            await pusherServer.trigger(
-              `user-${postAuthor.walletAddress.toLowerCase()}`,
-              'notification',
-              {
-                id: notification.id,
-                type: 'comment',
-                title: notification.title,
-                message: notification.message,
-                data: notification.data,
-                isRead: notification.isRead,
-                dateCreated: notification.dateCreated
-              }
-            );
-            console.log('Pusher event triggered for comment notification');
-          } catch (error) {
-            console.error('Failed to trigger Pusher event for comment notification', error);
-          }
+          await NotificationService.createCommentNotification(
+            commenter.id,
+            postAuthor.id,
+            journalId,
+            commenter.username || `User_${baseUserId.slice(0, 6)}`
+          );
+          console.log('Simple notification created for comment');
         }
 
       } catch (notificationError) {

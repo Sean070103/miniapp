@@ -1,7 +1,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from "next/server";
-import { pusherServer } from '@/lib/pusher';
+import { NotificationService } from '@/lib/notification-service';
 
 //POST JOURNAL
 export async function POST(req: Request) {
@@ -58,42 +58,18 @@ export async function POST(req: Request) {
           // Create notifications for each follower
           const notifications = await Promise.all(
             followers.map(async (follow) => {
-              const notification = await prisma.notification.create({
-                data: {
-                  senderId: poster.id,
-                  receiverId: follow.follower.id,
-                  type: 'post',
-                  postId: newJournal.id,
-                  title: 'New Post',
-                  message: `${poster.username || `User_${baseUserId.slice(0, 6)}`} posted something new`,
-                  data: JSON.stringify({ 
-                    actorId: poster.id, 
-                    journalId: newJournal.id, 
-                    action: 'post',
-                    actorUsername: poster.username,
-                    postPreview: journal.substring(0, 100) + (journal.length > 100 ? '...' : '')
-                  })
-                } as any
-              });
-
-              // Trigger Pusher event for real-time notification
-              try {
-                await pusherServer.trigger(
-                  `user-${follow.follower.walletAddress.toLowerCase()}`,
-                  'notification',
-                  {
-                    id: notification.id,
-                    type: 'post',
-                    title: notification.title,
-                    message: notification.message,
-                    data: notification.data,
-                    isRead: notification.isRead,
-                    dateCreated: notification.dateCreated
-                  }
-                );
-              } catch (error) {
-                console.error('Failed to trigger Pusher event for post notification', error);
-              }
+              const notification = await NotificationService.createSystemNotification(
+                follow.follower.id,
+                'New Post',
+                `${poster.username || `User_${baseUserId.slice(0, 6)}`} posted something new`,
+                { 
+                  actorId: poster.id, 
+                  journalId: newJournal.id, 
+                  action: 'post',
+                  actorUsername: poster.username,
+                  postPreview: journal.substring(0, 100) + (journal.length > 100 ? '...' : '')
+                }
+              );
 
               return notification;
             })

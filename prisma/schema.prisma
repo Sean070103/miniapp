@@ -26,10 +26,10 @@ model BaseUser {
  following      Follow[] @relation("UserFollowing")
  followers      Follow[] @relation("UserFollowers")
  
- // Notifications
- sentNotifications     Notification[] @relation("NotificationSender")
- receivedNotifications Notification[] @relation("NotificationReceiver")
- notificationPreferences NotificationPreferences?
+ // Simple Notifications
+ sentNotifications     SimpleNotification[] @relation("SimpleNotificationSender")
+ receivedNotifications SimpleNotification[] @relation("SimpleNotificationReceiver")
+ notificationPreferences SimpleNotificationPreferences?
  
  // Analytics
  userAnalytics  UserAnalytics?
@@ -110,21 +110,22 @@ model Follow {
  @@unique([followerId, followingId])
 }
 
-// Notifications system
-model Notification {
+// Simple Notifications system
+model SimpleNotification {
  id          String   @id @default(auto()) @map("_id") @db.ObjectId
- senderId    String   // ID of the user who triggered the notification
- receiverId  String   // ID of the user who receives the notification
- type        String   // 'like', 'repost', 'comment', 'follow'
- postId      String?  // ID of the post being liked/reposted
+ type        String   // 'like', 'comment', 'repost', 'follow', 'mention', 'system'
  title       String
  message     String
+ senderId    String?  // ID of the user who triggered the notification
+ receiverId  String   // ID of the user who receives the notification
+ postId      String?  // ID of the post being referenced
  data        String?  // JSON string for additional data
  isRead      Boolean  @default(false)
  dateCreated DateTime @default(now())
  
- sender      BaseUser @relation("NotificationSender", fields: [senderId], references: [id])
- receiver    BaseUser @relation("NotificationReceiver", fields: [receiverId], references: [id])
+ // Relations
+ sender      BaseUser? @relation("SimpleNotificationSender", fields: [senderId], references: [id])
+ receiver    BaseUser  @relation("SimpleNotificationReceiver", fields: [receiverId], references: [id])
  
  // Indexes for better performance
  @@index([receiverId, isRead])
@@ -132,8 +133,8 @@ model Notification {
  @@index([senderId, dateCreated])
 }
 
-// Notification preferences
-model NotificationPreferences {
+// Simple Notification preferences
+model SimpleNotificationPreferences {
  id                String   @id @default(auto()) @map("_id") @db.ObjectId
  userId            String   @unique
  likes             Boolean  @default(true)
@@ -141,14 +142,11 @@ model NotificationPreferences {
  reposts           Boolean  @default(true)
  follows           Boolean  @default(true)
  mentions          Boolean  @default(true)
- emailDigest       Boolean  @default(false)
- pushNotifications Boolean  @default(true)
- quietHours        Boolean  @default(false)
- quietHoursStart   String   @default("22:00")
- quietHoursEnd     String   @default("08:00")
+ system            Boolean  @default(true)
  dateCreated       DateTime @default(now())
  dateUpdated       DateTime @updatedAt
  
+ // Relations
  user              BaseUser @relation(fields: [userId], references: [id])
 }
 

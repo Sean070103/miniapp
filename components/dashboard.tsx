@@ -26,14 +26,10 @@ import { UserSearch } from "@/components/ui/user-search"
 import { TVContainer, TVImage, TVImageGrid } from "@/components/ui/tv-container"
 import { TVPostContainer, PostHeader, PostContent, PostTags, PostActions } from "@/components/ui/tv-post-container"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { RichNotificationCard } from "@/components/ui/rich-notification-card"
-import { NotificationPreferences } from "@/components/ui/notification-preferences"
-import { useSocket } from "@/hooks/use-socket"
-import { useNotifications } from "@/hooks/use-notifications"
-import { NotificationsDropdown } from "@/components/ui/notifications-dropdown"
-import { RetroNotificationToast } from "@/components/ui/retro-notification-toast"
-import { FeedNotifications } from "@/components/ui/feed-notifications"
-import { RealTimeToast } from "@/components/ui/real-time-toast"
+import { SimpleNotificationDropdown } from "@/components/ui/simple-notification-dropdown"
+import { useSimpleNotifications } from "@/hooks/use-simple-notifications"
+import { getNotificationColor, getNotificationIcon, formatTimeAgo } from "@/lib/simple-notifications"
+
 
 interface DailyEntry {
   id: string
@@ -228,28 +224,17 @@ export default function Dashboard({ address }: DashboardProps) {
   // Get baseuser ID from user account
   const baseUserId = user?.account?.id;
 
-  // Notification system
+  // Simple notification system
   const {
     notifications,
     unreadCount,
     isLoading: notificationsLoading,
-    error: notificationsError,
     markAsRead,
-    fetchNotifications,
+    markAllAsRead,
     addNotification
-  } = useNotifications()
+  } = useSimpleNotifications(baseUserId || address);
 
-  // Show retro toast for new notifications
-  const [toastNotifications, setToastNotifications] = useState<any[]>([])
 
-  const showNotificationToast = useCallback((notification: any) => {
-    const toastId = `toast-${notification.id}-${Date.now()}`
-    setToastNotifications(prev => [...prev, { ...notification, toastId }])
-  }, [])
-
-  const dismissToast = useCallback((toastId: string) => {
-    setToastNotifications(prev => prev.filter(t => t.toastId !== toastId))
-  }, [])
 
   const openPostModal = async (journalId: string) => {
     let post = allPosts.find(p => p.id === journalId) || dbEntries.find(p => p.id === journalId) || null;
@@ -1385,16 +1370,7 @@ export default function Dashboard({ address }: DashboardProps) {
     currencySwap.toCurrency
   );
 
-  // Legacy notification states (for backward compatibility)
-  const [legacyNotifications, setLegacyNotifications] = useState<{
-    id: string;
-    type: 'like' | 'comment' | 'repost';
-    userId: string;
-    content: string;
-    timestamp: Date;
-    read: boolean;
-    data?: any;
-  }[]>([]);
+
 
   // Sidebar items configuration
   const sidebarItems = [
@@ -1407,32 +1383,13 @@ export default function Dashboard({ address }: DashboardProps) {
       id: 'notifications' as SidebarItem, 
       label: 'Notifications', 
       icon: Bell,
-              badge: notifications.filter(n => !n.isRead).length > 0 ? notifications.filter(n => !n.isRead).length : undefined
+      badge: unreadCount > 0 ? unreadCount : undefined
     },
     { id: 'profile' as SidebarItem, label: 'Profile', icon: User },
     { id: 'settings' as SidebarItem, label: 'Settings', icon: Settings },
   ];
 
-  // Notification functions - all notifications now created server-side
 
-  const markNotificationAsRead = async (notificationId: string) => {
-    try {
-      await markAsRead([notificationId]);
-    } catch (error) {
-      console.error('Error marking notification read:', error);
-    }
-  };
-
-  const clearAllNotifications = async () => {
-    try {
-      await markAsRead(); // Mark all as read
-      localStorage.removeItem('dailybase-notifications');
-    } catch (error) {
-      console.error('Error clearing notifications:', error);
-    }
-  };
-
-  // Legacy notification loading is now handled by useNotifications hook
 
   const renderContent = () => {
     switch (activeSidebarItem) {
@@ -1460,10 +1417,7 @@ export default function Dashboard({ address }: DashboardProps) {
               </div>
             </div>
 
-            {/* Real-Time Notifications Feed */}
-            <div className="mb-6">
-              <FeedNotifications maxNotifications={3} />
-            </div>
+
 
             {/* Gaming-style Create Post */}
             <div className="pixel-card rounded-xl p-3 sm:p-4 mb-6 scanlines">
@@ -3098,6 +3052,116 @@ export default function Dashboard({ address }: DashboardProps) {
          </div>
        );
 
+     case "notifications":
+       return (
+         <div className="space-y-6">
+           {/* Notifications Header */}
+           <div className="text-center mb-6">
+             <h1 className="text-3xl font-bold text-green-100 pixelated-text mb-2">
+               Notifications
+             </h1>
+             <p className="text-green-300/80 pixelated-text">
+               Stay updated with your crypto activities
+             </p>
+           </div>
+
+           {/* Notifications List */}
+           <div className="space-y-4">
+             {notificationsLoading ? (
+               <div className="text-center py-16">
+                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto mb-3"></div>
+                 <p className="font-mono text-sm text-green-300 pixelated-text">
+                   Loading notifications...
+                 </p>
+               </div>
+             ) : notifications.length === 0 ? (
+               <Card className="bg-gradient-to-br from-gray-800/90 via-gray-700/80 to-gray-800/90 border-2 border-green-500/50 text-white backdrop-blur-xl shadow-lg gaming-glow">
+                 <CardContent className="flex flex-col items-center justify-center py-16">
+                   <div className="w-24 h-24 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mb-6 gaming-glow">
+                     <Bell className="w-12 h-12 text-white" />
+                   </div>
+                   <h3 className="text-2xl font-bold text-green-100 pixelated-text mb-3">
+                     No notifications yet
+                   </h3>
+                   <p className="text-green-300/80 text-center mb-8 max-w-md leading-relaxed pixelated-text">
+                     When you get likes, comments, reposts, or other interactions, they'll appear here.
+                   </p>
+                   <Button 
+                     onClick={() => setActiveSidebarItem("home")}
+                     className="bg-gradient-to-r from-green-500 to-green-600 text-white pixelated-text px-6 py-3 text-lg hover:shadow-lg hover:shadow-green-500/25 gaming-glow"
+                   >
+                     <Home className="w-5 h-5 mr-2" />
+                     Go to Feed
+                   </Button>
+                 </CardContent>
+               </Card>
+             ) : (
+               <>
+                 <div className="flex justify-between items-center mb-4">
+                   <div className="flex items-center gap-2">
+                     <h2 className="text-xl font-bold text-green-100 pixelated-text">
+                       Recent Activity ({notifications.length})
+                     </h2>
+                     <div className={`w-2 h-2 rounded-full ${notificationsLoading ? 'bg-yellow-400' : 'bg-green-400'} gaming-glow`}></div>
+                     <span className="text-xs text-green-300 pixelated-text">
+                       {notificationsLoading ? 'Loading' : 'Live'}
+                     </span>
+                   </div>
+                   <div className="flex gap-2">
+                     <Button 
+                       onClick={markAllAsRead}
+                       variant="outline"
+                       size="sm"
+                       className="text-green-400 hover:text-green-300 hover:bg-green-900/30 border-green-500/50 pixelated-text"
+                     >
+                       Mark All Read
+                     </Button>
+                   </div>
+                 </div>
+
+                 <div className="space-y-3">
+                   {notifications.map((notification) => (
+                     <Card key={notification.id} className="bg-gradient-to-br from-gray-800/50 to-gray-700/50 border border-gray-600/30 hover:border-green-500/50 transition-all duration-300">
+                       <CardContent className="p-4">
+                         <div className="flex items-start space-x-3">
+                           <div className={`text-2xl ${getNotificationColor(notification.type)}`}>
+                             {getNotificationIcon(notification.type)}
+                           </div>
+                           <div className="flex-1 min-w-0">
+                             <div className="flex items-center space-x-2 mb-1">
+                               <h4 className="font-mono font-bold text-sm text-green-100 pixelated-text truncate">
+                                 {notification.title}
+                               </h4>
+                               {!notification.isRead && (
+                                 <div className="w-2 h-2 bg-green-400 rounded-full" />
+                               )}
+                             </div>
+                             <div className="font-mono text-sm text-green-300 leading-relaxed mb-2">
+                               {notification.message}
+                             </div>
+                             <div className="flex items-center justify-between">
+                               <span className="font-mono text-xs text-green-400">
+                                 {notification.senderId ? 
+                                   `${notification.senderId.slice(0, 6)}...` : 
+                                   'System'
+                                 }
+                               </span>
+                               <span className="font-mono text-xs text-green-400/70">
+                                 {formatTimeAgo(notification.dateCreated)}
+                               </span>
+                             </div>
+                           </div>
+                         </div>
+                       </CardContent>
+                     </Card>
+                   ))}
+                 </div>
+               </>
+             )}
+           </div>
+         </div>
+       );
+
      case "profile":
        return (
          <div className="space-y-6">
@@ -3143,174 +3207,7 @@ export default function Dashboard({ address }: DashboardProps) {
          </div>
        );
 
-     case "notifications":
-       return (
-         <div className="space-y-6">
-           {/* Notifications Header */}
-           <div className="text-center mb-6">
-             <h1 className="text-3xl font-bold text-green-100 pixelated-text mb-2">
-               Notifications
-             </h1>
-             <p className="text-green-300/80 pixelated-text">
-               Stay updated with your crypto activities
-             </p>
-           </div>
 
-           {/* Post Modal */}
-           <Dialog open={isPostModalOpen} onOpenChange={setIsPostModalOpen}>
-             <DialogContent className="max-w-3xl bg-gradient-to-br from-gray-900/95 via-gray-800/90 to-gray-900/95 border border-purple-500/30 text-green-100">
-               <DialogHeader>
-                 <DialogTitle className="pixelated-text text-green-100">Post Preview</DialogTitle>
-               </DialogHeader>
-               {selectedPost ? (
-                 <div className="mt-2">
-                   <TVPostContainer>
-                     <PostHeader
-                       user={{
-                         address: selectedPost.baseUserId,
-                         name: `User_${selectedPost.baseUserId.slice(0,6)}`
-                       }}
-                       date={new Date(selectedPost.dateCreated)}
-                       privacy={selectedPost.privacy}
-                     />
-                     <PostContent
-                       content={selectedPost.journal}
-                       photos={selectedPost.photos}
-                     />
-                     <PostTags tags={selectedPost.tags || []} />
-                     <PostActions
-                       likes={likeCounts[selectedPost.id] || selectedPost.likes || 0}
-                       comments={commentCounts[selectedPost.id] || 0}
-                       reposts={repostCounts[selectedPost.id] || 0}
-                       isLiked={!!userLikes[selectedPost.id]}
-                       loadingLikes={!!loadingLikes[selectedPost.id]}
-                       isOwner={selectedPost.baseUserId === address}
-                       onLike={() => handleLike(selectedPost.id)}
-                       onComment={() => {}}
-                       onRepost={() => {}}
-                     />
-                   </TVPostContainer>
-                 </div>
-               ) : (
-                 <div className="text-green-200">Post not found.</div>
-               )}
-             </DialogContent>
-           </Dialog>
-
-           {/* Notifications List */}
-           <div className="space-y-4">
-             {notifications.length === 0 ? (
-               /* Empty State */
-               <Card className="bg-gradient-to-br from-gray-800/90 via-gray-700/80 to-gray-800/90 border-2 border-green-500/50 text-white backdrop-blur-xl shadow-lg gaming-glow">
-               <CardContent className="flex flex-col items-center justify-center py-16">
-                   <div className="w-24 h-24 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mb-6 gaming-glow">
-                   <Bell className="w-12 h-12 text-white" />
-                 </div>
-                   <h3 className="text-2xl font-bold text-green-100 pixelated-text mb-3">
-                   No notifications yet
-                 </h3>
-                   <p className="text-green-300/80 text-center mb-8 max-w-md leading-relaxed pixelated-text">
-                   When you get likes, comments, reposts, or other interactions, they'll appear here.
-                 </p>
-                 <div className="flex gap-3">
-                   <Button 
-                     onClick={() => setActiveSidebarItem("home")}
-                     className="bg-gradient-to-r from-green-500 to-green-600 text-white pixelated-text px-6 py-3 text-lg hover:shadow-lg hover:shadow-green-500/25 gaming-glow"
-                   >
-                     <Home className="w-5 h-5 mr-2" />
-                     Go to Feed
-                   </Button>
-                   <Button 
-                     onClick={() => window.location.href = '/notifications'}
-                     variant="outline"
-                     className="border-green-500/50 text-green-300 hover:bg-green-900/30 pixelated-text px-6 py-3 text-lg"
-                   >
-                     <Bell className="w-5 h-5 mr-2" />
-                     View All
-                   </Button>
-                 </div>
-               </CardContent>
-             </Card>
-             ) : (
-               /* Notifications List */
-               <>
-                 <div className="flex justify-between items-center mb-4">
-                   <div className="flex items-center gap-2">
-                     <h2 className="text-xl font-bold text-green-100 pixelated-text">
-                       Recent Activity ({notifications.length})
-                     </h2>
-                     <div className={`w-2 h-2 rounded-full ${notificationsLoading ? 'bg-yellow-400' : 'bg-green-400'} gaming-glow`}></div>
-                     <span className="text-xs text-green-300 pixelated-text">
-                       {notificationsLoading ? 'Loading' : 'Live'}
-                     </span>
-                   </div>
-                   <div className="flex gap-2">
-                     <Button 
-                       onClick={() => window.location.href = '/notifications'}
-                       size="sm"
-                       className="bg-green-600 hover:bg-green-700 text-white pixelated-text"
-                     >
-                       View All
-                     </Button>
-                     <Button 
-                       onClick={clearAllNotifications}
-                       variant="outline"
-                       size="sm"
-                       className="text-green-400 hover:text-green-300 hover:bg-green-900/30 border-green-500/50 pixelated-text"
-                     >
-                       Clear All
-                     </Button>
-
-                   </div>
-           </div>
-
-                 {notifications.map((notification) => (
-                   <RichNotificationCard
-                     key={notification.id}
-                     notification={{
-                       id: notification.id,
-                       type: notification.type as 'like' | 'comment' | 'repost' | 'follow' | 'mention',
-                       title: notification.title,
-                       message: notification.message,
-                       isRead: notification.isRead,
-                       dateCreated: notification.dateCreated.toISOString()
-                     }}
-                     onMarkRead={markNotificationAsRead}
-                     onAction={(action, data) => {
-                       switch (action) {
-                         case 'view_post':
-                           if (data?.journalId) {
-                             openPostModal(data.journalId)
-                           }
-                           break
-                         case 'reply':
-                           // Enhanced reply functionality - open reply modal with comment data
-                           if (data?.journalId) {
-                             const commentData = {
-                               journalId: data.journalId,
-                               baseUserId: data.actorId || data.userId,
-                               commentText: data.commentText || ''
-                             };
-                             openReplyModal(commentData);
-                           }
-                           break
-                         case 'view_profile':
-                           // Navigate to profile
-                           console.log('View profile:', data.userId)
-                           break
-                         case 'follow_back':
-                           // Follow user back
-                           console.log('Follow back:', data.userId)
-                           break
-                       }
-                     }}
-                   />
-                 ))}
-               </>
-             )}
-           </div>
-         </div>
-       );
 
      case "settings":
        return (
@@ -3373,18 +3270,9 @@ export default function Dashboard({ address }: DashboardProps) {
                </CardTitle>
              </CardHeader>
              <CardContent>
-               {baseUserId ? (
-                 <NotificationPreferences 
-                   userId={baseUserId}
-                   onSave={(preferences) => {
-                     console.log('Notification preferences saved:', preferences)
-                   }}
-                 />
-               ) : (
-                 <p className="text-blue-300 pixelated-text">
-                   Please connect your wallet to manage notification preferences.
-                 </p>
-               )}
+               <p className="text-blue-300 pixelated-text">
+                 Notification preferences will be available soon.
+               </p>
              </CardContent>
            </Card>
 
@@ -3609,15 +3497,7 @@ export default function Dashboard({ address }: DashboardProps) {
        </div>
      ))}
 
-     {/* Retro Notification Toasts */}
-     {toastNotifications.map((toast) => (
-       <RetroNotificationToast
-         key={toast.toastId}
-         notification={toast}
-         onDismiss={() => dismissToast(toast.toastId)}
-         duration={4000}
-       />
-     ))}
+
 
      {/* Enhanced Responsive Sidebar with Gaming Theme */}
      <ResponsiveSidebar
@@ -3648,13 +3528,15 @@ export default function Dashboard({ address }: DashboardProps) {
                  </span>
                </div>
                <div className="flex items-center gap-2">
-                 {/* Notifications Dropdown */}
-                 <NotificationsDropdown
+                 <SimpleNotificationDropdown
                    notifications={notifications}
+                   unreadCount={unreadCount}
+                   isLoading={notificationsLoading}
                    onMarkAsRead={markAsRead}
+                   onMarkAllAsRead={markAllAsRead}
                    onNotificationClick={(notification) => {
                      console.log('Notification clicked:', notification);
-                     // You can add navigation logic here
+                     // Handle notification click - could navigate to post, profile, etc.
                    }}
                  />
                  <Button
@@ -3806,8 +3688,6 @@ export default function Dashboard({ address }: DashboardProps) {
        </DialogContent>
      </Dialog>
 
-     {/* Real-Time Toast Notifications */}
-     <RealTimeToast position="top-right" maxToasts={3} autoHideDuration={5000} />
    </div>
  )
 }

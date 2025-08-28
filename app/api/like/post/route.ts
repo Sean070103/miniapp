@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { pusherServer } from '@/lib/pusher';
+import { NotificationService } from '@/lib/notification-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -85,39 +85,13 @@ export async function POST(request: NextRequest) {
           }
 
           if (liker && postAuthor) {
-            const notification = await prisma.notification.create({
-              data: {
-                senderId: liker.id,
-                receiverId: postAuthor.id,
-                type: 'like',
-                postId: journalId,
-                title: 'New Like',
-                message: `${liker.username || `User_${userId.slice(0, 6)}`} liked your post`,
-                data: JSON.stringify({ 
-                  actorId: liker.id, 
-                  journalId, 
-                  action: 'like',
-                  actorUsername: liker.username
-                })
-              }
-            });
-
-          // Trigger Pusher event for real-time notification
-          try {
-            await pusherServer.trigger(`user-${postAuthor.walletAddress.toLowerCase()}`, 'notification', {
-              id: notification.id,
-              type: 'like',
-              title: notification.title,
-              message: notification.message,
-              data: notification.data,
-              isRead: notification.isRead,
-              dateCreated: notification.dateCreated
-            });
-            console.log('Pusher event triggered for like notification');
-          } catch (pusherError) {
-            console.error('Error triggering Pusher event:', pusherError);
-          }
-
+            await NotificationService.createLikeNotification(
+              liker.id,
+              postAuthor.id,
+              journalId,
+              liker.username || `User_${userId.slice(0, 6)}`
+            );
+            console.log('Simple notification created for like');
           }
 
         } catch (notificationError) {

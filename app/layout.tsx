@@ -8,7 +8,6 @@ import LBProvider from '@/components/providers/liveblocks-provider'
 import { HydrationProvider } from '@/components/providers/hydration-provider'
 import { ErrorBoundary } from '@/components/providers/error-boundary'
 import { ChunkErrorHandler } from '@/components/providers/chunk-error-handler'
-import NotificationSocket from '@/components/providers/notification-socket'
 
 export async function generateMetadata(): Promise<Metadata> {
   const URL = process.env.NEXT_PUBLIC_URL || 'https://your-domain.com';
@@ -61,7 +60,6 @@ export default function RootLayout({
                   <WalletProvider>
                     <AuthProvider>
                       <WalletSync />
-                      <NotificationSocket />
                       {children}
                     </AuthProvider>
                   </WalletProvider>

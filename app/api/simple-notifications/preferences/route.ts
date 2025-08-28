@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { DEFAULT_PREFERENCES } from '@/lib/simple-notifications'
 
-// GET /api/notifications/preferences - Get user notification preferences
+// GET /api/simple-notifications/preferences - Get user notification preferences
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -14,26 +15,16 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get user preferences from database
-    let preferences = await prisma.notificationPreferences.findUnique({
+    let preferences = await prisma.simpleNotificationPreferences.findUnique({
       where: { userId }
     })
 
-    // If no preferences exist, create default ones
     if (!preferences) {
-      preferences = await prisma.notificationPreferences.create({
+      // Create default preferences if none exist
+      preferences = await prisma.simpleNotificationPreferences.create({
         data: {
           userId,
-          likes: true,
-          comments: true,
-          reposts: true,
-          follows: true,
-          mentions: true,
-          emailDigest: false,
-          pushNotifications: true,
-          quietHours: false,
-          quietHoursStart: '22:00',
-          quietHoursEnd: '08:00'
+          ...DEFAULT_PREFERENCES
         }
       })
     }
@@ -43,33 +34,33 @@ export async function GET(request: NextRequest) {
       preferences
     })
   } catch (error) {
-    console.error('Error in Notification Preferences GET:', error)
+    console.error('Error fetching notification preferences:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { success: false, error: 'Failed to fetch preferences' },
       { status: 500 }
     )
   }
 }
 
-// POST /api/notifications/preferences - Update user notification preferences
+// POST /api/simple-notifications/preferences - Update user notification preferences
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { userId, preferences } = body
 
-    if (!userId || !preferences) {
+    if (!userId) {
       return NextResponse.json(
-        { success: false, error: 'User ID and preferences are required' },
+        { success: false, error: 'User ID is required' },
         { status: 400 }
       )
     }
 
-    // Upsert preferences (create if doesn't exist, update if it does)
-    const updatedPreferences = await prisma.notificationPreferences.upsert({
+    const updatedPreferences = await prisma.simpleNotificationPreferences.upsert({
       where: { userId },
       update: preferences,
       create: {
         userId,
+        ...DEFAULT_PREFERENCES,
         ...preferences
       }
     })
@@ -79,13 +70,10 @@ export async function POST(request: NextRequest) {
       preferences: updatedPreferences
     })
   } catch (error) {
-    console.error('Error in Notification Preferences POST:', error)
+    console.error('Error updating notification preferences:', error)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { success: false, error: 'Failed to update preferences' },
       { status: 500 }
     )
   }
 }
-
-
-
