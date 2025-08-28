@@ -121,6 +121,13 @@ export default function Dashboard({ address }: DashboardProps) {
     experience: 0
   });
   
+  // Server-provided streak stats
+  const [streakStats, setStreakStats] = useState<{ currentStreak: number; longestStreak: number; totalPosts: number }>({
+    currentStreak: 0,
+    longestStreak: 0,
+    totalPosts: 0
+  });
+  
   // User authentication and profile states
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -401,6 +408,51 @@ export default function Dashboard({ address }: DashboardProps) {
       getUserReposts(baseUserId).then(setUserReposts);
     }
   }, [user?.address, baseUserId]);
+
+  // Hydrate calendar dates and streak from server (works with BaseUser.id or wallet address)
+  useEffect(() => {
+    const uid = baseUserId || address;
+    if (!uid) return;
+
+    // Fetch calendar dates
+    fetch(`/api/calendar/dates?userId=${uid}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.success && Array.isArray(data.dates)) {
+          const hydrated: DailyEntry[] = data.dates.map((d: string): DailyEntry => ({
+            id: `srv-${d}`,
+            date: d,
+            content: 'Posted',
+            tags: [],
+            timestamp: new Date(`${d}T00:00:00.000Z`).getTime(),
+          }));
+          setEntries(prev => {
+            const byDate = new Map<string, DailyEntry>();
+            // keep existing entries content if already present for a date
+            prev.forEach(e => byDate.set(e.date, e));
+            hydrated.forEach(e => {
+              if (!byDate.has(e.date)) byDate.set(e.date, e);
+            });
+            return Array.from(byDate.values()).sort((a: DailyEntry, b: DailyEntry) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          });
+        }
+      })
+      .catch(() => {});
+
+    // Fetch streak stats
+    fetch(`/api/streak?userId=${uid}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.success) {
+          setStreakStats({
+            currentStreak: data.currentStreak || 0,
+            longestStreak: data.longestStreak || 0,
+            totalPosts: data.totalPosts || 0,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [baseUserId, address]);
 
   // Fetch engagement data for all posts
   useEffect(() => {
@@ -1837,7 +1889,7 @@ export default function Dashboard({ address }: DashboardProps) {
                 <div className="flex items-center justify-center mb-1">
                   <Flame className="w-6 h-6 text-green-400 mr-2 pixel-text-glow" />
                   <span className="text-2xl font-bold text-green-100 pixelated-text pixel-text-shadow">
-                    {calculateCurrentStreak()}
+                    {streakStats.currentStreak}
                   </span>
                 </div>
                 <div className="text-sm text-green-300 pixelated-text">Day Streak</div>
