@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Pusher from 'pusher-js';
+import { pusherClient } from '@/lib/pusher';
 
 interface Notification {
   id: string;
@@ -15,44 +15,38 @@ export default function NotificationList() {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Initialize Pusher
-    const key = process.env.NEXT_PUBLIC_PUSHER_KEY;
-    const cluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
-    
-    if (!key || !cluster) {
-      console.error('Pusher environment variables not configured');
-      return;
-    }
+    const channel = pusherClient.subscribe('notifications');
 
-    const pusher = new Pusher(key, {
-      cluster,
-      forceTLS: true
-    });
-
-    // Subscribe to notifications channel
-    const channel = pusher.subscribe('notifications');
-
-    // Listen for new-notification events
-    channel.bind('new-notification', (notification: Notification) => {
+    const handleNewNotification = (notification: Notification) => {
       console.log('New notification received:', notification);
       setNotifications(prev => [notification, ...prev]);
-    });
+    };
 
-    // Handle connection status
-    pusher.connection.bind('connected', () => {
+    const handleConnected = () => {
       console.log('Connected to Pusher');
       setIsConnected(true);
-    });
+    };
 
-    pusher.connection.bind('disconnected', () => {
+    const handleDisconnected = () => {
       console.log('Disconnected from Pusher');
       setIsConnected(false);
-    });
+    };
+
+    channel.bind('new-notification', handleNewNotification);
+    pusherClient.connection.bind('connected', handleConnected);
+    pusherClient.connection.bind('disconnected', handleDisconnected);
+
+    // Set initial connection state
+    if (pusherClient.connection.state === 'connected') {
+      setIsConnected(true);
+    }
 
     // Cleanup on unmount
     return () => {
-      pusher.unsubscribe('notifications');
-      pusher.disconnect();
+      pusherClient.unsubscribe('notifications');
+      pusherClient.connection.unbind('connected', handleConnected);
+      pusherClient.connection.unbind('disconnected', handleDisconnected);
+      channel.unbind('new-notification', handleNewNotification);
     };
   }, []);
 

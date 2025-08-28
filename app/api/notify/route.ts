@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPusher } from '@/lib/pusher';
+import { pusherServer } from '@/lib/pusher';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
@@ -36,29 +36,21 @@ export async function POST(request: NextRequest) {
       createdAt: notification.dateCreated
     };
 
-    // 3. Trigger Pusher event on the "notifications" channel
-    const pusher = getPusher();
-    if (pusher) {
-      try {
-        await pusher.trigger('notifications', 'new-notification', notificationData);
-        
-        console.log('Pusher notification event triggered:', notificationData);
-        
-        return NextResponse.json({ 
-          success: true,
-          message: 'Notification sent successfully',
-          notification: notificationData
-        });
-      } catch (pusherError) {
-        console.error('Error triggering Pusher event:', pusherError);
-        return NextResponse.json(
-          { error: 'Failed to trigger Pusher event' },
-          { status: 500 }
-        );
-      }
-    } else {
+    // 3. Trigger Pusher event
+    try {
+      await pusherServer.trigger('notifications', 'new-notification', notificationData);
+      
+      console.log('Pusher notification event triggered:', notificationData);
+      
+      return NextResponse.json({ 
+        success: true,
+        message: 'Notification sent successfully',
+        notification: notificationData
+      });
+    } catch (pusherError) {
+      console.error('Error triggering Pusher event:', pusherError);
       return NextResponse.json(
-        { error: 'Pusher not configured' },
+        { error: 'Failed to trigger Pusher event' },
         { status: 500 }
       );
     }

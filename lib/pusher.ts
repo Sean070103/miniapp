@@ -1,62 +1,22 @@
-import Pusher from 'pusher'
+import PusherServer from 'pusher';
+import PusherClient from 'pusher-js';
 
-let pusherClient: Pusher | null = null
+// Ensure only one instance of the Pusher server client is created.
+export const pusherServer = new PusherServer({
+  appId: process.env.PUSHER_APP_ID!,
+  key: process.env.NEXT_PUBLIC_PUSHER_KEY!,
+  secret: process.env.PUSHER_SECRET!,
+  cluster: process.env.PUSHER_CLUSTER!,
+  useTLS: true,
+});
 
-export function getPusher(): Pusher | null {
-  if (pusherClient) return pusherClient
-
-  const appId = process.env.PUSHER_APP_ID
-  const key = process.env.PUSHER_KEY
-  const secret = process.env.PUSHER_SECRET
-  const cluster = process.env.PUSHER_CLUSTER
-
-  if (!appId || !key || !secret || !cluster) {
-    console.warn('Pusher configuration missing, returning null')
-    return null
+// Ensure only one instance of the Pusher client is created for the frontend.
+export const pusherClient = new PusherClient(
+  process.env.NEXT_PUBLIC_PUSHER_KEY!,
+  {
+    cluster: process.env.PUSHER_CLUSTER!,
   }
+);
 
-  try {
-    pusherClient = new Pusher({
-      appId,
-      key,
-      secret,
-      cluster,
-      useTLS: true,
-      // Production-ready configuration
-      timeout: 30000, // 30 second timeout
-      // Encryption settings for production
-      encryptionMasterKeyBase64: process.env.PUSHER_ENCRYPTION_MASTER_KEY,
-    })
-
-    console.log('Pusher client initialized successfully for production')
-    return pusherClient
-  } catch (error) {
-    console.error('Error initializing Pusher client:', error)
-    return null
-  }
-}
-
-// Helper function to safely trigger events with error handling
-export async function triggerPusherEvent(
-  channel: string,
-  event: string,
-  data: any,
-  options?: any
-): Promise<boolean> {
-  try {
-    const pusher = getPusher()
-    if (!pusher) {
-      console.error('Pusher client not available')
-      return false
-    }
-
-    await pusher.trigger(channel, event, data, options)
-    console.log(`Pusher event triggered: ${channel}:${event}`)
-    return true
-  } catch (error) {
-    console.error('Error triggering Pusher event:', error)
-    return false
-  }
-}
 
 
