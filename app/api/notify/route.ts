@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPusher } from '@/lib/pusher';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { baseUserId, message } = body;
+    const { baseUserId, message, type = 'general' } = body;
 
     if (!baseUserId || !message) {
       return NextResponse.json(
@@ -13,15 +14,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create notification data
+    // 1. Save notification to DB
+    const notification = await prisma.notification.create({
+      data: {
+        senderId: baseUserId, // Using senderId as userId for simplicity
+        receiverId: baseUserId, // Same user for demo
+        type: type as any,
+        title: 'New Notification',
+        message: message,
+        data: JSON.stringify({ userId: baseUserId, message, type })
+      } as any
+    });
+
+    // 2. Create notification data for Pusher
     const notificationData = {
+      id: notification.id,
       userId: baseUserId,
-      message,
+      type: type,
+      message: message,
       timestamp: new Date().toISOString(),
-      id: Date.now().toString() // Simple ID for demo
+      createdAt: notification.dateCreated
     };
 
-    // Trigger Pusher event on the "notifications" channel
+    // 3. Trigger Pusher event on the "notifications" channel
     const pusher = getPusher();
     if (pusher) {
       try {
@@ -32,7 +47,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ 
           success: true,
           message: 'Notification sent successfully',
-          data: notificationData
+          notification: notificationData
         });
       } catch (pusherError) {
         console.error('Error triggering Pusher event:', pusherError);
