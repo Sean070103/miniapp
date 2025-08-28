@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/auth-context'
 
 interface Notification {
   id: string
-  type: 'like' | 'repost' | 'comment' | 'follow'
+  type: 'like' | 'repost' | 'comment' | 'follow' | 'post'
   title: string
   message: string
   isRead: boolean
@@ -17,6 +17,7 @@ interface Notification {
     walletAddress: string
     profilePicture?: string
   }
+  data?: any
 }
 
 interface UseNotificationsReturn {
@@ -50,7 +51,8 @@ export function useNotifications(): UseNotificationsReturn {
         message: notification.message,
         isRead: false,
         dateCreated: new Date(notification.dateCreated),
-        sender: notification.sender
+        sender: notification.sender,
+        data: notification.data
       })
     },
     onConnect: () => {
@@ -144,44 +146,6 @@ export function useNotifications(): UseNotificationsReturn {
 
     const onFocus = () => fetchNotifications()
     window.addEventListener('focus', onFocus)
-
-    return () => {
-      clearInterval(interval)
-      window.removeEventListener('focus', onFocus)
-    }
-  }, [baseUserId, fetchNotifications, isSocketConnected])
-
-  const unreadCount = notifications.filter(n => !n.isRead).length
-
-  return {
-    notifications,
-    unreadCount,
-    isLoading,
-    error,
-    markAsRead,
-    fetchNotifications,
-    addNotification
-  }
-}
-
-    return () => {
-      clearInterval(interval)
-      window.removeEventListener('focus', onFocus)
-    }
-  }, [baseUserId, fetchNotifications, isSocketConnected])
-
-  const unreadCount = notifications.filter(n => !n.isRead).length
-
-  return {
-    notifications,
-    unreadCount,
-    isLoading,
-    error,
-    markAsRead,
-    fetchNotifications,
-    addNotification
-  }
-}
 
     return () => {
       clearInterval(interval)

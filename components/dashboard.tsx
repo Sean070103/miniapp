@@ -32,6 +32,8 @@ import { useSocket } from "@/hooks/use-socket"
 import { useNotifications } from "@/hooks/use-notifications"
 import { NotificationsDropdown } from "@/components/ui/notifications-dropdown"
 import { RetroNotificationToast } from "@/components/ui/retro-notification-toast"
+import { FeedNotifications } from "@/components/ui/feed-notifications"
+import { RealTimeToast } from "@/components/ui/real-time-toast"
 
 interface DailyEntry {
   id: string
@@ -228,7 +230,7 @@ export default function Dashboard({ address }: DashboardProps) {
 
   // Notification system
   const {
-    notifications: newNotifications,
+    notifications,
     unreadCount,
     isLoading: notificationsLoading,
     error: notificationsError,
@@ -1405,7 +1407,7 @@ export default function Dashboard({ address }: DashboardProps) {
       id: 'notifications' as SidebarItem, 
       label: 'Notifications', 
       icon: Bell,
-      badge: newNotifications.filter(n => !n.isRead).length > 0 ? newNotifications.filter(n => !n.isRead).length : undefined
+              badge: notifications.filter(n => !n.isRead).length > 0 ? notifications.filter(n => !n.isRead).length : undefined
     },
     { id: 'profile' as SidebarItem, label: 'Profile', icon: User },
     { id: 'settings' as SidebarItem, label: 'Settings', icon: Settings },
@@ -1456,6 +1458,11 @@ export default function Dashboard({ address }: DashboardProps) {
                   onFilterChange={setSearchFilter} 
                 />
               </div>
+            </div>
+
+            {/* Real-Time Notifications Feed */}
+            <div className="mb-6">
+              <FeedNotifications maxNotifications={3} />
             </div>
 
             {/* Gaming-style Create Post */}
@@ -3192,7 +3199,7 @@ export default function Dashboard({ address }: DashboardProps) {
 
            {/* Notifications List */}
            <div className="space-y-4">
-             {newNotifications.length === 0 ? (
+             {notifications.length === 0 ? (
                /* Empty State */
                <Card className="bg-gradient-to-br from-gray-800/90 via-gray-700/80 to-gray-800/90 border-2 border-green-500/50 text-white backdrop-blur-xl shadow-lg gaming-glow">
                <CardContent className="flex flex-col items-center justify-center py-16">
@@ -3205,13 +3212,23 @@ export default function Dashboard({ address }: DashboardProps) {
                    <p className="text-green-300/80 text-center mb-8 max-w-md leading-relaxed pixelated-text">
                    When you get likes, comments, reposts, or other interactions, they'll appear here.
                  </p>
-                 <Button 
-                   onClick={() => setActiveSidebarItem("home")}
-                     className="bg-gradient-to-r from-green-500 to-green-600 text-white pixelated-text px-8 py-3 text-lg hover:shadow-lg hover:shadow-green-500/25 gaming-glow"
-                 >
-                   <Home className="w-5 h-5 mr-2" />
-                   Go to Feed
-                 </Button>
+                 <div className="flex gap-3">
+                   <Button 
+                     onClick={() => setActiveSidebarItem("home")}
+                     className="bg-gradient-to-r from-green-500 to-green-600 text-white pixelated-text px-6 py-3 text-lg hover:shadow-lg hover:shadow-green-500/25 gaming-glow"
+                   >
+                     <Home className="w-5 h-5 mr-2" />
+                     Go to Feed
+                   </Button>
+                   <Button 
+                     onClick={() => window.location.href = '/notifications'}
+                     variant="outline"
+                     className="border-green-500/50 text-green-300 hover:bg-green-900/30 pixelated-text px-6 py-3 text-lg"
+                   >
+                     <Bell className="w-5 h-5 mr-2" />
+                     View All
+                   </Button>
+                 </div>
                </CardContent>
              </Card>
              ) : (
@@ -3220,7 +3237,7 @@ export default function Dashboard({ address }: DashboardProps) {
                  <div className="flex justify-between items-center mb-4">
                    <div className="flex items-center gap-2">
                      <h2 className="text-xl font-bold text-green-100 pixelated-text">
-                       Recent Activity ({newNotifications.length})
+                       Recent Activity ({notifications.length})
                      </h2>
                      <div className={`w-2 h-2 rounded-full ${notificationsLoading ? 'bg-yellow-400' : 'bg-green-400'} gaming-glow`}></div>
                      <span className="text-xs text-green-300 pixelated-text">
@@ -3228,6 +3245,13 @@ export default function Dashboard({ address }: DashboardProps) {
                      </span>
                    </div>
                    <div className="flex gap-2">
+                     <Button 
+                       onClick={() => window.location.href = '/notifications'}
+                       size="sm"
+                       className="bg-green-600 hover:bg-green-700 text-white pixelated-text"
+                     >
+                       View All
+                     </Button>
                      <Button 
                        onClick={clearAllNotifications}
                        variant="outline"
@@ -3240,7 +3264,7 @@ export default function Dashboard({ address }: DashboardProps) {
                    </div>
            </div>
 
-                 {newNotifications.map((notification) => (
+                 {notifications.map((notification) => (
                    <RichNotificationCard
                      key={notification.id}
                      notification={{
@@ -3612,7 +3636,7 @@ export default function Dashboard({ address }: DashboardProps) {
 
        {/* Gaming-style Content Container */}
        <div className="max-w-2xl mx-auto px-2 sm:px-4 py-4 sm:py-6 lg:py-8">
-         {/* User ID Display */}
+         {/* User ID Display and Notifications */}
          {baseUserId && (
            <div className="mb-4 p-3 bg-gradient-to-r from-green-900/20 to-blue-900/20 border border-green-500/30 rounded-lg backdrop-blur-sm">
              <div className="flex items-center justify-between">
@@ -3623,14 +3647,25 @@ export default function Dashboard({ address }: DashboardProps) {
                    {baseUserId.slice(0, 12)}...{baseUserId.slice(-8)}
                  </span>
                </div>
-               <Button
-                 onClick={() => setIsUserSwitcherOpen(true)}
-                 size="sm"
-                 variant="outline"
-                 className="bg-blue-500/20 border-blue-500 text-blue-300 hover:bg-blue-500/30 text-xs"
-               >
-                 Switch
-               </Button>
+               <div className="flex items-center gap-2">
+                 {/* Notifications Dropdown */}
+                 <NotificationsDropdown
+                   notifications={notifications}
+                   onMarkAsRead={markAsRead}
+                   onNotificationClick={(notification) => {
+                     console.log('Notification clicked:', notification);
+                     // You can add navigation logic here
+                   }}
+                 />
+                 <Button
+                   onClick={() => setIsUserSwitcherOpen(true)}
+                   size="sm"
+                   variant="outline"
+                   className="bg-blue-500/20 border-blue-500 text-blue-300 hover:bg-blue-500/30 text-xs"
+                 >
+                   Switch
+                 </Button>
+               </div>
              </div>
            </div>
          )}
@@ -3770,6 +3805,9 @@ export default function Dashboard({ address }: DashboardProps) {
          )}
        </DialogContent>
      </Dialog>
+
+     {/* Real-Time Toast Notifications */}
+     <RealTimeToast position="top-right" maxToasts={3} autoHideDuration={5000} />
    </div>
  )
 }

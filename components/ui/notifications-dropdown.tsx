@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { Bell, Heart, Share2, MessageSquare, UserPlus, Check } from 'lucide-react'
+import { Bell, Heart, Share2, MessageSquare, UserPlus, Check, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/auth-context'
 
 interface Notification {
   id: string
-  type: 'like' | 'repost' | 'comment' | 'follow'
+  type: 'like' | 'repost' | 'comment' | 'follow' | 'post'
   title: string
   message: string
   isRead: boolean
@@ -32,30 +32,34 @@ interface NotificationsDropdownProps {
 const getNotificationIcon = (type: string) => {
   switch (type) {
     case 'like':
-      return <Heart className="w-4 h-4 text-red-500" />
+      return <Heart className="w-4 h-4 text-red-400" />
     case 'repost':
-      return <Share2 className="w-4 h-4 text-blue-500" />
+      return <Share2 className="w-4 h-4 text-blue-400" />
     case 'comment':
-      return <MessageSquare className="w-4 h-4 text-green-500" />
+      return <MessageSquare className="w-4 h-4 text-green-400" />
     case 'follow':
-      return <UserPlus className="w-4 h-4 text-purple-500" />
+      return <UserPlus className="w-4 h-4 text-purple-400" />
+    case 'post':
+      return <Bell className="w-4 h-4 text-yellow-400" />
     default:
-      return <Heart className="w-4 h-4 text-blue-500" />
+      return <Bell className="w-4 h-4 text-blue-400" />
   }
 }
 
 const getNotificationColor = (type: string) => {
   switch (type) {
     case 'like':
-      return 'border-l-red-400'
+      return 'border-l-red-500'
     case 'repost':
-      return 'border-l-blue-400'
+      return 'border-l-blue-500'
     case 'comment':
-      return 'border-l-green-400'
+      return 'border-l-green-500'
     case 'follow':
-      return 'border-l-purple-400'
+      return 'border-l-purple-500'
+    case 'post':
+      return 'border-l-yellow-500'
     default:
-      return 'border-l-blue-400'
+      return 'border-l-blue-500'
   }
 }
 
@@ -98,13 +102,13 @@ export function NotificationsDropdown({
         variant="ghost"
         size="sm"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2"
+        className="relative p-2 text-green-100 hover:text-green-300 hover:bg-green-600/20"
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
           <Badge 
             variant="destructive" 
-            className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs font-mono"
+            className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs font-mono bg-red-500"
           >
             {unreadCount > 99 ? '99+' : unreadCount}
           </Badge>
@@ -113,14 +117,14 @@ export function NotificationsDropdown({
 
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 w-80 z-50">
-          <Card className="shadow-lg border-2 border-blue-200">
+          <Card className="shadow-lg border-2 border-green-500/30 bg-gradient-to-br from-gray-900/95 via-gray-800/90 to-gray-900/95">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="font-mono text-sm text-blue-900">
+                <CardTitle className="font-mono text-sm text-green-100 pixelated-text">
                   Notifications
                 </CardTitle>
                 {unreadCount > 0 && (
-                  <Badge variant="secondary" className="font-mono text-xs">
+                  <Badge variant="secondary" className="font-mono text-xs bg-green-600/20 text-green-300 border-green-500/30">
                     {unreadCount} new
                   </Badge>
                 )}
@@ -130,9 +134,13 @@ export function NotificationsDropdown({
             <CardContent className="p-0">
               <div className="max-h-96 overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <div className="p-4 text-center">
-                    <p className="font-mono text-sm text-blue-600">
+                  <div className="p-6 text-center">
+                    <Bell className="w-12 h-12 text-green-400/50 mx-auto mb-3" />
+                    <p className="font-mono text-sm text-green-300 pixelated-text">
                       No notifications yet
+                    </p>
+                    <p className="font-mono text-xs text-green-400/70 mt-1">
+                      When you get likes, comments, or reposts, they'll appear here
                     </p>
                   </div>
                 ) : (
@@ -141,15 +149,15 @@ export function NotificationsDropdown({
                       <div
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`p-3 cursor-pointer transition-colors hover:bg-blue-50 border-l-4 ${getNotificationColor(notification.type)} ${
-                          !notification.isRead ? 'bg-blue-25' : 'bg-white'
+                        className={`p-3 cursor-pointer transition-colors hover:bg-green-600/10 border-l-4 ${getNotificationColor(notification.type)} ${
+                          !notification.isRead ? 'bg-green-600/5' : 'bg-transparent'
                         }`}
                       >
                         <div className="flex items-start space-x-3">
                           {/* Avatar */}
-                          <Avatar className="w-8 h-8 border border-white shadow-sm">
+                          <Avatar className="w-8 h-8 border border-green-500/30 shadow-sm">
                             <AvatarImage src={notification.sender?.profilePicture} />
-                            <AvatarFallback className="bg-blue-100 text-blue-800 font-mono text-xs">
+                            <AvatarFallback className="bg-green-600/20 text-green-300 font-mono text-xs">
                               {notification.sender?.username?.slice(0, 2).toUpperCase() || 
                                notification.sender?.walletAddress.slice(2, 4).toUpperCase()}
                             </AvatarFallback>
@@ -159,24 +167,24 @@ export function NotificationsDropdown({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-2 mb-1">
                               {getNotificationIcon(notification.type)}
-                              <h4 className="font-mono font-bold text-xs text-blue-900 truncate">
+                              <h4 className="font-mono font-bold text-xs text-green-100 pixelated-text truncate">
                                 {notification.title}
                               </h4>
                               {!notification.isRead && (
-                                <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                                <div className="w-2 h-2 bg-green-400 rounded-full" />
                               )}
                             </div>
                             
-                            <p className="font-mono text-xs text-blue-800 leading-relaxed mb-1">
+                            <p className="font-mono text-xs text-green-300 leading-relaxed mb-1">
                               {notification.message}
                             </p>
                             
                             <div className="flex items-center justify-between">
-                              <span className="font-mono text-xs text-blue-600">
+                              <span className="font-mono text-xs text-green-400">
                                 {notification.sender?.username || 
                                  `${notification.sender?.walletAddress.slice(0, 6)}...`}
                               </span>
-                              <span className="font-mono text-xs text-blue-500">
+                              <span className="font-mono text-xs text-green-400/70">
                                 {formatTimeAgo(notification.dateCreated)}
                               </span>
                             </div>
@@ -189,12 +197,12 @@ export function NotificationsDropdown({
               </div>
               
               {notifications.length > 0 && (
-                <div className="p-3 border-t border-blue-200">
+                <div className="p-3 border-t border-green-500/30">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onMarkAsRead()}
-                    className="w-full font-mono text-xs text-blue-600 hover:text-blue-800"
+                    className="w-full font-mono text-xs text-green-400 hover:text-green-300 hover:bg-green-600/20"
                   >
                     <Check className="w-3 h-3 mr-1" />
                     Mark all as read
@@ -208,3 +216,4 @@ export function NotificationsDropdown({
     </div>
   )
 }
+
