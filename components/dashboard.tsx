@@ -3128,16 +3128,16 @@ export default function Dashboard({ address }: DashboardProps) {
                </div>
              ) : notifications.length === 0 ? (
                <Card className="bg-gradient-to-br from-gray-800/90 via-gray-700/80 to-gray-800/90 border-2 border-green-500/50 text-white backdrop-blur-xl shadow-lg gaming-glow">
-                 <CardContent className="flex flex-col items-center justify-center py-16">
+               <CardContent className="flex flex-col items-center justify-center py-16">
                    <div className="w-24 h-24 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mb-6 gaming-glow">
-                     <Bell className="w-12 h-12 text-white" />
-                   </div>
+                   <Bell className="w-12 h-12 text-white" />
+                 </div>
                    <h3 className="text-2xl font-bold text-green-100 pixelated-text mb-3">
-                     No notifications yet
-                   </h3>
+                   No notifications yet
+                 </h3>
                    <p className="text-green-300/80 text-center mb-8 max-w-md leading-relaxed pixelated-text">
-                     When you get likes, comments, reposts, or other interactions, they'll appear here.
-                   </p>
+                   When you get likes, comments, reposts, or other interactions, they'll appear here.
+                 </p>
                    <Button 
                      onClick={() => setActiveSidebarItem("home")}
                      className="bg-gradient-to-r from-green-500 to-green-600 text-white pixelated-text px-6 py-3 text-lg hover:shadow-lg hover:shadow-green-500/25 gaming-glow"
@@ -3145,8 +3145,8 @@ export default function Dashboard({ address }: DashboardProps) {
                      <Home className="w-5 h-5 mr-2" />
                      Go to Feed
                    </Button>
-                 </CardContent>
-               </Card>
+               </CardContent>
+             </Card>
              ) : (
                <>
                  <div className="flex justify-between items-center mb-4">
@@ -3169,10 +3169,10 @@ export default function Dashboard({ address }: DashboardProps) {
                        Mark All Read
                      </Button>
                    </div>
-                 </div>
+           </div>
 
                  <div className="space-y-3">
-                   {notifications.map((notification) => (
+                 {notifications.map((notification) => (
                      <Card key={notification.id} className="bg-gradient-to-br from-gray-800/50 to-gray-700/50 border border-gray-600/30 hover:border-green-500/50 transition-all duration-300">
                        <CardContent className="p-4">
                          <div className="flex items-start space-x-3">
@@ -3322,9 +3322,9 @@ export default function Dashboard({ address }: DashboardProps) {
                </CardTitle>
              </CardHeader>
              <CardContent>
-               <p className="text-blue-300 pixelated-text">
+                 <p className="text-blue-300 pixelated-text">
                  Notification preferences will be available soon.
-               </p>
+                 </p>
              </CardContent>
            </Card>
 
