@@ -24,7 +24,6 @@ export function getPusher(): Pusher | null {
       useTLS: true,
       // Production-ready configuration
       timeout: 30000, // 30 second timeout
-      keepAlive: true, // Keep connection alive
       // Encryption settings for production
       encryptionMasterKeyBase64: process.env.PUSHER_ENCRYPTION_MASTER_KEY,
     })
@@ -42,7 +41,7 @@ export async function triggerPusherEvent(
   channel: string,
   event: string,
   data: any,
-  options?: { socketId?: string }
+  options?: any
 ): Promise<boolean> {
   try {
     const pusher = getPusher()
