@@ -14,12 +14,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Resolve wallet address to BaseUser.id if needed
+    let resolvedUserId = userId
+    try {
+      const baseUser = await prisma.baseUser.findFirst({
+        where: {
+          OR: [
+            { id: userId },
+            { walletAddress: userId }
+          ]
+        },
+        select: { id: true }
+      })
+      if (baseUser?.id) {
+        resolvedUserId = baseUser.id
+      }
+    } catch (_) {
+      // Fallback to provided userId if lookup fails
+    }
+
     if (notificationIds && notificationIds.length > 0) {
       // Mark specific notifications as read
       await prisma.simpleNotification.updateMany({
         where: {
           id: { in: notificationIds },
-          receiverId: userId
+          receiverId: resolvedUserId
         },
         data: {
           isRead: true
@@ -29,7 +48,7 @@ export async function POST(request: NextRequest) {
       // Mark all notifications for user as read
       await prisma.simpleNotification.updateMany({
         where: {
-          receiverId: userId,
+          receiverId: resolvedUserId,
           isRead: false
         },
         data: {

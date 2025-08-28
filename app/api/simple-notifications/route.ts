@@ -16,9 +16,28 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Resolve wallet address to BaseUser.id if needed
+    let resolvedUserId = userId
+    try {
+      const baseUser = await prisma.baseUser.findFirst({
+        where: {
+          OR: [
+            { id: userId },
+            { walletAddress: userId }
+          ]
+        },
+        select: { id: true }
+      })
+      if (baseUser?.id) {
+        resolvedUserId = baseUser.id
+      }
+    } catch (_) {
+      // Fallback to provided userId if lookup fails
+    }
+
     const notifications = await prisma.simpleNotification.findMany({
       where: {
-        receiverId: userId
+        receiverId: resolvedUserId
       },
       orderBy: {
         dateCreated: 'desc'

@@ -15,15 +15,34 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Resolve wallet address to BaseUser.id if needed
+    let resolvedUserId = userId
+    try {
+      const baseUser = await prisma.baseUser.findFirst({
+        where: {
+          OR: [
+            { id: userId! },
+            { walletAddress: userId! }
+          ]
+        },
+        select: { id: true }
+      })
+      if (baseUser?.id) {
+        resolvedUserId = baseUser.id
+      }
+    } catch (_) {
+      // Fallback to provided userId if lookup fails
+    }
+
     let preferences = await prisma.simpleNotificationPreferences.findUnique({
-      where: { userId }
+      where: { userId: resolvedUserId! }
     })
 
     if (!preferences) {
       // Create default preferences if none exist
       preferences = await prisma.simpleNotificationPreferences.create({
         data: {
-          userId,
+          userId: resolvedUserId!,
           ...DEFAULT_PREFERENCES
         }
       })
@@ -55,11 +74,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Resolve wallet address to BaseUser.id if needed
+    let resolvedUserId = userId as string
+    try {
+      const baseUser = await prisma.baseUser.findFirst({
+        where: {
+          OR: [
+            { id: userId },
+            { walletAddress: userId }
+          ]
+        },
+        select: { id: true }
+      })
+      if (baseUser?.id) {
+        resolvedUserId = baseUser.id
+      }
+    } catch (_) {
+      // Fallback to provided userId if lookup fails
+    }
+
     const updatedPreferences = await prisma.simpleNotificationPreferences.upsert({
-      where: { userId },
+      where: { userId: resolvedUserId },
       update: preferences,
       create: {
-        userId,
+        userId: resolvedUserId,
         ...DEFAULT_PREFERENCES,
         ...preferences
       }
