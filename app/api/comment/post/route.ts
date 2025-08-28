@@ -1,7 +1,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { NextResponse, NextRequest } from 'next/server'
-import { triggerPusherEvent } from '@/lib/pusher'
+import { pusherServer } from '@/lib/pusher'
 
 //POST comment
 export async function POST(req: Request) {
@@ -87,24 +87,23 @@ export async function POST(req: Request) {
           });
 
           // Trigger Pusher event for real-time notification
-          const success = await triggerPusherEvent(
-            `user-${postAuthor.walletAddress.toLowerCase()}`,
-            'notification',
-            {
-              id: notification.id,
-              type: 'comment',
-              title: notification.title,
-              message: notification.message,
-              data: notification.data,
-              isRead: notification.isRead,
-              dateCreated: notification.dateCreated
-            }
-          );
-          
-          if (success) {
+          try {
+            await pusherServer.trigger(
+              `user-${postAuthor.walletAddress.toLowerCase()}`,
+              'notification',
+              {
+                id: notification.id,
+                type: 'comment',
+                title: notification.title,
+                message: notification.message,
+                data: notification.data,
+                isRead: notification.isRead,
+                dateCreated: notification.dateCreated
+              }
+            );
             console.log('Pusher event triggered for comment notification');
-          } else {
-            console.warn('Failed to trigger Pusher event for comment notification');
+          } catch (error) {
+            console.error('Failed to trigger Pusher event for comment notification', error);
           }
         }
 

@@ -1,7 +1,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from "next/server";
-import { triggerPusherEvent } from '@/lib/pusher';
+import { pusherServer } from '@/lib/pusher';
 
 //POST JOURNAL
 export async function POST(req: Request) {
@@ -77,22 +77,22 @@ export async function POST(req: Request) {
               });
 
               // Trigger Pusher event for real-time notification
-              const success = await triggerPusherEvent(
-                `user-${follow.follower.walletAddress.toLowerCase()}`,
-                'notification',
-                {
-                  id: notification.id,
-                  type: 'post',
-                  title: notification.title,
-                  message: notification.message,
-                  data: notification.data,
-                  isRead: notification.isRead,
-                  dateCreated: notification.dateCreated
-                }
-              );
-              
-              if (!success) {
-                console.warn('Failed to trigger Pusher event for post notification');
+              try {
+                await pusherServer.trigger(
+                  `user-${follow.follower.walletAddress.toLowerCase()}`,
+                  'notification',
+                  {
+                    id: notification.id,
+                    type: 'post',
+                    title: notification.title,
+                    message: notification.message,
+                    data: notification.data,
+                    isRead: notification.isRead,
+                    dateCreated: notification.dateCreated
+                  }
+                );
+              } catch (error) {
+                console.error('Failed to trigger Pusher event for post notification', error);
               }
 
               return notification;

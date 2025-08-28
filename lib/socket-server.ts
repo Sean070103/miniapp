@@ -1,5 +1,5 @@
 import { Server as SocketIOServer } from 'socket.io'
-import { getPusher } from './pusher'
+import { pusherServer } from './pusher'
 import type { Server as HTTPServer } from 'http'
 
 // Store user connections
@@ -100,14 +100,11 @@ async function sendNotificationToUser(userId: string, notification: Notification
     }
   }
   // Try Pusher in serverless
-  const pusher = getPusher()
-  if (pusher) {
-    try {
-      await pusher.trigger(`user-${userId}`, 'notification', notification)
-      return true
-    } catch (e) {
-      console.error('Pusher trigger error', e)
-    }
+  try {
+    await pusherServer.trigger(`user-${userId}`, 'notification', notification)
+    return true
+  } catch (e) {
+    console.error('Pusher trigger error', e)
   }
   // If running in serverless where io is not present, forward to external socket server
   const forwardUrl = process.env.SOCKET_FORWARD_URL

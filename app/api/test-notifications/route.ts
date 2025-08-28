@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPusher } from '@/lib/pusher';
+import { pusherServer } from '@/lib/pusher';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,33 +13,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Trigger Pusher event on the "notifications" channel
-    const pusher = getPusher();
-    if (pusher) {
-      try {
-        await pusher.trigger('notifications', 'like', {
-          recipientId,
-          senderId,
-          postId
-        });
-        
-        console.log('Test Pusher event triggered:', { recipientId, senderId, postId });
-        
-        return NextResponse.json({ 
-          success: true,
-          message: 'Pusher event triggered successfully',
-          data: { recipientId, senderId, postId }
-        });
-      } catch (pusherError) {
-        console.error('Error triggering Pusher event:', pusherError);
-        return NextResponse.json(
-          { error: 'Failed to trigger Pusher event' },
-          { status: 500 }
-        );
-      }
-    } else {
+    // Trigger Pusher event for real-time notification
+    try {
+      await pusherServer.trigger('notifications', 'like', {
+        recipientId,
+        senderId,
+        postId
+      });
+      
+      console.log('Test Pusher event triggered:', { recipientId, senderId, postId });
+      
+      return NextResponse.json({ 
+        success: true,
+        message: 'Pusher event triggered successfully',
+        data: { recipientId, senderId, postId }
+      });
+    } catch (pusherError) {
+      console.error('Error triggering Pusher event:', pusherError);
       return NextResponse.json(
-        { error: 'Pusher not configured' },
+        { error: 'Failed to trigger Pusher event' },
         { status: 500 }
       );
     }

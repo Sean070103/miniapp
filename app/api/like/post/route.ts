@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getPusher } from '@/lib/pusher';
+import { pusherServer } from '@/lib/pusher';
 
 export async function POST(request: NextRequest) {
   try {
@@ -102,23 +102,20 @@ export async function POST(request: NextRequest) {
               }
             });
 
-          // Trigger Pusher event on the "notifications" channel
-          const pusher = getPusher();
-          if (pusher) {
-            try {
-              await pusher.trigger(`user-${postAuthor.walletAddress.toLowerCase()}`, 'notification', {
-                id: notification.id,
-                type: 'like',
-                title: notification.title,
-                message: notification.message,
-                data: notification.data,
-                isRead: notification.isRead,
-                dateCreated: notification.dateCreated
-              });
-              console.log('Pusher event triggered for like notification');
-            } catch (pusherError) {
-              console.error('Error triggering Pusher event:', pusherError);
-            }
+          // Trigger Pusher event for real-time notification
+          try {
+            await pusherServer.trigger(`user-${postAuthor.walletAddress.toLowerCase()}`, 'notification', {
+              id: notification.id,
+              type: 'like',
+              title: notification.title,
+              message: notification.message,
+              data: notification.data,
+              isRead: notification.isRead,
+              dateCreated: notification.dateCreated
+            });
+            console.log('Pusher event triggered for like notification');
+          } catch (pusherError) {
+            console.error('Error triggering Pusher event:', pusherError);
           }
 
           }

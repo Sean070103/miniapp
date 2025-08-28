@@ -1,7 +1,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { NextResponse, NextRequest } from 'next/server'
-import { getPusher } from '@/lib/pusher'
+import { pusherServer } from '@/lib/pusher'
 
 //POST REPOST - Toggle functionality
 export async function POST(req: Request) {
@@ -108,23 +108,20 @@ export async function POST(req: Request) {
               } as any
             });
 
-          // Trigger Pusher event on the "notifications" channel
-          const pusher = getPusher();
-          if (pusher) {
-            try {
-              await pusher.trigger(`user-${postAuthor.walletAddress.toLowerCase()}`, 'notification', {
-                id: notification.id,
-                type: 'repost',
-                title: notification.title,
-                message: notification.message,
-                data: notification.data,
-                isRead: notification.isRead,
-                dateCreated: notification.dateCreated
-              });
-              console.log('Pusher event triggered for repost notification');
-            } catch (pusherError) {
-              console.error('Error triggering Pusher event:', pusherError);
-            }
+          // Trigger Pusher event for real-time notification
+          try {
+            await pusherServer.trigger(`user-${postAuthor.walletAddress.toLowerCase()}`, 'notification', {
+              id: notification.id,
+              type: 'repost',
+              title: notification.title,
+              message: notification.message,
+              data: notification.data,
+              isRead: notification.isRead,
+              dateCreated: notification.dateCreated
+            });
+            console.log('Pusher event triggered for repost notification');
+          } catch (pusherError) {
+            console.error('Error triggering Pusher event:', pusherError);
           }
         }
 
