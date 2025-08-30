@@ -2966,134 +2966,191 @@ export default function Dashboard({ address }: DashboardProps) {
              <p className="text-blue-300 pixelated-text">
                Track your DailyBase journey and progress
              </p>
-             <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-               <Button variant="outline" size="sm" className="pixel-button pixel-rounded">RESET</Button>
-               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white pixel-rounded rgb-fringe">POWER-UP</Button>
-               <Button variant="outline" size="sm" className="pixel-button pixel-rounded">Ⓐ / Ⓑ</Button>
-             </div>
            </div>
 
            {/* Key Metrics */}
            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
              <div className="text-center p-6 bg-slate-800/30 rounded-lg border border-slate-600/30">
                <div className="text-4xl font-bold text-white pixelated-text mb-1">
-                 {entries.length}
+                 {allPosts.filter(post => post.baseUserId === (baseUserId || address)).length}
                </div>
                <div className="text-sm text-blue-300 pixelated-text">
-                 Entries
+                 Total Posts
                </div>
              </div>
              <div className="text-center p-6 bg-slate-800/30 rounded-lg border border-slate-600/30">
                <div className="text-4xl font-bold text-white pixelated-text mb-1">
-                 {entries.length > 0 ? Math.ceil(entries.length / 7) : 0}
+                 {Object.values(likeCounts).reduce((sum, count) => sum + count, 0)}
                </div>
                <div className="text-sm text-blue-300 pixelated-text">
-                 Weeks
+                 Total Likes
                </div>
              </div>
              <div className="text-center p-6 bg-slate-800/30 rounded-lg border border-slate-600/30">
                <div className="text-4xl font-bold text-white pixelated-text mb-1">
-                 {entries.length > 0
-                   ? Math.round((entries.length / 30) * 100)
-                   : 0}
-                 %
+                 {Object.values(commentCounts).reduce((sum, count) => sum + count, 0)}
                </div>
                <div className="text-sm text-blue-300 pixelated-text">
-                 Consistency
+                 Total Comments
                </div>
              </div>
              <div className="text-center p-6 bg-slate-800/30 rounded-lg border border-slate-600/30">
                <div className="text-4xl font-bold text-white pixelated-text mb-1">
-                 {entries.length > 0
-                   ? Math.max(...entries.map((_, i) => i + 1))
-                   : 0}
+                 {Object.values(repostCounts).reduce((sum, count) => sum + count, 0)}
                </div>
                <div className="text-sm text-blue-300 pixelated-text">
-                 Streak
+                 Total Reposts
                </div>
              </div>
            </div>
 
-           {/* Activity Overview */}
-           <div className="bg-slate-800/30 rounded-lg border border-slate-600/30 p-6">
-             <div className="text-center mb-6">
-               <h3 className="text-xl font-semibold text-white pixelated-text mb-2">
-                 Activity
+           {/* Engagement Stats */}
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div className="bg-slate-800/30 rounded-lg border border-slate-600/30 p-6">
+               <h3 className="text-xl font-semibold text-white pixelated-text mb-4">
+                 Engagement Rate
                </h3>
-               <p className="text-sm text-blue-300 pixelated-text">
-                 Daily contribution pattern
-               </p>
-             </div>
-             <div className="flex justify-center mb-4">
-               <ContributionGrid entries={entries} />
-             </div>
-             <div className="flex items-center justify-center gap-4 text-xs text-blue-300 pixelated-text">
-               <div className="flex items-center gap-1">
-                 <div className="w-2 h-2 bg-slate-600 rounded-sm"></div>
-                 <span>Empty</span>
+               <div className="space-y-4">
+                 <div className="flex items-center justify-between">
+                   <span className="text-blue-300 pixelated-text">Average Likes per Post</span>
+                   <span className="text-white pixelated-text font-bold">
+                     {(() => {
+                       const myPosts = allPosts.filter(post => post.baseUserId === (baseUserId || address));
+                       const totalLikes = myPosts.reduce((sum, post) => sum + (likeCounts[post.id] || 0), 0);
+                       return myPosts.length > 0 ? (totalLikes / myPosts.length).toFixed(1) : '0';
+                     })()}
+                   </span>
+                 </div>
+                 <div className="flex items-center justify-between">
+                   <span className="text-blue-300 pixelated-text">Average Comments per Post</span>
+                   <span className="text-white pixelated-text font-bold">
+                     {(() => {
+                       const myPosts = allPosts.filter(post => post.baseUserId === (baseUserId || address));
+                       const totalComments = myPosts.reduce((sum, post) => sum + (commentCounts[post.id] || 0), 0);
+                       return myPosts.length > 0 ? (totalComments / myPosts.length).toFixed(1) : '0';
+                     })()}
+                   </span>
+                 </div>
+                 <div className="flex items-center justify-between">
+                   <span className="text-blue-300 pixelated-text">Most Popular Post</span>
+                   <span className="text-white pixelated-text font-bold">
+                     {(() => {
+                       const myPosts = allPosts.filter(post => post.baseUserId === (baseUserId || address));
+                       if (myPosts.length === 0) return 'None';
+                       const mostLiked = myPosts.reduce((max, post) => 
+                         (likeCounts[post.id] || 0) > (likeCounts[max.id] || 0) ? post : max
+                       );
+                       return `${likeCounts[mostLiked.id] || 0} likes`;
+                     })()}
+                   </span>
+                 </div>
                </div>
-               <div className="flex items-center gap-1">
-                 <div className="w-2 h-2 bg-blue-500 rounded-sm"></div>
-                 <span>Entry</span>
+             </div>
+
+             <div className="bg-slate-800/30 rounded-lg border border-slate-600/30 p-6">
+               <h3 className="text-xl font-semibold text-white pixelated-text mb-4">
+                 Post Activity
+               </h3>
+               <div className="space-y-4">
+                 <div className="flex items-center justify-between">
+                   <span className="text-blue-300 pixelated-text">Active Posts</span>
+                   <span className="text-white pixelated-text font-bold">
+                     {allPosts.filter(post => post.baseUserId === (baseUserId || address) && !post.archived).length}
+                   </span>
+                 </div>
+                 <div className="flex items-center justify-between">
+                   <span className="text-blue-300 pixelated-text">Archived Posts</span>
+                   <span className="text-white pixelated-text font-bold">
+                     {allPosts.filter(post => post.baseUserId === (baseUserId || address) && post.archived).length}
+                   </span>
+                 </div>
+                 <div className="flex items-center justify-between">
+                   <span className="text-blue-300 pixelated-text">Posts with Tags</span>
+                   <span className="text-white pixelated-text font-bold">
+                     {allPosts.filter(post => post.baseUserId === (baseUserId || address) && post.tags && post.tags.length > 0).length}
+                   </span>
+                 </div>
                </div>
              </div>
            </div>
 
-           {/* Recent Activity */}
+           {/* Recent Posts */}
            <div className="bg-slate-800/30 rounded-lg border border-slate-600/30 p-6">
              <h3 className="text-xl font-semibold text-white pixelated-text mb-4">
-               Recent
+               Recent Posts
              </h3>
-             {entries.length === 0 ? (
-               <div className="text-center py-8">
-                 <p className="text-blue-300 pixelated-text">No entries yet</p>
-               </div>
-             ) : (
-               <div className="space-y-3">
-                 {entries.slice(0, 3).map((entry, index) => (
-                   <div
-                     key={entry.id}
-                     className="flex items-center gap-3 p-3 bg-slate-700/20 rounded-lg"
-                   >
-                     <div className="w-8 h-8 bg-blue-500/20 rounded flex items-center justify-center">
-                       <span className="text-blue-300 font-bold text-sm">
-                         {index + 1}
-                       </span>
+             {(() => {
+               const myPosts = allPosts.filter(post => post.baseUserId === (baseUserId || address)).slice(0, 5);
+               if (myPosts.length === 0) {
+                 return (
+                   <div className="text-center py-8">
+                     <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                       <svg className="w-8 h-8 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                       </svg>
                      </div>
-                     <div className="flex-1 min-w-0">
-                       <div className="text-white pixelated-text text-sm truncate">
-                         {entry.content}
-                       </div>
-                       <div className="text-xs text-blue-300 pixelated-text">
-                         {new Date(entry.date).toLocaleDateString("en-US", {
-                           month: "short",
-                           day: "numeric",
-                         })}
-                       </div>
-                     </div>
+                     <p className="text-blue-300 pixelated-text">No posts yet. Start sharing your crypto journey!</p>
                    </div>
-                 ))}
-               </div>
-             )}
+                 );
+               }
+               
+               return (
+                 <div className="space-y-3">
+                   {myPosts.map((post, index) => (
+                     <div
+                       key={post.id}
+                       className="flex items-center gap-3 p-3 bg-slate-700/20 rounded-lg hover:bg-slate-700/30 transition-all duration-300"
+                     >
+                       <div className="w-8 h-8 bg-blue-500/20 rounded flex items-center justify-center">
+                         <span className="text-blue-300 font-bold text-sm">
+                           {index + 1}
+                         </span>
+                       </div>
+                       <div className="flex-1 min-w-0">
+                         <div className="text-white pixelated-text text-sm truncate">
+                           {post.journal || "No content"}
+                         </div>
+                         <div className="flex items-center gap-4 text-xs text-blue-300 pixelated-text mt-1">
+                           <span>{new Date(post.dateCreated).toLocaleDateString("en-US", {
+                             month: "short",
+                             day: "numeric",
+                           })}</span>
+                           <span>❤️ {likeCounts[post.id] || 0}</span>
+                           <span>💬 {commentCounts[post.id] || 0}</span>
+                           <span>🔄 {repostCounts[post.id] || 0}</span>
+                           {post.archived && (
+                             <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-400/30 pixelated-text text-xs">
+                               ARCHIVED
+                             </Badge>
+                           )}
+                         </div>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               );
+             })()}
            </div>
 
            {/* Monthly Breakdown */}
            <div className="bg-slate-800/30 rounded-lg border border-slate-600/30 p-6">
              <h3 className="text-xl font-semibold text-white pixelated-text mb-4">
-               Monthly
+               Monthly Activity
              </h3>
              <div className="space-y-3">
-               {Array.from({ length: 3 }, (_, i) => {
+               {Array.from({ length: 6 }, (_, i) => {
                  const month = new Date();
                  month.setMonth(month.getMonth() - i);
                  const monthName = month.toLocaleDateString("en-US", {
                    month: "short",
+                   year: "numeric"
                  });
-                 const monthEntries = entries.filter((entry) => {
-                   const entryDate = new Date(entry.date);
+                 const monthPosts = allPosts.filter((post) => {
+                   const postDate = new Date(post.dateCreated);
                    return (
-                     entryDate.getMonth() === month.getMonth() &&
-                     entryDate.getFullYear() === month.getFullYear()
+                     postDate.getMonth() === month.getMonth() &&
+                     postDate.getFullYear() === month.getFullYear() &&
+                     post.baseUserId === (baseUserId || address)
                    );
                  });
 
@@ -3105,21 +3162,30 @@ export default function Dashboard({ address }: DashboardProps) {
                      <span className="text-blue-300 pixelated-text">
                        {monthName}
                      </span>
-                     <div className="flex items-center gap-2">
+                     <div className="flex items-center gap-4">
+                       <div className="flex items-center gap-2">
+                         <span className="text-xs text-blue-300/70">Posts:</span>
+                         <span className="text-white pixelated-text text-sm font-bold">
+                           {monthPosts.length}
+                         </span>
+                       </div>
+                       <div className="flex items-center gap-2">
+                         <span className="text-xs text-blue-300/70">Likes:</span>
+                         <span className="text-white pixelated-text text-sm font-bold">
+                           {monthPosts.reduce((sum, post) => sum + (likeCounts[post.id] || 0), 0)}
+                         </span>
+                       </div>
                        <div className="w-16 bg-slate-600/50 rounded-full h-1">
                          <div
                            className="bg-blue-500 h-1 rounded-full transition-all duration-300"
                            style={{
                              width: `${Math.min(
-                               (monthEntries.length / 30) * 100,
+                               (monthPosts.length / 30) * 100,
                                100
                              )}%`,
                            }}
                          ></div>
                        </div>
-                       <span className="text-white pixelated-text text-sm">
-                         {monthEntries.length}
-                       </span>
                      </div>
                    </div>
                  );
@@ -3523,6 +3589,189 @@ export default function Dashboard({ address }: DashboardProps) {
         });
              }}
            />
+           
+           {/* My Posts Section */}
+           <Card className="bg-white/8 border-white/20 text-white backdrop-blur-3xl card-glass shadow-2xl shadow-blue-400/30 border-opacity-30 hover:bg-white/12 hover:border-white/30 transition-all duration-500">
+             <CardHeader>
+               <CardTitle className="text-blue-100 pixelated-text">
+                 My Posts
+               </CardTitle>
+             </CardHeader>
+             <CardContent className="space-y-4">
+               {(() => {
+                 const myPosts = allPosts.filter(post => 
+                   post.baseUserId === (baseUserId || address)
+                 );
+                 
+                 if (myPosts.length === 0) {
+                   return (
+                     <div className="text-center py-8">
+                       <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                         <svg className="w-8 h-8 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                         </svg>
+                       </div>
+                       <h3 className="text-lg font-semibold text-white pixelated-text mb-2">
+                         No Posts Yet
+                       </h3>
+                       <p className="text-blue-300/70 pixelated-text text-sm mb-4">
+                         Start sharing your crypto journey by creating your first post!
+                       </p>
+                       <Button
+                         onClick={() => setActiveSidebarItem('home')}
+                         className="bg-blue-500 hover:bg-blue-600 text-white pixelated-text"
+                       >
+                         Create Post
+                       </Button>
+                     </div>
+                   );
+                 }
+                 
+                 const activePosts = myPosts.filter(post => !post.archived);
+                 const archivedPosts = myPosts.filter(post => post.archived);
+                 
+                 return (
+                   <div className="space-y-6">
+                     {/* Active Posts */}
+                     <div>
+                       <div className="flex items-center justify-between mb-4">
+                         <h3 className="text-lg font-semibold text-white pixelated-text">
+                           Active Posts ({activePosts.length})
+                         </h3>
+                       </div>
+                       <div className="space-y-3">
+                         {activePosts.map((post) => (
+                           <div key={post.id} className="p-4 bg-slate-700/50 rounded-lg border border-slate-600/30 hover:border-green-500/50 transition-all duration-300">
+                             <div className="flex items-start justify-between">
+                               <div className="flex-1 min-w-0">
+                                 <div className="flex items-center gap-2 mb-2">
+                                   <Badge className="bg-green-500/20 text-green-300 border-green-400/30 pixelated-text text-xs">
+                                     ACTIVE
+                                   </Badge>
+                                   <span className="text-xs text-blue-300/70 pixelated-text">
+                                     {new Date(post.dateCreated).toLocaleDateString()}
+                                   </span>
+                                 </div>
+                                 <p className="text-white pixelated-text text-sm mb-2 line-clamp-2">
+                                   {post.journal || "No content"}
+                                 </p>
+                                 {post.tags && post.tags.length > 0 && (
+                                   <div className="flex flex-wrap gap-1 mb-2">
+                                     {post.tags.slice(0, 3).map((tag, index) => (
+                                       <span key={index} className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded pixelated-text">
+                                         #{tag}
+                                       </span>
+                                     ))}
+                                     {post.tags.length > 3 && (
+                                       <span className="text-xs text-green-300/50 pixelated-text">
+                                         +{post.tags.length - 3} more
+                                       </span>
+                                     )}
+                                   </div>
+                                 )}
+                               </div>
+                               <div className="flex gap-2 ml-4">
+                                 <Button
+                                   onClick={() => handleArchivePost(post.id)}
+                                   size="sm"
+                                   variant="outline"
+                                   className="bg-yellow-500/20 border-yellow-400 text-yellow-300 pixelated-text hover:bg-yellow-500/30"
+                                   title="Archive post"
+                                 >
+                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                   </svg>
+                                 </Button>
+                                 <Button
+                                   onClick={() => handleDeletePost(post.id)}
+                                   size="sm"
+                                   variant="outline"
+                                   className="bg-red-500/20 border-red-400 text-red-300 pixelated-text hover:bg-red-500/30"
+                                   title="Delete post"
+                                 >
+                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                   </svg>
+                                 </Button>
+                               </div>
+                             </div>
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+                     
+                     {/* Archived Posts */}
+                     {archivedPosts.length > 0 && (
+                       <div>
+                         <div className="flex items-center justify-between mb-4">
+                           <h3 className="text-lg font-semibold text-white pixelated-text">
+                             Archived Posts ({archivedPosts.length})
+                           </h3>
+                           <Button
+                             onClick={() => setActiveSidebarItem('settings')}
+                             size="sm"
+                             variant="outline"
+                             className="bg-blue-500/20 border-blue-400 text-blue-300 pixelated-text hover:bg-blue-500/30"
+                           >
+                             Manage All
+                           </Button>
+                         </div>
+                         <div className="space-y-3">
+                           {archivedPosts.slice(0, 3).map((post) => (
+                             <div key={post.id} className="p-4 bg-slate-700/50 rounded-lg border border-slate-600/30 hover:border-yellow-500/50 transition-all duration-300 opacity-60">
+                               <div className="flex items-start justify-between">
+                                 <div className="flex-1 min-w-0">
+                                   <div className="flex items-center gap-2 mb-2">
+                                     <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-400/30 pixelated-text text-xs">
+                                       ARCHIVED
+                                     </Badge>
+                                     <span className="text-xs text-blue-300/70 pixelated-text">
+                                       {new Date(post.dateCreated).toLocaleDateString()}
+                                     </span>
+                                   </div>
+                                   <p className="text-white pixelated-text text-sm mb-2 line-clamp-2">
+                                     {post.journal || "No content"}
+                                   </p>
+                                 </div>
+                                 <div className="flex gap-2 ml-4">
+                                   <Button
+                                     onClick={() => handleArchivePost(post.id)}
+                                     size="sm"
+                                     variant="outline"
+                                     className="bg-green-500/20 border-green-400 text-green-300 pixelated-text hover:bg-green-500/30"
+                                     title="Restore post"
+                                   >
+                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                     </svg>
+                                   </Button>
+                                 </div>
+                               </div>
+                             </div>
+                           ))}
+                           {archivedPosts.length > 3 && (
+                             <div className="text-center py-4">
+                               <p className="text-blue-300/70 pixelated-text text-sm">
+                                 +{archivedPosts.length - 3} more archived posts
+                               </p>
+                               <Button
+                                 onClick={() => setActiveSidebarItem('settings')}
+                                 size="sm"
+                                 variant="outline"
+                                 className="mt-2 bg-blue-500/20 border-blue-400 text-blue-300 pixelated-text hover:bg-blue-500/30"
+                               >
+                                 View All Archived
+                               </Button>
+                             </div>
+                           )}
+                         </div>
+                       </div>
+                     )}
+                   </div>
+                 );
+               })()}
+             </CardContent>
+           </Card>
          </div>
        );
 
@@ -3783,6 +4032,189 @@ export default function Dashboard({ address }: DashboardProps) {
                    Version 1.0.0
                  </p>
                </div>
+             </CardContent>
+           </Card>
+
+           {/* My Posts Section */}
+           <Card className="bg-white/8 border-white/20 text-white backdrop-blur-3xl card-glass shadow-2xl shadow-blue-400/30 border-opacity-30 hover:bg-white/12 hover:border-white/30 transition-all duration-500">
+             <CardHeader>
+               <CardTitle className="text-blue-100 pixelated-text">
+                 My Posts
+               </CardTitle>
+             </CardHeader>
+             <CardContent className="space-y-4">
+               {(() => {
+                 const myPosts = allPosts.filter(post => 
+                   post.baseUserId === (baseUserId || address)
+                 );
+                 
+                 if (myPosts.length === 0) {
+                   return (
+                     <div className="text-center py-8">
+                       <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                         <svg className="w-8 h-8 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                         </svg>
+                       </div>
+                       <h3 className="text-lg font-semibold text-white pixelated-text mb-2">
+                         No Posts Yet
+                       </h3>
+                       <p className="text-blue-300/70 pixelated-text text-sm mb-4">
+                         Start sharing your crypto journey by creating your first post!
+                       </p>
+                       <Button
+                         onClick={() => setActiveSidebarItem('home')}
+                         className="bg-blue-500 hover:bg-blue-600 text-white pixelated-text"
+                       >
+                         Create Post
+                       </Button>
+                     </div>
+                   );
+                 }
+                 
+                 const activePosts = myPosts.filter(post => !post.archived);
+                 const archivedPosts = myPosts.filter(post => post.archived);
+                 
+                 return (
+                   <div className="space-y-6">
+                     {/* Active Posts */}
+                     <div>
+                       <div className="flex items-center justify-between mb-4">
+                         <h3 className="text-lg font-semibold text-white pixelated-text">
+                           Active Posts ({activePosts.length})
+                         </h3>
+                       </div>
+                       <div className="space-y-3">
+                         {activePosts.map((post) => (
+                           <div key={post.id} className="p-4 bg-slate-700/50 rounded-lg border border-slate-600/30 hover:border-green-500/50 transition-all duration-300">
+                             <div className="flex items-start justify-between">
+                               <div className="flex-1 min-w-0">
+                                 <div className="flex items-center gap-2 mb-2">
+                                   <Badge className="bg-green-500/20 text-green-300 border-green-400/30 pixelated-text text-xs">
+                                     ACTIVE
+                                   </Badge>
+                                   <span className="text-xs text-blue-300/70 pixelated-text">
+                                     {new Date(post.dateCreated).toLocaleDateString()}
+                                   </span>
+                                 </div>
+                                 <p className="text-white pixelated-text text-sm mb-2 line-clamp-2">
+                                   {post.journal || "No content"}
+                                 </p>
+                                 {post.tags && post.tags.length > 0 && (
+                                   <div className="flex flex-wrap gap-1 mb-2">
+                                     {post.tags.slice(0, 3).map((tag, index) => (
+                                       <span key={index} className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded pixelated-text">
+                                         #{tag}
+                                       </span>
+                                     ))}
+                                     {post.tags.length > 3 && (
+                                       <span className="text-xs text-green-300/50 pixelated-text">
+                                         +{post.tags.length - 3} more
+                                       </span>
+                                     )}
+                                   </div>
+                                 )}
+                               </div>
+                               <div className="flex gap-2 ml-4">
+                                 <Button
+                                   onClick={() => handleArchivePost(post.id)}
+                                   size="sm"
+                                   variant="outline"
+                                   className="bg-yellow-500/20 border-yellow-400 text-yellow-300 pixelated-text hover:bg-yellow-500/30"
+                                   title="Archive post"
+                                 >
+                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                   </svg>
+                                 </Button>
+                                 <Button
+                                   onClick={() => handleDeletePost(post.id)}
+                                   size="sm"
+                                   variant="outline"
+                                   className="bg-red-500/20 border-red-400 text-red-300 pixelated-text hover:bg-red-500/30"
+                                   title="Delete post"
+                                 >
+                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                   </svg>
+                                 </Button>
+                               </div>
+                             </div>
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+                     
+                     {/* Archived Posts */}
+                     {archivedPosts.length > 0 && (
+                       <div>
+                         <div className="flex items-center justify-between mb-4">
+                           <h3 className="text-lg font-semibold text-white pixelated-text">
+                             Archived Posts ({archivedPosts.length})
+                           </h3>
+                           <Button
+                             onClick={() => setActiveSidebarItem('settings')}
+                             size="sm"
+                             variant="outline"
+                             className="bg-blue-500/20 border-blue-400 text-blue-300 pixelated-text hover:bg-blue-500/30"
+                           >
+                             Manage All
+                           </Button>
+                         </div>
+                         <div className="space-y-3">
+                           {archivedPosts.slice(0, 3).map((post) => (
+                             <div key={post.id} className="p-4 bg-slate-700/50 rounded-lg border border-slate-600/30 hover:border-yellow-500/50 transition-all duration-300 opacity-60">
+                               <div className="flex items-start justify-between">
+                                 <div className="flex-1 min-w-0">
+                                   <div className="flex items-center gap-2 mb-2">
+                                     <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-400/30 pixelated-text text-xs">
+                                       ARCHIVED
+                                     </Badge>
+                                     <span className="text-xs text-blue-300/70 pixelated-text">
+                                       {new Date(post.dateCreated).toLocaleDateString()}
+                                     </span>
+                                   </div>
+                                   <p className="text-white pixelated-text text-sm mb-2 line-clamp-2">
+                                     {post.journal || "No content"}
+                                   </p>
+                                 </div>
+                                 <div className="flex gap-2 ml-4">
+                                   <Button
+                                     onClick={() => handleArchivePost(post.id)}
+                                     size="sm"
+                                     variant="outline"
+                                     className="bg-green-500/20 border-green-400 text-green-300 pixelated-text hover:bg-green-500/30"
+                                     title="Restore post"
+                                   >
+                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                     </svg>
+                                   </Button>
+                                 </div>
+                               </div>
+                             </div>
+                           ))}
+                           {archivedPosts.length > 3 && (
+                             <div className="text-center py-4">
+                               <p className="text-blue-300/70 pixelated-text text-sm">
+                                 +{archivedPosts.length - 3} more archived posts
+                               </p>
+                               <Button
+                                 onClick={() => setActiveSidebarItem('settings')}
+                                 size="sm"
+                                 variant="outline"
+                                 className="mt-2 bg-blue-500/20 border-blue-400 text-blue-300 pixelated-text hover:bg-blue-500/30"
+                               >
+                                 View All Archived
+                               </Button>
+                             </div>
+                           )}
+                         </div>
+                       </div>
+                     )}
+                   </div>
+                 );
+               })()}
              </CardContent>
            </Card>
          </div>

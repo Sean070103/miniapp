@@ -119,11 +119,11 @@ export function TVPostContainer({
       <div className={cn(
         'relative rounded-2xl p-4 sm:p-6',
         surface === 'transparent'
-                  ? 'bg-white/10 border-2 border-sky-400/50 backdrop-blur-md shadow-xl'
+                  ? 'bg-white/10 border-2 border-green-500/50 backdrop-blur-md shadow-xl'
         : 'bg-gradient-to-br from-slate-900/90 to-slate-800/90 border-2 border-green-500/30 backdrop-blur-sm shadow-xl',
         'pixel-card scanlines',
         'transition-all duration-300',
-        'hover:scale-[1.02] hover:border-sky-400/50',
+        'hover:scale-[1.02] hover:border-green-500/50',
         'hover:shadow-green-500/20'
       )}>
         <div className="pointer-events-none absolute inset-0 rounded-2xl pixel-shine"></div>
@@ -156,11 +156,11 @@ export function PostHeader({ user, date, privacy, isOwner = false, isArchived = 
   return (
     <div className={cn(
       'flex items-center justify-between pb-4',
-              'border-b border-sky-400/30',
+              'border-b border-green-500/30',
       className
     )}>
       <div className="flex items-center gap-4">
-        <Avatar className="w-12 h-12 border-2 border-sky-400/50 shadow-lg shadow-sky-400/20 ring-2 ring-sky-400/20">
+        <Avatar className="w-12 h-12 border-2 border-green-500/50 shadow-lg shadow-green-500/20 ring-2 ring-green-500/20">
           <AvatarFallback className="bg-gradient-to-br from-green-600 to-green-700 text-green-100 font-bold text-sm pixelated-text">
             {user.name ? user.name.charAt(0).toUpperCase() : user.address.slice(2, 4).toUpperCase()}
           </AvatarFallback>
@@ -178,7 +178,7 @@ export function PostHeader({ user, date, privacy, isOwner = false, isArchived = 
               })}</span>
             </div>
             {privacy && (
-              <Badge variant="outline" className="text-xs border-sky-400/50 text-sky-300 bg-sky-900/30 pixelated-text font-bold">
+              <Badge variant="outline" className="text-xs border-green-500/50 text-green-300 bg-green-900/30 pixelated-text font-bold">
                 {privacy}
               </Badge>
             )}
@@ -189,12 +189,12 @@ export function PostHeader({ user, date, privacy, isOwner = false, isArchived = 
       {/* Owner Actions - "..." Button */}
       {isOwner && (
         <div className="relative group">
-          <button className="pixel-button flex items-center justify-center w-9 h-9 rounded-lg text-sky-300/70 hover:text-sky-400 hover:bg-sky-500/10 hover:scale-105 transition-all duration-300 border border-sky-400/20 hover:border-sky-400/40 shadow-lg shadow-sky-400/10">
+          <button className="pixel-button flex items-center justify-center w-9 h-9 rounded-lg text-green-300/70 hover:text-green-400 hover:bg-green-500/10 hover:scale-105 transition-all duration-300 border border-green-500/20 hover:border-green-500/40 shadow-lg shadow-green-500/10">
             <MoreHorizontal className="w-4 h-4" />
           </button>
           
           {/* Dropdown Menu - Enhanced Gaming Style */}
-          <div className="absolute right-0 top-full mt-1 w-52 bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl border-2 border-sky-400/40 rounded-xl shadow-2xl shadow-sky-400/30 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 transform origin-top-right scale-95 group-hover:scale-100">
+          <div className="absolute right-0 top-full mt-1 w-52 bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl border-2 border-green-500/40 rounded-xl shadow-2xl shadow-green-500/30 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 transform origin-top-right scale-95 group-hover:scale-100">
             <div className="p-2 space-y-1">
               {onArchive && (
                 <button
@@ -202,7 +202,7 @@ export function PostHeader({ user, date, privacy, isOwner = false, isArchived = 
                   className={cn(
                     "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 pixelated-text text-sm font-bold",
                     isArchived 
-                      ? "text-sky-300 hover:text-sky-400 hover:bg-sky-500/15 border border-sky-400/20 hover:border-sky-400/40" 
+                      ? "text-green-300 hover:text-green-400 hover:bg-green-500/15 border border-green-500/20 hover:border-green-500/40" 
                       : "text-blue-300 hover:text-blue-400 hover:bg-blue-500/15 border border-blue-500/20 hover:border-blue-500/40"
                   )}
                 >
@@ -358,7 +358,7 @@ export function PostActions({
 
   return (
     <div className={cn(
-              'flex items-center justify-between pt-3 border-t border-sky-400/30',
+      'flex items-center justify-between pt-3 border-t border-green-500/30',
       'pb-2',
       className
     )}>
