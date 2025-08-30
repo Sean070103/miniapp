@@ -1,39 +1,32 @@
-import prisma from '../../../../../utils/connect';
+import { prisma } from '@/lib/prisma'
+import { NextResponse } from "next/server";
 
 
-// get post bu baseUserId
+// get chain comments by commentId
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { commentId } = body;
-
-  if (!commentId) {
-    return new Response(JSON.stringify({ error: "Missing commentId" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
   try {
-   const chainCommentUser = await prisma.chaincomments.findMany({
-     where: { commentId: commentId },
-   });
+    const body = await req.json();
+    const { commentId } = body;
 
+    if (!commentId) {
+      return NextResponse.json(
+        { error: "Missing commentId" },
+        { status: 400 }
+      );
+    }
 
-    return new Response(JSON.stringify(chainCommentUser), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    const chainComments = await prisma.chaincomments.findMany({
+      where: { commentId: commentId },
+      orderBy: { dateCreated: 'asc' },
     });
 
-  } catch (e) {
-    return new Response(
-      JSON.stringify({
-        error: "Error fetching base user",
-        details: e instanceof Error ? e.message : String(e),
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+    return NextResponse.json(chainComments, { status: 200 });
+
+  } catch (error) {
+    console.error("Error fetching chain comments:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch chain comments" },
+      { status: 500 }
     );
   }
 }

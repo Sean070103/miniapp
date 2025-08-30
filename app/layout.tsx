@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { Jersey_10 } from 'next/font/google'
 import { WalletProvider } from '@/components/providers/wallet-provider'
 import { AuthProvider } from '@/contexts/auth-context'
 import { WalletSync } from '@/components/providers/wallet-sync'
@@ -45,13 +46,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="pixel-font">
+    <html lang="en">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P:wght@400&display=swap" rel="stylesheet" />
       </head>
-      <body className="pixel-font" suppressHydrationWarning={true}>
+      <body suppressHydrationWarning={true}>
         <ChunkErrorHandler>
           <ErrorBoundary>
             <HydrationProvider>

@@ -2,6 +2,265 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Retro CRT and scanline effects */
+.crt {
+  position: relative;
+  overflow: hidden;
+}
+
+.crt:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(rgba(255,255,255,0.05), rgba(0,0,0,0.05));
+  mix-blend-mode: overlay;
+}
+
+.scanlines:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(0,0,0,0.15) 50%, rgba(0,0,0,0) 50%);
+  background-size: 100% 2px;
+  opacity: .35;
+}
+
+.vignette:after {
+  content: "";
+  position: absolute;
+  inset: -2%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.4) 100%);
+}
+
+.rgb-fringe {
+  text-shadow: 1px 0 0 rgba(255,0,0,0.25), -1px 0 0 rgba(0,255,255,0.25);
+}
+
+.flicker {
+  animation: flicker 2.5s infinite steps(100);
+}
+
+@keyframes flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1 }
+  20%, 24%, 55% { opacity: .95 }
+  22% { opacity: .9 }
+}
+
+.pixel-rounded {
+  border-radius: 8px;
+  clip-path: polygon(
+    0% 6px, 6px 6px, 6px 0, calc(100% - 6px) 0, calc(100% - 6px) 6px, 100% 6px,
+    100% calc(100% - 6px), calc(100% - 6px) calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%,
+    6px calc(100% - 6px), 0 calc(100% - 6px)
+  );
+}
+
+/* Arcade cabinet styles */
+.arcade-cabinet {
+  position: relative;
+  max-width: 860px;
+  margin: 0 auto;
+  padding-top: 72px; /* space for marquee */
+}
+
+.arcade-marquee {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 54px;
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.15), rgba(0,0,0,0.1)), linear-gradient(135deg, #0ea5e9, #8b5cf6);
+  border: 3px solid rgba(255,255,255,0.2);
+  border-radius: 10px 10px 4px 4px;
+  box-shadow: 0 10px 30px rgba(14,165,233,0.3), inset 0 0 20px rgba(255,255,255,0.15);
+  color: white;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.arcade-bezel {
+  background: linear-gradient(180deg, rgba(15,23,42,0.95), rgba(2,6,23,0.95));
+  border: 10px solid #111827;
+  border-top-width: 24px;
+  border-bottom-width: 16px;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 0 80px rgba(59,130,246,0.08);
+}
+
+/* Subtle screen curvature */
+.screen-curved {
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+}
+.screen-curved:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 80% at 50% 10%, rgba(255,255,255,0.07), rgba(0,0,0,0) 60%);
+  pointer-events: none;
+}
+
+/* Bezel screws */
+.bezel-screw {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: radial-gradient(circle at 35% 35%, #e5e7eb, #9ca3af);
+  border-radius: 9999px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.3); 
+}
+
+/* Side art panels */
+.arcade-side-left, .arcade-side-right {
+  position: absolute;
+  top: 28px;
+  width: 18px;
+  bottom: 58px;
+  background: linear-gradient(180deg, rgba(219,39,119,0.8), rgba(59,130,246,0.8));
+  filter: blur(0.4px) saturate(1.2);
+  box-shadow: 0 0 20px rgba(219,39,119,0.35);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.arcade-side-left { left: -24px; border-radius: 8px 0 0 8px; }
+.arcade-side-right { right: -24px; border-radius: 0 8px 8px 0; }
+
+/* Coin slot */
+.coin-slot {
+  width: 120px;
+  height: 40px;
+  margin: 6px auto 0;
+  background: linear-gradient(180deg, #0b1220, #060b14);
+  border: 2px solid #0f172a;
+  border-radius: 8px;
+  box-shadow: inset 0 -6px 10px rgba(0,0,0,0.6);
+  position: relative;
+}
+.coin-slot:before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 56px;
+  height: 6px;
+  border-radius: 3px;
+  background: #1f2937;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.06);
+}
+.coin-slot:after {
+  content: "25¢";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #93c5fd;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.arcade-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(180deg, #0f172a, #0b1220);
+  border: 6px solid #0b1220;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 10px 16px 16px;
+  box-shadow: inset 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.btn-arcade {
+  border: 2px solid rgba(255,255,255,0.25);
+  border-radius: 9999px;
+  padding: 8px 14px;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.25), rgba(255,255,255,0) 40%), var(--btn-color, #22c55e);
+  color: white;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.35), 0 0 18px var(--btn-glow, rgba(34,197,94,0.35));
+  transform: translateY(0);
+  transition: transform .05s ease, box-shadow .2s ease, filter .2s ease;
+}
+
+.btn-arcade:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.4), 0 0 10px var(--btn-glow, rgba(34,197,94,0.35));
+  filter: brightness(1.1);
+}
+
+.btn-arcade-red { --btn-color:#ef4444; --btn-glow: rgba(239,68,68,0.4); }
+.btn-arcade-blue { --btn-color:#3b82f6; --btn-glow: rgba(59,130,246,0.4); }
+.btn-arcade-yellow { --btn-color:#eab308; --btn-glow: rgba(234,179,8,0.45); }
+.btn-arcade-green { --btn-color:#22c55e; --btn-glow: rgba(34,197,94,0.45); }
+
+/* Arcade Joystick */
+.joystick {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 16px;
+}
+
+.joystick-base {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 24px;
+  background: radial-gradient(circle at 50% 20%, rgba(255,255,255,0.15), rgba(0,0,0,0) 60%), #0b1220;
+  border-radius: 12px;
+  box-shadow: inset 0 6px 12px rgba(0,0,0,0.6), 0 8px 16px rgba(0,0,0,0.35);
+  border: 2px solid #111827;
+}
+
+.joystick-stick {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  width: 10px;
+  height: 46px;
+  background: linear-gradient(180deg, #1f2937, #0f172a);
+  transform-origin: bottom center;
+  transform: translateX(-50%) rotate(0deg);
+  border-radius: 6px;
+  box-shadow: inset 0 0 6px rgba(255,255,255,0.1);
+}
+
+.joystick-ball {
+  position: absolute;
+  bottom: 56px;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  transform: translateX(-50%);
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.7), rgba(255,255,255,0) 55%), #ef4444;
+  border-radius: 9999px;
+  box-shadow: 0 0 18px rgba(239,68,68,0.45), inset 0 0 10px rgba(255,255,255,0.2);
+  border: 2px solid rgba(255,255,255,0.25);
+}
+
+.joystick:hover .joystick-stick {
+  animation: jostick-wobble .9s ease-in-out infinite;
+}
+
+@keyframes jostick-wobble {
+  0%,100% { transform: translateX(-50%) rotate(0deg); }
+  25% { transform: translateX(-50%) rotate(-10deg); }
+  50% { transform: translateX(-50%) rotate(8deg); }
+  75% { transform: translateX(-50%) rotate(-6deg); }
+}
+
 @layer base {
 :root {
     --background: 0 0% 100%;
@@ -1090,6 +1349,8 @@
     font-family: 'Courier New', monospace !important;
   }
 }
+
+
 
 /* Enhanced Landscape orientation optimizations */
 @media (orientation: landscape) and (max-height: 500px) {

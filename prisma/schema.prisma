@@ -52,6 +52,16 @@ model Journal {
  privacy     String   @default("public")
  dateCreated DateTime @default(now())
  
+ // New journal-specific fields
+ mood        Int?     // 1-5 scale for mood tracking
+ weather     String?  // Weather condition
+ location    String?  // Optional location
+ category    String?  // Entry category (personal, crypto, work, health, etc.)
+ isGratitude Boolean  @default(false) // Gratitude journal entry
+ isGoal      Boolean  @default(false) // Goal-related entry
+ isDream     Boolean  @default(false) // Dream journal entry
+ prompt      String?  // Journal prompt used (if any)
+ 
  // Analytics
  contentAnalytics ContentAnalytics?
  

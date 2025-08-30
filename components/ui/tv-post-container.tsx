@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { Badge } from './badge'
 import { Button } from './button'
 import { Avatar, AvatarFallback } from './avatar'
-import { Heart, MessageSquare, Share2, BookOpen, Calendar, MoreHorizontal, Trash2, Archive } from 'lucide-react'
+import { Heart, MessageSquare, Share2, BookOpen, Calendar, Trash2, Archive, MoreHorizontal } from 'lucide-react'
 
 interface TVPostContainerProps {
   children: React.ReactNode
@@ -14,6 +14,7 @@ interface TVPostContainerProps {
   showReflection?: boolean
   hasImage?: boolean
   tvStyle?: 'retro' | 'modern' | 'futuristic' | 'vintage' | 'minimal'
+  surface?: 'transparent' | 'dark'
 }
 
 export function TVPostContainer({ 
@@ -22,7 +23,8 @@ export function TVPostContainer({
   neonColor = 'cyan',
   showReflection = true,
   hasImage = false,
-  tvStyle = 'modern'
+  tvStyle = 'modern',
+  surface = 'dark'
 }: TVPostContainerProps) {
   const neonColors = {
     blue: {
@@ -107,7 +109,7 @@ export function TVPostContainer({
 
   // TV effect removed – use single light card for all posts
 
-  // Uniform clean card container (no TV)
+  // Gaming-style post container
   return (
     <div className={cn(
       'relative w-full',
@@ -116,9 +118,13 @@ export function TVPostContainer({
       {/* Gaming Post Container */}
       <div className={cn(
         'relative rounded-2xl p-4 sm:p-6',
+        surface === 'transparent'
+                  ? 'bg-white/10 border-2 border-sky-400/50 backdrop-blur-md shadow-xl'
+        : 'bg-gradient-to-br from-slate-900/90 to-slate-800/90 border-2 border-green-500/30 backdrop-blur-sm shadow-xl',
         'pixel-card scanlines',
         'transition-all duration-300',
-        'hover:scale-[1.02]'
+        'hover:scale-[1.02] hover:border-sky-400/50',
+        'hover:shadow-green-500/20'
       )}>
         <div className="pointer-events-none absolute inset-0 rounded-2xl pixel-shine"></div>
         {/* Content Area */}
@@ -139,50 +145,84 @@ interface PostHeaderProps {
   }
   date: Date
   privacy?: string
+  isOwner?: boolean
+  isArchived?: boolean
+  onArchive?: () => void
+  onDelete?: () => void
   className?: string
 }
 
-export function PostHeader({ user, date, privacy, className }: PostHeaderProps) {
+export function PostHeader({ user, date, privacy, isOwner = false, isArchived = false, onArchive, onDelete, className }: PostHeaderProps) {
   return (
     <div className={cn(
-      'flex items-center justify-between pb-3',
-      'border-b border-green-500/30',
+      'flex items-center justify-between pb-4',
+              'border-b border-sky-400/30',
       className
     )}>
-      <div className="flex items-center gap-3">
-        <Avatar className="w-10 h-10 border-2 border-green-500/50 shadow-lg shadow-green-500/20">
+      <div className="flex items-center gap-4">
+        <Avatar className="w-12 h-12 border-2 border-sky-400/50 shadow-lg shadow-sky-400/20 ring-2 ring-sky-400/20">
           <AvatarFallback className="bg-gradient-to-br from-green-600 to-green-700 text-green-100 font-bold text-sm pixelated-text">
             {user.name ? user.name.charAt(0).toUpperCase() : user.address.slice(2, 4).toUpperCase()}
           </AvatarFallback>
         </Avatar>
-        <div className="space-y-0.5">
-          <div className="text-green-100 font-bold text-sm pixelated-text">
+        <div className="space-y-1">
+          <div className="text-green-100 font-bold text-base pixelated-text pixel-text-shadow">
             {user.name || `${user.address.slice(0, 6)}...${user.address.slice(-4)}`}
           </div>
-          <div className="flex items-center gap-2 text-green-300/70 text-xs">
-            <div className="flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              <span>{date.toLocaleDateString('en-US', {
+          <div className="flex items-center gap-3 text-green-300/70 text-xs">
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5" />
+              <span className="pixelated-text">{date.toLocaleDateString('en-US', {
                 month: 'short',
                 day: 'numeric',
               })}</span>
             </div>
             {privacy && (
-              <Badge variant="outline" className="text-xs border-green-500/50 text-green-300 bg-green-900/30">
+              <Badge variant="outline" className="text-xs border-sky-400/50 text-sky-300 bg-sky-900/30 pixelated-text font-bold">
                 {privacy}
               </Badge>
             )}
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-1">
-        <Button variant="ghost" size="sm" className="text-green-400 hover:text-green-300 hover:bg-green-900/30 rounded-lg p-1.5 transition-all">
-          <Share2 className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="sm" className="text-green-400 hover:text-green-300 hover:bg-green-900/30 rounded-lg p-1.5 transition-all">
-          <BookOpen className="w-4 h-4" />
-        </Button>
-      </div>
+      
+      {/* Owner Actions - "..." Button */}
+      {isOwner && (
+        <div className="relative group">
+          <button className="pixel-button flex items-center justify-center w-9 h-9 rounded-lg text-sky-300/70 hover:text-sky-400 hover:bg-sky-500/10 hover:scale-105 transition-all duration-300 border border-sky-400/20 hover:border-sky-400/40 shadow-lg shadow-sky-400/10">
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+          
+          {/* Dropdown Menu - Enhanced Gaming Style */}
+          <div className="absolute right-0 top-full mt-1 w-52 bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl border-2 border-sky-400/40 rounded-xl shadow-2xl shadow-sky-400/30 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 transform origin-top-right scale-95 group-hover:scale-100">
+            <div className="p-2 space-y-1">
+              {onArchive && (
+                <button
+                  onClick={onArchive}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 pixelated-text text-sm font-bold",
+                    isArchived 
+                      ? "text-sky-300 hover:text-sky-400 hover:bg-sky-500/15 border border-sky-400/20 hover:border-sky-400/40" 
+                      : "text-blue-300 hover:text-blue-400 hover:bg-blue-500/15 border border-blue-500/20 hover:border-blue-500/40"
+                  )}
+                >
+                  <Archive className="w-4 h-4" />
+                  {isArchived ? "Restore Post" : "Archive Post"}
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={onDelete}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-500/15 rounded-lg transition-all duration-200 pixelated-text text-sm font-bold border border-red-500/20 hover:border-red-500/40"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Post
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -285,7 +325,9 @@ interface PostActionsProps {
   onArchive?: () => void
   loadingLikes?: boolean
   isOwner?: boolean
+  isArchived?: boolean
   className?: string
+  theme?: 'night' | 'dark'
 }
 
 export function PostActions({ 
@@ -300,11 +342,23 @@ export function PostActions({
   onArchive,
   loadingLikes = false,
   isOwner = false,
-  className 
+  isArchived = false,
+  className,
+  theme = 'dark' 
 }: PostActionsProps) {
+  const palette = theme === 'night'
+    ? {
+        btn: 'bg-indigo-500/20 border border-indigo-300/40 text-indigo-50 hover:bg-indigo-500/30 hover:border-indigo-300/60 shadow-indigo-500/20',
+        count: 'text-indigo-50'
+      }
+    : {
+        btn: 'bg-emerald-500/20 border border-emerald-300/40 text-emerald-50 hover:bg-emerald-500/30 hover:border-emerald-300/60 shadow-emerald-500/20',
+        count: 'text-emerald-50'
+      }
+
   return (
     <div className={cn(
-      'flex items-center justify-between pt-3 border-t border-green-500/30',
+              'flex items-center justify-between pt-3 border-t border-sky-400/30',
       'pb-2',
       className
     )}>
@@ -314,9 +368,10 @@ export function PostActions({
           onClick={onLike}
           disabled={loadingLikes}
           className={cn(
-            'pixel-button flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 hover:scale-105',
+            'flex items-center gap-2 px-3 py-2 rounded-full transition-all duration-300 hover:scale-105',
+            palette.btn,
             loadingLikes ? "opacity-50 cursor-not-allowed" : "",
-            isLiked ? "text-green-400 pixel-text-glow" : "text-green-300/70 hover:text-green-400"
+            isLiked ? "!text-green-300 pixel-text-glow" : ""
           )}
         >
           <div className="relative">
@@ -325,64 +380,33 @@ export function PostActions({
             ) : (
               <Heart className={cn(
                 'w-5 h-5 transition-all duration-300',
-                isLiked ? "text-green-400 fill-green-400 pixel-text-glow" : "text-green-300/70 hover:text-green-400 hover:scale-110"
+                isLiked ? "text-green-400 fill-green-400 pixel-text-glow" : "text-white/80 hover:text-white hover:scale-110"
               )} />
             )}
           </div>
-          <span className="text-sm font-bold text-green-100 pixel-text-shadow">{likes}</span>
+          <span className={cn('text-sm font-bold pixel-text-shadow', palette.count)}>{likes}</span>
         </button>
 
         {/* Enhanced Comment Button */}
         <button
           onClick={onComment}
-          className="pixel-button flex items-center gap-2 px-3 py-2 rounded-lg text-green-300/70 hover:text-green-400 hover:scale-105 transition-all duration-300"
+          className={cn('flex items-center gap-2 px-3 py-2 rounded-full hover:scale-105 transition-all duration-300', palette.btn)}
         >
           <MessageSquare className="w-5 h-5 hover:scale-110 transition-transform duration-300" />
-          <span className="text-sm font-bold text-green-100 pixel-text-shadow">{comments}</span>
+          <span className={cn('text-sm font-bold pixel-text-shadow', palette.count)}>{comments}</span>
         </button>
 
         {/* Enhanced Repost Button */}
         <button
           onClick={onRepost}
-          className="pixel-button flex items-center gap-2 px-3 py-2 rounded-lg text-green-300/70 hover:text-green-400 hover:scale-105 transition-all duration-300"
+          className={cn('flex items-center gap-2 px-3 py-2 rounded-full hover:scale-105 transition-all duration-300', palette.btn)}
         >
           <Share2 className="w-5 h-5 hover:scale-110 transition-transform duration-300" />
-          <span className="text-sm font-bold text-green-100 pixel-text-shadow">{reposts}</span>
+          <span className={cn('text-sm font-bold pixel-text-shadow', palette.count)}>{reposts}</span>
         </button>
       </div>
 
-      {/* Post Owner Actions */}
-      {isOwner && (
-        <div className="relative group">
-          <button className="pixel-button flex items-center gap-2 px-3 py-2 rounded-lg text-green-300/70 hover:text-green-400 hover:scale-105 transition-all duration-300">
-            <MoreHorizontal className="w-5 h-5 hover:scale-110 transition-transform duration-300" />
-          </button>
-          
-          {/* Dropdown Menu */}
-          <div className="absolute right-0 top-full mt-2 w-48 bg-black/90 backdrop-blur-xl border border-green-500/30 rounded-lg shadow-2xl shadow-green-500/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-            <div className="p-2 space-y-1">
-              {onArchive && (
-                <button
-                  onClick={onArchive}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-green-300 hover:text-green-400 hover:bg-green-500/10 rounded-md transition-all duration-200 pixelated-text text-sm"
-                >
-                  <Archive className="w-4 h-4" />
-                  Archive Post
-                </button>
-              )}
-              {onDelete && (
-                <button
-                  onClick={onDelete}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-md transition-all duration-200 pixelated-text text-sm"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete Post
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   )
 }

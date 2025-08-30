@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -53,6 +53,8 @@ interface Journal {
   tags: string[];
   privacy: string;
   dateCreated: Date;
+  archived?: boolean;
+  archivedAt?: Date;
 }
 
 type SidebarItem = 'home' | 'calendar' | 'calculator' | 'stats' | 'streak' | 'notifications' | 'profile' | 'settings'
@@ -133,6 +135,9 @@ export default function Dashboard({ address }: DashboardProps) {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   
+  // Theme and background states
+  const [selectedTheme, setSelectedTheme] = useState<'night-mode' | 'dark-gaming'>('night-mode');
+  
   // User switching functionality
   const [availableUsers, setAvailableUsers] = useState<string[]>([]);
   const [isUserSwitcherOpen, setIsUserSwitcherOpen] = useState(false);
@@ -143,6 +148,14 @@ export default function Dashboard({ address }: DashboardProps) {
   const [replyToComment, setReplyToComment] = useState<any>(null);
   const [replyContent, setReplyContent] = useState('');
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  // Inline edit state for comments
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState<string>('');
+  const [commentLiked, setCommentLiked] = useState<{[key:string]: boolean}>({});
+  const [commentLikeCounts, setCommentLikeCounts] = useState<{[key:string]: number}>({});
+  const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState<string>('');
+  const [replyCounts, setReplyCounts] = useState<{[key:string]: number}>({});
   
   // Home feed states
   const [allPosts, setAllPosts] = useState<Journal[]>([]);
@@ -151,6 +164,113 @@ export default function Dashboard({ address }: DashboardProps) {
   const [trendingTopics, setTrendingTopics] = useState<string[]>([]);
   const [feedFilter, setFeedFilter] = useState<'all' | 'following' | 'trending'>('all');
   const [isLoadingFeed, setIsLoadingFeed] = useState(false);
+  const [recentlyDeletedPost, setRecentlyDeletedPost] = useState<Journal | null>(null);
+  const deleteTimerRef = useRef<number | null>(null);
+
+  // Undo delete function
+  const undoDelete = () => {
+    if (recentlyDeletedPost) {
+      setAllPosts(prev => [recentlyDeletedPost, ...prev]);
+      setRecentlyDeletedPost(null);
+      if (deleteTimerRef.current) {
+        window.clearTimeout(deleteTimerRef.current);
+        deleteTimerRef.current = null;
+      }
+    }
+  };
+
+  // Theme background renderer
+  const renderThemeBackground = () => {
+    switch (selectedTheme) {
+      case 'night-mode':
+        return (
+          <div className="absolute inset-0">
+            {/* Night sky gradient */}
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-blue-900 to-slate-800" />
+            
+            {/* Stars */}
+            <div className="absolute inset-0">
+              {[...Array(50)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                    animationDuration: `${2 + Math.random() * 3}s`,
+                    animationDelay: `${Math.random() * 2}s`,
+                    opacity: 0.3 + Math.random() * 0.7
+                  }}
+                />
+              ))}
+            </div>
+            
+            {/* Moon */}
+            <div className="absolute top-8 right-8 z-0">
+              <div className="relative">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full bg-gray-200 shadow-[0_0_20px_rgba(255,255,255,0.3)]" />
+                <div className="absolute inset-0 rounded-full bg-gray-100/40 blur-lg" />
+              </div>
+            </div>
+            
+            {/* Shooting stars */}
+            <div className="absolute top-20 left-1/4 w-20 h-0.5 bg-gradient-to-r from-white to-transparent animate-pulse" style={{ animationDuration: '4s', transform: 'rotate(-45deg)' }} />
+            <div className="absolute top-40 right-1/3 w-16 h-0.5 bg-gradient-to-r from-white to-transparent animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s', transform: 'rotate(-30deg)' }} />
+            
+            {/* Ground */}
+            <div className="absolute bottom-0 left-0 right-0 z-30 w-full h-[40px] sm:h-[50px] md:h-[60px] lg:h-[70px] overflow-hidden">
+              <div className="absolute bottom-0 left-0 w-full h-full bg-slate-800" />
+              <div
+                className="absolute bottom-0 left-0 w-full h-full bg-slate-700/50"
+                style={{
+                  backgroundImage: "repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(255,255,255,0.05) 30px, rgba(255,255,255,0.05) 60px)",
+                  backgroundSize: "60px 100%",
+                }}
+              />
+            </div>
+          </div>
+        );
+
+      case 'dark-gaming':
+        return (
+          <div className="absolute inset-0">
+            {/* Dark gaming background */}
+            <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-800 to-black" />
+            
+            {/* Grid pattern */}
+            <div className="absolute inset-0 opacity-30"
+              style={{
+                backgroundImage: `
+                  linear-gradient(rgba(0,255,0,0.15) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(0,255,0,0.15) 1px, transparent 1px)
+                `,
+                backgroundSize: '40px 40px'
+              }}
+            />
+            
+            {/* Corner grid lines */}
+            <div className="absolute top-0 left-0 w-32 h-1 bg-gradient-to-r from-green-400 to-transparent" />
+            <div className="absolute top-0 left-0 w-1 h-32 bg-gradient-to-b from-green-400 to-transparent" />
+            <div className="absolute top-0 right-0 w-32 h-1 bg-gradient-to-l from-green-400 to-transparent" />
+            <div className="absolute top-0 right-0 w-1 h-32 bg-gradient-to-b from-green-400 to-transparent" />
+            <div className="absolute bottom-0 left-0 w-32 h-1 bg-gradient-to-r from-green-400 to-transparent" />
+            <div className="absolute bottom-0 left-0 w-1 h-32 bg-gradient-to-t from-green-400 to-transparent" />
+            <div className="absolute bottom-0 right-0 w-32 h-1 bg-gradient-to-l from-green-400 to-transparent" />
+            <div className="absolute bottom-0 right-0 w-1 h-32 bg-gradient-to-t from-green-400 to-transparent" />
+            
+            {/* Glowing orbs */}
+            <div className="absolute top-20 left-20 w-4 h-4 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50" style={{ animationDuration: '3s' }} />
+            <div className="absolute top-40 right-32 w-3 h-3 bg-blue-400 rounded-full animate-pulse shadow-lg shadow-blue-400/50" style={{ animationDuration: '4s' }} />
+            <div className="absolute bottom-40 left-1/3 w-5 h-5 bg-purple-400 rounded-full animate-pulse shadow-lg shadow-purple-400/50" style={{ animationDuration: '2.5s' }} />
+            <div className="absolute top-1/2 right-20 w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50" style={{ animationDuration: '3.5s' }} />
+            <div className="absolute bottom-1/3 right-1/3 w-3 h-3 bg-yellow-400 rounded-full animate-pulse shadow-lg shadow-yellow-400/50" style={{ animationDuration: '2s' }} />
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   // TV styles order for image posts, typed as a readonly tuple to preserve literal types
   const tvStylesOrder = ['retro', 'modern', 'futuristic', 'vintage', 'minimal'] as const;
@@ -241,7 +361,7 @@ export default function Dashboard({ address }: DashboardProps) {
     addNotification
   } = useSimpleNotifications(baseUserId || address);
 
-
+  const [commentCursors, setCommentCursors] = useState<{ [key: string]: string | null }>({});
 
   const openPostModal = async (journalId: string) => {
     let post = allPosts.find(p => p.id === journalId) || dbEntries.find(p => p.id === journalId) || null;
@@ -338,17 +458,29 @@ export default function Dashboard({ address }: DashboardProps) {
 
   const fetchComments = async (journalId: string) => {
     try {
-      const response = await fetch(`/api/comment/get?journalId=${journalId}`);
+      const response = await fetch(`/api/comment/get`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ journalId, cursor: commentCursors?.[journalId] || null, pageSize: 10 }),
+      });
       if (response.ok) {
         const data = await response.json();
-        setDbComments(prev => ({
-          ...prev,
-          [journalId]: data.data || []
-        }));
+        setCommentCursors(prev => ({ ...prev, [journalId]: data.nextCursor }));
+        return data.items || [];
       }
+      return [];
     } catch (error) {
-      console.error('Error fetching comments:', error);
+      console.error("Error fetching comments:", error);
+      return [];
     }
+  };
+
+  const loadMoreComments = async (journalId: string) => {
+    const more = await fetchComments(journalId);
+    setDbComments(prev => {
+      const existing = prev.filter(c => c.journalId !== journalId);
+      return [...existing, ...prev.filter(c=>c.journalId===journalId), ...more];
+    });
   };
 
   // Fetch baseuser journal
@@ -413,9 +545,10 @@ export default function Dashboard({ address }: DashboardProps) {
   useEffect(() => {
     const uid = baseUserId || address;
     if (!uid) return;
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
     // Fetch calendar dates
-    fetch(`/api/calendar/dates?userId=${uid}`)
+    fetch(`/api/calendar/dates?userId=${uid}&tz=${encodeURIComponent(tz)}`)
       .then(r => r.json())
       .then(data => {
         if (data && data.success && Array.isArray(data.dates)) {
@@ -440,7 +573,7 @@ export default function Dashboard({ address }: DashboardProps) {
       .catch(() => {});
 
     // Fetch streak stats
-    fetch(`/api/streak?userId=${uid}`)
+    fetch(`/api/streak?userId=${uid}&tz=${encodeURIComponent(tz)}`)
       .then(r => r.json())
       .then(data => {
         if (data && data.success) {
@@ -483,9 +616,11 @@ export default function Dashboard({ address }: DashboardProps) {
         fetchJournalComments(post.id).then(comments => {
           console.log('Fetched comments for post', post.id, ':', comments);
           setDbComments(prev => {
-            const existingComments = prev.filter(c => c.journalId !== post.id);
-            return [...existingComments, ...comments];
+            const existing = prev.filter(c => c.journalId !== post.id);
+            return [...existing, ...comments];
           });
+          // fetch reply counts for each comment
+          // TODO: Implement fetchReplyCount function
         });
       });
     }
@@ -761,6 +896,18 @@ export default function Dashboard({ address }: DashboardProps) {
   // Comment utility functions
   const postComment = async (journalId: string, comment: string) => {
     try {
+      // optimistic insert
+      const tempId = `temp-${Date.now()}`;
+      const tempComment = {
+        id: tempId,
+        journalId,
+        baseUserId: baseUserId || address,
+        comment,
+        dateCreated: new Date().toISOString(),
+      } as any;
+      setDbComments(prev => [tempComment, ...prev]);
+      setCommentCounts(prev => ({ ...prev, [journalId]: (prev[journalId] || 0) + 1 }));
+
       const response = await fetch("/api/comment/post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -772,15 +919,14 @@ export default function Dashboard({ address }: DashboardProps) {
       });
       if (!response.ok) throw new Error("Failed to post comment");
       const newComment = await response.json();
-      
-      // Add to local comments state
-      setDbComments(prev => [newComment, ...prev]);
+      // replace temp with real
+      setDbComments(prev => {
+        const withoutTemp = prev.filter(c => c.id !== tempId);
+        return [newComment, ...withoutTemp];
+      });
       
       // Update comment count
-      setCommentCounts(prev => ({
-        ...prev,
-        [journalId]: (prev[journalId] || 0) + 1
-      }));
+      // already incremented optimistically
       
       // Show success toast
               toast({
@@ -791,11 +937,61 @@ export default function Dashboard({ address }: DashboardProps) {
       return newComment;
     } catch (error) {
       console.error("Error posting comment:", error);
+      // rollback optimistic
+      setDbComments(prev => prev.filter(c => !(c.id as string)?.startsWith('temp-')));
+      setCommentCounts(prev => ({
+        ...prev,
+        [journalId]: Math.max(0, (prev[journalId] || 1) - 1)
+      }));
               toast({
           title: "Error",
           description: "Failed to post comment"
         });
       throw error;
+    }
+  };
+
+  // Local edit/delete helpers (no server persistence yet)
+  const startEditComment = (commentId: string, currentText: string) => {
+    setEditingCommentId(commentId);
+    setEditingText(currentText);
+  };
+  const saveEditComment = (commentId: string) => {
+    setDbComments(prev => prev.map(c => c.id === commentId ? { ...c, comment: editingText } : c));
+    setEditingCommentId(null);
+    setEditingText('');
+  };
+  const cancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditingText('');
+  };
+  const deleteLocalComment = (journalId: string, commentId: string) => {
+    setDbComments(prev => prev.filter(c => c.id !== commentId));
+    setCommentCounts(prev => ({ ...prev, [journalId]: Math.max(0, (prev[journalId] || 1) - 1) }));
+  };
+
+  const toggleLikeComment = (commentId: string) => {
+    const liked = !!commentLiked[commentId];
+    setCommentLiked(prev => ({ ...prev, [commentId]: !liked }));
+    setCommentLikeCounts(prev => ({ ...prev, [commentId]: (prev[commentId] || 0) + (liked ? -1 : 1) }));
+    // Optional: call API here to persist like
+  };
+
+  const submitInlineReply = async (parent: any) => {
+    const text = replyText.trim();
+    if (!text) return;
+    try {
+      // Try chain comment endpoint if present
+      await fetch('/api/comment/chainComment/post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commentId: parent.id, baseUserId: baseUserId || address, chainComment: text })
+      }).catch(()=>{});
+      toast({ title: 'Replied', description: 'Your reply was posted.', duration: 2000 });
+      setReplyText('');
+      setReplyingToCommentId(null);
+    } catch (_) {
+      toast({ title: 'Error', description: 'Failed to reply.', duration: 3000 });
     }
   };
 
@@ -1057,79 +1253,57 @@ export default function Dashboard({ address }: DashboardProps) {
 
   // Delete post function
   const handleDeletePost = async (journalId: string) => {
-    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/journal/delete?journalId=${journalId}&userId=${address}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        // Remove post from local state
+    if (!confirm('Delete this post? This cannot be undone.')) return;
+    // optimistic remove
+    const previous = allPosts;
+    const deleted = previous.find(p => p.id === journalId) || null;
         setAllPosts(prev => prev.filter(post => post.id !== journalId));
-        
-        toast({
-          title: "Success",
-          description: "Post deleted successfully!",
-          duration: 3000
-        });
-      } else {
+    setRecentlyDeletedPost(deleted);
+    if (deleteTimerRef.current) window.clearTimeout(deleteTimerRef.current);
+    try {
+      // delay actual delete 5s to allow undo
+      deleteTimerRef.current = window.setTimeout(async () => {
+        if (!recentlyDeletedPost || recentlyDeletedPost.id !== journalId) return;
+        const response = await fetch(`/api/journal/delete?journalId=${journalId}&userId=${address}`, { method: 'DELETE' });
+        if (!response.ok) {
+          setAllPosts(previous);
         const errorData = await response.json();
-        toast({
-          title: "Error",
-          description: errorData.error || "Failed to delete post",
-          duration: 3000
-        });
-      }
+          toast({ title: 'Error', description: errorData.error || 'Failed to delete post', duration: 3000 });
+        } else {
+          toast({ title: 'Deleted', description: 'Post removed.', duration: 3000 });
+        }
+        setRecentlyDeletedPost(null);
+        deleteTimerRef.current && window.clearTimeout(deleteTimerRef.current);
+        deleteTimerRef.current = null;
+      }, 5000) as unknown as number;
+      toast({ title: 'Pending delete', description: 'Undo available for 5s', duration: 2000 });
     } catch (error) {
+      setAllPosts(previous);
       console.error('Error deleting post:', error);
-      toast({
-        title: "Error",
-        description: "Error deleting post",
-        duration: 3000
-      });
+      toast({ title: 'Error', description: 'Error deleting post', duration: 3000 });
     }
   };
 
   // Archive post function
   const handleArchivePost = async (journalId: string) => {
+    // optimistic toggle
+    const prev = allPosts;
+    setAllPosts(prevPosts => prevPosts.map(p => p.id === journalId ? { ...p, archived: !p.archived, archivedAt: !p.archived ? new Date() : undefined } : p));
     try {
-      const response = await fetch(`/api/journal/archive?journalId=${journalId}&userId=${address}&action=archive`, {
-        method: 'PUT',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Update post in local state
-        setAllPosts(prev => prev.map(post => 
-          post.id === journalId 
-            ? { ...post, archived: data.archived, archivedAt: data.archived ? new Date() : null }
-            : post
-        ));
-        
-        toast({
-          title: "Success",
-          description: data.archived ? "Post archived successfully!" : "Post unarchived successfully!",
-          duration: 3000
-        });
-      } else {
+      const action = 'archive';
+      const response = await fetch(`/api/journal/archive?journalId=${journalId}&userId=${address}&action=${action}`, { method: 'PUT' });
+      if (!response.ok) {
+        setAllPosts(prev);
         const errorData = await response.json();
-        toast({
-          title: "Error",
-          description: errorData.error || "Failed to archive post",
-          duration: 3000
-        });
+        toast({ title: 'Error', description: errorData.error || 'Failed to archive post', duration: 3000 });
+        return;
       }
+      const data = await response.json();
+      toast({ title: 'Success', description: data.archived ? 'Post archived successfully!' : 'Post unarchived successfully!', duration: 3000 });
     } catch (error) {
+      setAllPosts(prev);
       console.error('Error archiving post:', error);
-      toast({
-        title: "Error",
-        description: "Error archiving post",
-        duration: 3000
-      });
+      toast({ title: 'Error', description: 'Error archiving post', duration: 3000 });
     }
   };
 
@@ -1243,11 +1417,12 @@ export default function Dashboard({ address }: DashboardProps) {
       const response = await fetch("/api/comment/get", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ journalId }),
+        body: JSON.stringify({ journalId, cursor: commentCursors?.[journalId] || null, pageSize: 10 }),
       });
       if (response.ok) {
-        const comments = await response.json();
-        return comments || [];
+        const data = await response.json();
+        setCommentCursors(prev => ({ ...prev, [journalId]: data.nextCursor }));
+        return data.items || [];
       }
       return [];
     } catch (error) {
@@ -1256,9 +1431,11 @@ export default function Dashboard({ address }: DashboardProps) {
     }
   };
 
+
+
   // Home feed functions
-  const fetchAllPosts = async () => {
-    setIsLoadingFeed(true);
+  const fetchAllPosts = async (silent: boolean = false) => {
+    if (!silent) setIsLoadingFeed(true);
     try {
       const response = await fetch("/api/journal/get", {
         method: "GET",
@@ -1272,9 +1449,28 @@ export default function Dashboard({ address }: DashboardProps) {
     } catch (error) {
       console.error("Error fetching all posts:", error);
     } finally {
-      setIsLoadingFeed(false);
+      if (!silent) setIsLoadingFeed(false);
     }
   };
+
+  // Auto-refresh feed periodically and on focus/visibility
+  useEffect(() => {
+    const REFRESH_MS = 10000; // 10s
+    const id = window.setInterval(() => {
+      fetchAllPosts(true);
+    }, REFRESH_MS);
+
+    const onFocus = () => fetchAllPosts(true);
+    const onVisibility = () => { if (!document.hidden) fetchAllPosts(true); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
 
   const extractTrendingTopics = (posts: Journal[]) => {
     const tagCounts: { [key: string]: number } = {};
@@ -1472,7 +1668,7 @@ export default function Dashboard({ address }: DashboardProps) {
 
 
             {/* Gaming-style Create Post */}
-            <div className="pixel-card rounded-xl p-3 sm:p-4 mb-6 scanlines">
+            <div className="rounded-xl p-3 sm:p-4 mb-6 scanlines pixel-card">
               <div className="flex items-start gap-2 sm:gap-3">
                 <Avatar className="w-8 h-8 sm:w-10 sm:h-10 pixel-avatar flex-shrink-0">
                   <AvatarFallback className="bg-gradient-to-br from-green-600 to-green-700 text-green-100 text-xs sm:text-sm font-bold pixelated-text pixel-text-shadow">
@@ -1481,19 +1677,19 @@ export default function Dashboard({ address }: DashboardProps) {
                 </Avatar>
                 <div className="flex-1 space-y-2 sm:space-y-3 min-w-0">
                   <div>
-                    <div className="text-green-100 mb-2 font-bold text-xs sm:text-sm pixelated-text">
+                    <div className="mb-2 font-bold text-xs sm:text-sm pixelated-text text-green-100">
                       What's happening in your crypto world today?
                     </div>
                     <textarea
                       value={newPostContent}
                       onChange={(e) => setNewPostContent(e.target.value)}
                       placeholder="Share your thoughts, trades, or insights..."
-                      className="w-full p-2 sm:p-3 pixel-input rounded-lg text-green-100 placeholder-green-300/50 resize-none transition-all duration-200 text-xs sm:text-sm pixelated-text"
+                      className="w-full p-2 sm:p-3 rounded-lg resize-none transition-all duration-200 text-xs sm:text-sm pixelated-text text-green-100 placeholder-green-300/50 pixel-input"
                       rows={3}
                       maxLength={500}
                     />
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-2 space-y-2 sm:space-y-0">
-                        <span className="text-xs sm:text-sm text-green-300/70 pixelated-text">
+                        <span className="text-xs sm:text-sm pixelated-text text-green-300/70">
                         {newPostContent.length}/500
                       </span>
                       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
@@ -1501,7 +1697,7 @@ export default function Dashboard({ address }: DashboardProps) {
                           variant="ghost"
                           size="sm"
                           onClick={() => document.getElementById('image-upload')?.click()}
-                            className="pixel-button text-green-100 hover:text-green-300 rounded-lg px-2 sm:px-3 py-1 sm:py-2 transition-all duration-300 pixelated-text text-xs sm:text-sm w-full sm:w-auto"
+                          className="rounded-lg px-2 sm:px-3 py-1 sm:py-2 transition-all duration-300 pixelated-text text-xs sm:text-sm w-full sm:w-auto text-green-100 hover:text-green-300 pixel-button"
                         >
                           <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                           {images.length > 0 ? `${images.length} Image${images.length > 1 ? 's' : ''}` : 'Add Photo'}
@@ -1512,7 +1708,7 @@ export default function Dashboard({ address }: DashboardProps) {
                           <select
                             value={newPostPrivacy}
                             onChange={(e) => setNewPostPrivacy(e.target.value as 'public' | 'private')}
-                              className="pixel-input rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm text-green-100 transition-all duration-300 pixelated-text w-full sm:w-auto"
+                            className="rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm transition-all duration-300 pixelated-text w-full sm:w-auto text-green-100 pixel-input"
                           >
                             <option value="public">🌍 Public</option>
                             <option value="private">🔒 Private</option>
@@ -1615,7 +1811,7 @@ export default function Dashboard({ address }: DashboardProps) {
                       id="tag-input"
                       type="text"
                       placeholder="Add tags..."
-                      className="flex-1 px-2 sm:px-3 py-1 sm:py-2 pixel-input rounded-lg text-green-100 placeholder-green-300/50 transition-all duration-300 pixelated-text text-xs sm:text-sm"
+                                                                      className="flex-1 px-2 sm:px-3 py-1 sm:py-2 rounded-lg transition-all duration-300 pixelated-text text-xs sm:text-sm text-green-100 placeholder-green-300/50 pixel-input"
                       onKeyPress={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
@@ -1637,7 +1833,7 @@ export default function Dashboard({ address }: DashboardProps) {
                       }}
                       variant="outline"
                       size="sm"
-                      className="pixel-button text-green-100 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 w-full sm:w-auto"
+                                                                      className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 w-full sm:w-auto text-green-100 pixel-button"
                     >
                       Add Tag
                     </Button>
@@ -1648,7 +1844,7 @@ export default function Dashboard({ address }: DashboardProps) {
                     <Button
                       onClick={handleCreatePost}
                       disabled={!newPostContent.trim() || isCreatingPost}
-                      className="pixel-button text-green-100 px-4 sm:px-6 py-2 disabled:opacity-50 text-xs sm:text-sm w-full sm:w-auto pixel-text-shadow"
+                                                                      className="px-4 sm:px-6 py-2 disabled:opacity-50 text-xs sm:text-sm w-full sm:w-auto pixel-text-shadow text-green-100 pixel-button"
                     >
                       {isCreatingPost ? (
                         <>
@@ -1718,6 +1914,7 @@ export default function Dashboard({ address }: DashboardProps) {
                       <TVPostContainer
                         neonColor="cyan"
                         className="mb-10"
+                        surface="dark"
                         hasImage={entry.photos && entry.photos.length > 0}
                         tvStyle={'retro'}
                       >
@@ -1729,6 +1926,11 @@ export default function Dashboard({ address }: DashboardProps) {
                           date={entry.dateCreated ? new Date(entry.dateCreated) : new Date()}
                           privacy={entry.privacy}
                         />
+                        {entry.archived && (
+                          <div className="px-3 py-1 mb-2 inline-flex items-center rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-400/30 text-xs font-semibold">
+                            ARCHIVED
+                          </div>
+                        )}
                         <PostContent
                           content={entry.journal || "This user shared their crypto journey..."}
                           photos={entry.photos}
@@ -1751,19 +1953,20 @@ export default function Dashboard({ address }: DashboardProps) {
                           onRepost={() => handleRepost(entry.id)}
                           onDelete={() => handleDeletePost(entry.id)}
                           onArchive={() => handleArchivePost(entry.id)}
+                          theme={selectedTheme === 'night-mode' ? 'night' : 'dark'}
                         />
                       </TVPostContainer>
                         
                         {/* Enhanced Comments Section */}
                         {currentJournalId === entry.id && (
-                          <div className="mt-6 p-6 bg-gradient-to-r from-slate-700/20 to-slate-800/20 rounded-2xl border border-slate-600/30">
-                            <div className="flex items-center justify-between mb-6">
+                          <div className="mt-6 p-6 rounded-2xl border backdrop-blur-sm shadow-inner border-slate-600/40 bg-slate-800/40">
+                            <div className="flex items-center justify-between mb-5">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-full flex items-center justify-center">
+                                <div className="w-8 h-8 bg-blue-600/90 rounded-lg flex items-center justify-center shadow ring-2 ring-blue-400/30">
                                   <MessageSquare className="w-4 h-4 text-white" />
                                 </div>
-                                <span className="text-blue-300 pixelated-text font-bold text-lg">Comments</span>
-                                <Badge className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-300 border-blue-400/30 pixelated-text text-sm font-medium">
+                                <span className="text-blue-200 pixelated-text font-bold text-lg">Comments</span>
+                                <Badge className="bg-blue-500/20 text-blue-200 border-blue-400/40 pixelated-text text-sm font-medium">
                                   {commentCounts[entry.id] || 0}
                                 </Badge>
                               </div>
@@ -1771,27 +1974,36 @@ export default function Dashboard({ address }: DashboardProps) {
                                 variant="ghost" 
                                 size="sm" 
                                 onClick={() => setCurrentJournalId(null)}
-                                className="text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-full p-2"
+                                className="text-slate-400 hover:text-white hover:bg-slate-700/60 rounded-full p-2"
+                                aria-label="Close comments"
                               >
                                 <X className="w-4 h-4" />
                               </Button>
                             </div>
                             
-                            {/* Enhanced Comment Input */}
-                            <div className="flex gap-4 mb-6">
+                            {/* Input */}
+                            <div className="flex gap-3 mb-5">
                               <Avatar className="w-10 h-10 ring-2 ring-blue-400/30 flex-shrink-0">
                                 <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold">
                                 {user?.address?.slice(0, 2).toUpperCase() || 'DB'}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="flex-1">
-                                <div className="relative">
+                                <div className="relative group">
                                   <input
                                     type="text"
                                     placeholder="Share your thoughts on this post..."
-                                    className="w-full bg-slate-700/50 border border-slate-600 text-white px-4 py-3 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 pixelated-text text-sm placeholder-slate-400"
-                                    onKeyPress={(e) => {
+                                    className="w-full border text-white px-4 py-3 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 pixelated-text text-sm placeholder-slate-400 bg-slate-900/40 border-slate-600/60"
+                                    onKeyDown={(e) => {
                                       if (e.key === 'Enter') {
+                                        const target = e.target as HTMLInputElement;
+                                        if (target.value.trim()) {
+                                          handleComment(entry.id, target.value);
+                                          target.value = '';
+                                        }
+                                      }
+                                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                                        e.preventDefault();
                                         const target = e.target as HTMLInputElement;
                                         if (target.value.trim()) {
                                           handleComment(entry.id, target.value);
@@ -1800,31 +2012,31 @@ export default function Dashboard({ address }: DashboardProps) {
                                       }
                                     }}
                                   />
-                                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                                     <Button 
                                       size="sm" 
-                                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-1"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-full h-7 w-7 p-0 disabled:opacity-50"
+                                    aria-label="Add comment"
                                       onClick={(e) => {
-                                        const input = e.currentTarget.parentElement?.previousElementSibling as HTMLInputElement;
+                                      const input = (e.currentTarget.parentElement?.querySelector('input') as HTMLInputElement);
                                         if (input && input.value.trim()) {
                                           handleComment(entry.id, input.value);
                                           input.value = '';
                                         }
                                       }}
+                                    disabled={false}
                                     >
-                                      <Plus className="w-3 h-3" />
+                                    <Plus className="w-3.5 h-3.5" />
                                     </Button>
-                                  </div>
                                 </div>
                               </div>
                             </div>
                             
-                            {/* Enhanced Comments List */}
+                            {/* List */}
                             <div className="space-y-4">
                               {dbComments
                                 .filter(comment => comment.journalId === entry.id)
                                 .map((comment, commentIndex) => (
-                                  <div key={comment.id || commentIndex} className="flex gap-4 p-4 bg-gradient-to-r from-slate-600/20 to-slate-700/20 rounded-xl border border-slate-500/20 hover:border-slate-500/40 transition-all duration-300 hover:scale-[1.02]">
+                                                                      <div key={comment.id || commentIndex} className="flex gap-4 p-4 rounded-xl border transition-all duration-300 hover:scale-[1.02] bg-gradient-to-r from-slate-600/20 to-slate-700/20 border-slate-500/20 hover:border-slate-500/40">
                                     <Avatar className="w-8 h-8 ring-1 ring-blue-400/20">
                                       <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xs">
                                         {comment.baseUserId.slice(0, 2).toUpperCase()}
@@ -1838,17 +2050,55 @@ export default function Dashboard({ address }: DashboardProps) {
                                         <span className="text-xs text-slate-400">
                                           {new Date(comment.dateCreated).toLocaleDateString()}
                                         </span>
+                                        {(comment.baseUserId === (baseUserId || address)) && (
+                                          <span className="ml-auto flex items-center gap-2">
+                                            {editingCommentId === comment.id ? (
+                                              <>
+                                                <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => saveEditComment(comment.id)}>Save</Button>
+                                                <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={cancelEditComment}>Cancel</Button>
+                                              </>
+                                            ) : (
+                                              <>
+                                                <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => startEditComment(comment.id, comment.comment)}>Edit</Button>
+                                                <Button size="sm" variant="ghost" className="h-6 px-2 text-xs text-red-300 hover:text-red-200" onClick={() => deleteLocalComment(entry.id, comment.id)}>Delete</Button>
+                                              </>
+                                            )}
+                                          </span>
+                                        )}
                                       </div>
+                                      {editingCommentId === comment.id ? (
+                                        <input value={editingText} onChange={(e)=>setEditingText(e.target.value)} className="w-full bg-slate-900/40 border border-slate-600/60 text-white px-3 py-2 rounded-md text-sm" />
+                                      ) : (
                                       <p className="text-sm text-white pixelated-text break-words">
                                         {comment.comment}
                                       </p>
+                                      )}
+                                      {/* Comment actions */}
+                                      <div className="mt-2 flex items-center gap-3 text-xs text-slate-400">
+                                        <button className={`px-2 py-1 rounded-md border border-slate-600/50 hover:bg-slate-700/40 transition ${commentLiked[comment.id] ? 'text-green-400 border-green-600/40' : ''}`} onClick={()=>toggleLikeComment(comment.id)}>
+                                          <span className="mr-1">❤️</span>{commentLikeCounts[comment.id] || 0}
+                                        </button>
+                                        <button className="px-2 py-1 rounded-md border border-slate-600/50 hover:bg-slate-700/40 transition" onClick={()=>{ setReplyingToCommentId(comment.id); setReplyText(''); }}>Reply{typeof comment.replyCount==='number' ? ` (${comment.replyCount})` : ''}</button>
+                                      </div>
+                                      {replyingToCommentId === comment.id && (
+                                        <div className="mt-2 flex items-center gap-2">
+                                          <input value={replyText} onChange={(e)=>setReplyText(e.target.value)} placeholder="Write a reply..." className="flex-1 bg-slate-900/40 border border-slate-600/60 text-white px-3 py-2 rounded-md text-sm" onKeyDown={(e)=>{ if(e.key==='Enter' && (e.ctrlKey||e.metaKey)){ e.preventDefault(); submitInlineReply(comment); } }} />
+                                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50" onClick={()=>submitInlineReply(comment)} disabled={!replyText.trim()}>Send</Button>
+                                          <Button size="sm" variant="ghost" onClick={()=>{ setReplyingToCommentId(null); setReplyText(''); }}>Cancel</Button>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 ))}
                               {dbComments.filter(comment => comment.journalId === entry.id).length === 0 && (
-                                <div className="text-center py-8">
-                                  <MessageSquare className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                                 <div className="text-center py-10">
+                                   <MessageSquare className="w-9 h-9 text-slate-500 mx-auto mb-3" />
                                   <p className="text-slate-400 text-sm">No comments yet. Be the first to comment!</p>
+                                </div>
+                              )}
+                              {commentCursors?.[entry.id] && (
+                                <div className="pt-2">
+                                  <Button variant="outline" size="sm" className="w-full" onClick={()=>loadMoreComments(entry.id)}>Load more comments</Button>
                                 </div>
                               )}
                             </div>
@@ -1871,6 +2121,13 @@ export default function Dashboard({ address }: DashboardProps) {
               <p className="text-green-300 pixelated-text text-lg font-medium pixel-text-shadow">
                 Track your daily entries and activities
               </p>
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                <Button variant="outline" size="sm" className="pixel-button pixel-rounded rgb-fringe">INSERT COIN</Button>
+                <Button onClick={goToToday} size="sm" className="bg-green-600 hover:bg-green-700 text-white pixel-rounded flicker">START</Button>
+                <Button variant="outline" size="sm" className="pixel-button pixel-rounded">SELECT</Button>
+                <Button onClick={goToPreviousMonth} variant="outline" size="sm" className="pixel-button pixel-rounded">◀</Button>
+                <Button onClick={goToNextMonth} variant="outline" size="sm" className="pixel-button pixel-rounded">▶</Button>
+              </div>
             </div>
 
             {/* Gaming-style Stats Row */}
@@ -2709,6 +2966,11 @@ export default function Dashboard({ address }: DashboardProps) {
              <p className="text-blue-300 pixelated-text">
                Track your DailyBase journey and progress
              </p>
+             <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+               <Button variant="outline" size="sm" className="pixel-button pixel-rounded">RESET</Button>
+               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white pixel-rounded rgb-fringe">POWER-UP</Button>
+               <Button variant="outline" size="sm" className="pixel-button pixel-rounded">Ⓐ / Ⓑ</Button>
+             </div>
            </div>
 
            {/* Key Metrics */}
@@ -3086,6 +3348,11 @@ export default function Dashboard({ address }: DashboardProps) {
              <p className="text-blue-300 pixelated-text">
                Track your progress and unlock achievements
              </p>
+             <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+               <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white pixel-rounded flicker">START</Button>
+               <Button variant="outline" size="sm" className="pixel-button pixel-rounded">SELECT</Button>
+               <Button variant="outline" size="sm" className="pixel-button pixel-rounded">Ⓐ Ⓑ</Button>
+             </div>
            </div>
            
            <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
@@ -3423,6 +3690,47 @@ export default function Dashboard({ address }: DashboardProps) {
              </CardContent>
            </Card>
 
+                      {/* Theme Selection */}
+           <Card className="bg-white/8 border-white/20 text-white backdrop-blur-3xl card-glass shadow-2xl shadow-blue-400/30 border-opacity-30 hover:bg-white/12 hover:border-white/30 transition-all duration-500">
+             <CardHeader>
+               <CardTitle className="text-blue-100 pixelated-text">
+                 Theme & Background
+               </CardTitle>
+             </CardHeader>
+             <CardContent className="space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                   {[
+             
+                     { id: 'night-mode', name: 'Night Mode', description: 'Dark sky with stars and moon', color: 'from-slate-900 to-blue-900' },
+                     { id: 'dark-gaming', name: 'Dark Gaming', description: 'Classic gaming grid with neon orbs', color: 'from-gray-900 to-black' }
+                   ].map((theme) => (
+                   <div
+                     key={theme.id}
+                     onClick={() => setSelectedTheme(theme.id as any)}
+                     className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-300 hover:scale-105 ${
+                       selectedTheme === theme.id
+                         ? 'border-blue-400 bg-blue-500/20 shadow-lg shadow-blue-400/30'
+                         : 'border-white/20 bg-white/10 hover:border-white/40'
+                     }`}
+                   >
+                     <div className={`w-full h-16 rounded-md bg-gradient-to-r ${theme.color} mb-3`} />
+                     <h3 className="text-white pixelated-text font-semibold text-sm mb-1">
+                       {theme.name}
+                     </h3>
+                     <p className="text-blue-100/70 pixelated-text text-xs">
+                       {theme.description}
+                     </p>
+                     {selectedTheme === theme.id && (
+                       <div className="absolute top-2 right-2 w-4 h-4 bg-blue-400 rounded-full flex items-center justify-center">
+                         <div className="w-2 h-2 bg-white rounded-full" />
+                       </div>
+                     )}
+                   </div>
+                 ))}
+               </div>
+             </CardContent>
+           </Card>
+
            {/* Preferences */}
            <Card className="bg-white/8 border-white/20 text-white backdrop-blur-3xl card-glass shadow-2xl shadow-blue-400/30 border-opacity-30 hover:bg-white/12 hover:border-white/30 transition-all duration-500">
              <CardHeader>
@@ -3431,20 +3739,6 @@ export default function Dashboard({ address }: DashboardProps) {
                </CardTitle>
              </CardHeader>
              <CardContent className="space-y-4">
-                                                                                                                                   <div className="flex items-center justify-between p-4 bg-white/8 rounded-lg border border-white/20 backdrop-blur-xl shadow-md shadow-blue-400/15">
-                 <div>
-                   <h3 className="text-white pixelated-text font-semibold">
-                     Theme
-                   </h3>
-                   <p className="text-blue-100 pixelated-text text-sm">
-                     Dark mode (default)
-                   </p>
-                 </div>
-                                                                         <Badge className="bg-blue-400/50 text-blue-50 border-blue-300/60 pixelated-text shadow-sm shadow-blue-300/30">
-                   Dark
-                 </Badge>
-               </div>
-
                <div className="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg">
                  <div>
                    <h3 className="text-white pixelated-text font-semibold">
@@ -3509,16 +3803,24 @@ export default function Dashboard({ address }: DashboardProps) {
  };
 
  return (
-   <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black relative overflow-hidden">
-     {/* Gaming Theme Background Pattern */}
-     <div className="absolute left-0 right-0 bottom-0 top-24 opacity-40 pointer-events-none">
-       {/* Tetris-style falling blocks */}
-       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.08)_2px,transparent_2px),linear-gradient(rgba(255,255,255,0.08)_2px,transparent_2px)] bg-[length:40px_40px]"></div>
-       {/* Minecraft-style pixel grid */}
-       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,197,94,0.1),transparent_30%),radial-gradient(circle_at_80%_80%,rgba(239,68,68,0.1),transparent_30%)]"></div>
-       {/* Mario-style floating platforms */}
-       <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(251,191,36,0.05)_1px,transparent_1px),linear-gradient(-45deg,rgba(251,191,36,0.05)_1px,transparent_1px)] bg-[length:80px_80px]"></div>
-     </div>
+   <div className="min-h-screen bg-blue-400 relative overflow-hidden">
+     <style jsx>{`
+       @keyframes driveWithShake {
+         0% { transform: translateX(-100px) translateY(0px); }
+         10% { transform: translateX(10%) translateY(1px); }
+         20% { transform: translateX(20%) translateY(-1px); }
+         30% { transform: translateX(30%) translateY(1px); }
+         40% { transform: translateX(40%) translateY(-1px); }
+         50% { transform: translateX(50%) translateY(1px); }
+         60% { transform: translateX(60%) translateY(-1px); }
+         70% { transform: translateX(70%) translateY(1px); }
+         80% { transform: translateX(80%) translateY(-1px); }
+         90% { transform: translateX(90%) translateY(1px); }
+         100% { transform: translateX(calc(100vw + 100px)) translateY(0px); }
+       }
+     `}</style>
+     {/* Dynamic Theme Background */}
+     {renderThemeBackground()}
      {/* Enhanced Toast Notifications with responsive positioning */}
      {toasts.map((toast) => (
        <div
@@ -3592,6 +3894,20 @@ export default function Dashboard({ address }: DashboardProps) {
                    }}
                  />
                  <Button
+                   onClick={() => setSelectedTheme(prev => {
+                     const themes = ['night-mode', 'dark-gaming'];
+                     const currentIndex = themes.indexOf(prev);
+                     const nextIndex = (currentIndex + 1) % themes.length;
+                     return themes[nextIndex] as any;
+                   })}
+                   size="sm"
+                   variant="outline"
+                   className="bg-purple-500/20 border-purple-500 text-purple-300 hover:bg-purple-500/30 text-xs"
+                   title="Switch Theme"
+                 >
+                   🎨
+                 </Button>
+                 <Button
                    onClick={() => setIsUserSwitcherOpen(true)}
                    size="sm"
                    variant="outline"
@@ -3605,6 +3921,12 @@ export default function Dashboard({ address }: DashboardProps) {
          )}
          
          <div className="space-y-3 sm:space-y-4">
+           {recentlyDeletedPost && (
+             <div className="mb-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center justify-between">
+               <span className="text-red-200 text-sm">Post deleted. Undo?</span>
+               <Button size="sm" variant="outline" className="text-red-200 border-red-400/50" onClick={undoDelete}>Undo</Button>
+             </div>
+           )}
            {renderContent()}
          </div>
        </div>

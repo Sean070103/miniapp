@@ -27,6 +27,11 @@ module.exports = {
       '4xl': '2560px',
     },
     extend: {
+      fontFamily: {
+        'jersey': ['Jersey 10', 'monospace'],
+        'sans': ['Jersey 10', 'system-ui', 'sans-serif'],
+        'mono': ['Jersey 10', 'monospace'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

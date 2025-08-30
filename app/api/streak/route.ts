@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
+    const tz = searchParams.get('tz') || 'UTC'
 
     if (!userId) {
       return NextResponse.json(
@@ -41,10 +42,12 @@ export async function GET(request: NextRequest) {
       orderBy: { dateCreated: 'desc' }
     })
 
-    // Build a set of YYYY-MM-DD keys
+    // Build a set of YYYY-MM-DD keys using the provided timezone for day boundaries
     const dateKeys = new Set<string>()
     for (const j of journals) {
-      dateKeys.add(toDateKey(new Date(j.dateCreated)))
+      const dt = new Date(j.dateCreated)
+      const dateStr = dt.toLocaleString('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' })
+      dateKeys.add(dateStr)
     }
 
     // Compute current and longest streaks (UTC-based)
@@ -52,11 +55,14 @@ export async function GET(request: NextRequest) {
     let currentStreak = 0
     let longestStreak = 0
 
-    // Walk backwards from today while dates exist
-    let cursor = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
-    while (dateKeys.has(toDateKey(cursor))) {
+    // Walk backwards from today while dates exist, using tz day cut
+    const toKeyInTz = (d: Date) => d.toLocaleString('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' })
+    // Start from local day in tz
+    let cursor = new Date(today)
+    while (dateKeys.has(toKeyInTz(cursor))) {
       currentStreak += 1
-      cursor.setUTCDate(cursor.getUTCDate() - 1)
+      // subtract one calendar day in tz by moving time and re-checking
+      cursor.setDate(cursor.getDate() - 1)
     }
 
     // Compute longest by scanning all dates

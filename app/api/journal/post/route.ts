@@ -7,7 +7,14 @@ import { NotificationService } from '@/lib/notification-service';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { baseUserId, photos, journal, likes, tags, privacy } = body;
+          const { 
+        baseUserId, 
+        photos, 
+        journal, 
+        likes, 
+        tags, 
+        privacy
+      } = body;
 
     if (!baseUserId || !journal) {
       return NextResponse.json(
@@ -21,9 +28,11 @@ export async function POST(req: Request) {
         baseUserId,
         photos: Array.isArray(photos) ? photos : [],
         journal,
-        likes: likes ?? 0,
+        likes: typeof likes === 'number' ? likes : 0,
         tags: Array.isArray(tags) ? tags : [],
         privacy: privacy || "public",
+        archived: false,
+        archivedAt: null,
       },
     });
 
@@ -35,7 +44,6 @@ export async function POST(req: Request) {
           where: { walletAddress: baseUserId },
           select: { id: true, username: true, walletAddress: true }
         });
-        
         if (!poster) {
           await prisma.baseUser.create({ data: { walletAddress: baseUserId } });
           poster = await prisma.baseUser.findUnique({
@@ -48,47 +56,38 @@ export async function POST(req: Request) {
           // Get all followers of the poster
           const followers = await prisma.follow.findMany({
             where: { followingId: poster.id },
-            include: {
-              follower: {
-                select: { id: true, username: true, walletAddress: true }
-              }
-            }
+            select: { followerId: true }
           });
 
-          // Create notifications for each follower
-          const notifications = await Promise.all(
-            followers.map(async (follow) => {
-              const notification = await NotificationService.createSystemNotification(
-                follow.follower.id,
-                'New Post',
-                `${poster.username || `User_${baseUserId.slice(0, 6)}`} posted something new`,
-                { 
-                  actorId: poster.id, 
-                  journalId: newJournal.id, 
-                  action: 'post',
-                  actorUsername: poster.username,
-                  postPreview: journal.substring(0, 100) + (journal.length > 100 ? '...' : '')
-                }
-              );
-
-              return notification;
-            })
-          );
-
-          console.log(`Created ${notifications.length} notifications for new post`);
+          // Create notifications for all followers
+          for (const follower of followers) {
+            await NotificationService.createSystemNotification(
+              follower.followerId,
+              'New Post',
+              `${poster.username || `User_${baseUserId.slice(0, 6)}`} posted something new`,
+              { 
+                actorId: poster.id, 
+                journalId: newJournal.id, 
+                action: 'post',
+                actorUsername: poster.username,
+                postPreview: journal.substring(0, 100) + (journal.length > 100 ? '...' : '')
+              }
+            );
+          }
         }
       } catch (notificationError) {
         console.error('Error creating post notifications:', notificationError);
-        // Don't fail the post creation if notification fails
+        // Don't fail the post operation if notification fails
       }
     }
 
-    return NextResponse.json(newJournal, { status: 201 });
+    return NextResponse.json(newJournal, { status: 201 })
+
   } catch (error) {
-    console.error("Error creating journal:", error);
+    console.error("Error posting journal:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Failed to post journal" },
       { status: 500 }
-    );
+    )
   }
 }

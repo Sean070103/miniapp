@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
+    const tz = searchParams.get('tz') || 'UTC'
 
     if (!userId) {
       return NextResponse.json(
@@ -41,7 +42,10 @@ export async function GET(request: NextRequest) {
       orderBy: { dateCreated: 'desc' }
     })
 
-    const dates = Array.from(new Set(journals.map(j => toDateKey(new Date(j.dateCreated)))))
+    const dates = Array.from(new Set(journals.map(j => {
+      const dt = new Date(j.dateCreated)
+      return dt.toLocaleString('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' })
+    })))
 
     return NextResponse.json({ success: true, userId: walletAddress, dates })
   } catch (error) {

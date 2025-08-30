@@ -253,33 +253,59 @@ export function SearchFilters({
   onFilterChange: (filter: 'all' | 'posts' | 'users' | 'tags') => void 
 }) {
   const filters = [
-    { id: 'all', label: 'All', icon: SearchIcon },
-    { id: 'posts', label: 'Posts', icon: FileText },
-    { id: 'users', label: 'Users', icon: User },
-    { id: 'tags', label: 'Tags', icon: Hash }
+    { id: 'all', label: 'All', icon: SearchIcon, count: undefined },
+    { id: 'posts', label: 'Posts', icon: FileText, count: undefined },
+    { id: 'users', label: 'Users', icon: User, count: undefined },
+    { id: 'tags', label: 'Tags', icon: Hash, count: undefined }
   ] as const
 
+  // keyboard hotkeys 1-4, arrows, home/end
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const order = ['all', 'posts', 'users', 'tags'] as const
+      const index = order.indexOf(activeFilter)
+      if (e.key === 'ArrowRight') onFilterChange(order[(index + 1) % order.length])
+      if (e.key === 'ArrowLeft') onFilterChange(order[(index - 1 + order.length) % order.length])
+      if (e.key === 'Home') onFilterChange('all')
+      if (e.key === 'End') onFilterChange('tags')
+      if (['1','2','3','4'].includes(e.key)) onFilterChange(order[Number(e.key)-1])
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [activeFilter, onFilterChange])
+ 
   return (
-    <div className="flex gap-2">
-      {filters.map((filter) => {
-        const Icon = filter.icon
-        return (
-          <Button
-            key={filter.id}
-            variant={activeFilter === filter.id ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => onFilterChange(filter.id)}
-            className={`pixelated-text ${
-              activeFilter === filter.id
-                ? 'bg-blue-500 text-white'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-            }`}
-          >
-            <Icon className="w-4 h-4 mr-2" />
-            {filter.label}
-          </Button>
-        )
-      })}
+    <div className="relative">
+      <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-slate-900/80 to-transparent pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-slate-900/80 to-transparent pointer-events-none" />
+      <div role="tablist" aria-label="Search filters" className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory px-1">
+        {filters.map((filter) => {
+          const Icon = filter.icon
+          const isActive = activeFilter === filter.id
+          return (
+            <button
+              key={filter.id}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => onFilterChange(filter.id)}
+              className={`relative snap-start px-3 py-2 rounded-lg transition-all pixelated-text flex items-center whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-500/40 ${
+                isActive ? 'bg-blue-600 text-white shadow-[0_0_12px_rgba(59,130,246,0.45)]' : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+              }`}
+            >
+              <Icon className="w-4 h-4 mr-2" />
+              {filter.label}
+              {typeof filter.count === 'number' && (
+                <span className="ml-2 text-xs opacity-80">{filter.count}</span>
+              )}
+              {isActive && (
+                <span className="absolute -bottom-1 left-2 right-2 h-0.5 bg-white/70 rounded-full" />
+              )}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
+
+

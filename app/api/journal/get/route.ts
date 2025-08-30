@@ -8,7 +8,17 @@ export async function GET() {
       orderBy: { dateCreated: 'desc' }
     })
 
-    return NextResponse.json(journals, { status: 200 });
+    // Normalize for legacy documents so UI has consistent fields
+    const normalized = journals.map(j => ({
+      ...j,
+      photos: Array.isArray((j as any).photos) ? (j as any).photos : [],
+      tags: Array.isArray((j as any).tags) ? (j as any).tags : [],
+      likes: typeof (j as any).likes === 'number' ? (j as any).likes : 0,
+      archived: typeof (j as any).archived === 'boolean' ? (j as any).archived : false,
+      archivedAt: (j as any).archivedAt ?? null,
+    }))
+
+    return NextResponse.json(normalized, { status: 200 });
 
   } catch (error) {
     console.error("Error at GET /Journal", error);
