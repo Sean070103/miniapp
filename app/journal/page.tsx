@@ -59,26 +59,45 @@ export default function JournalPage() {
     fetchEntries()
   }, [user?.address])
 
-  const handleSaveEntry = (entry: Omit<JournalEntry, 'id' | 'dateCreated'>) => {
+  const handleSaveEntry = async (entry: Omit<JournalEntry, 'id' | 'dateCreated'>) => {
+    if (!user?.address) return
+
+    try {
     if (editingEntry) {
       // Update existing entry
-      fetch(`/api/journal/${editingEntry.id}`, {
-        method: "PUT",
+        const response = await fetch(`/api/journal/post`, {
+          method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...entry, id: editingEntry.id }),
-      })
-      .then(response => {
+          body: JSON.stringify({ 
+            ...entry, 
+            id: editingEntry.id,
+            baseUserId: user.address 
+          }),
+        })
+        
         if (response.ok) {
-          setEntries(prev => prev.map(e => e.id === editingEntry.id ? { ...entry, id: editingEntry.id, dateCreated: e.dateCreated } : e))
+          const updatedEntry = await response.json()
+          setEntries(prev => prev.map(e => e.id === editingEntry.id ? updatedEntry : e))
           setEditingEntry(null)
         }
-      })
-      .catch(error => {
-        console.error("Error updating entry:", error)
-      })
-    } else {
-      // Add new entry - this will be handled by the API response
-      // The API will return the complete entry with id and dateCreated
+      } else {
+        // Add new entry
+        const response = await fetch("/api/journal/post", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            ...entry, 
+            baseUserId: user.address 
+          }),
+        })
+        
+        if (response.ok) {
+          const newEntry = await response.json()
+          setEntries(prev => [newEntry, ...prev])
+        }
+      }
+    } catch (error) {
+      console.error("Error saving entry:", error)
     }
   }
 

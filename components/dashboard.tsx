@@ -135,8 +135,7 @@ export default function Dashboard({ address }: DashboardProps) {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   
-  // Theme and background states
-  const [selectedTheme, setSelectedTheme] = useState<'night-mode' | 'dark-gaming'>('night-mode');
+
   
   // User switching functionality
   const [availableUsers, setAvailableUsers] = useState<string[]>([]);
@@ -179,101 +178,52 @@ export default function Dashboard({ address }: DashboardProps) {
     }
   };
 
-  // Theme background renderer
-  const renderThemeBackground = () => {
-    switch (selectedTheme) {
-      case 'night-mode':
-        return (
-          <div className="absolute inset-0">
-            {/* Night sky gradient */}
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-blue-900 to-slate-800" />
-            
-            {/* Stars */}
-            <div className="absolute inset-0">
-              {[...Array(50)].map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
-                  style={{
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 100}%`,
-                    animationDuration: `${2 + Math.random() * 3}s`,
-                    animationDelay: `${Math.random() * 2}s`,
-                    opacity: 0.3 + Math.random() * 0.7
-                  }}
-                />
-              ))}
-            </div>
-            
-            {/* Moon */}
-            <div className="absolute top-8 right-8 z-0">
-              <div className="relative">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full bg-gray-200 shadow-[0_0_20px_rgba(255,255,255,0.3)]" />
-                <div className="absolute inset-0 rounded-full bg-gray-100/40 blur-lg" />
-              </div>
-            </div>
-            
-            {/* Shooting stars */}
-            <div className="absolute top-20 left-1/4 w-20 h-0.5 bg-gradient-to-r from-white to-transparent animate-pulse" style={{ animationDuration: '4s', transform: 'rotate(-45deg)' }} />
-            <div className="absolute top-40 right-1/3 w-16 h-0.5 bg-gradient-to-r from-white to-transparent animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s', transform: 'rotate(-30deg)' }} />
-            
-            {/* Ground */}
-            <div className="absolute bottom-0 left-0 right-0 z-30 w-full h-[40px] sm:h-[50px] md:h-[60px] lg:h-[70px] overflow-hidden">
-              <div className="absolute bottom-0 left-0 w-full h-full bg-slate-800" />
-              <div
-                className="absolute bottom-0 left-0 w-full h-full bg-slate-700/50"
-                style={{
-                  backgroundImage: "repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(255,255,255,0.05) 30px, rgba(255,255,255,0.05) 60px)",
-                  backgroundSize: "60px 100%",
-                }}
-              />
-            </div>
-          </div>
-        );
 
-      case 'dark-gaming':
-        return (
-          <div className="absolute inset-0">
-            {/* Dark gaming background */}
-            <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-800 to-black" />
-            
-            {/* Grid pattern */}
-            <div className="absolute inset-0 opacity-30"
-              style={{
-                backgroundImage: `
-                  linear-gradient(rgba(0,255,0,0.15) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(0,255,0,0.15) 1px, transparent 1px)
-                `,
-                backgroundSize: '40px 40px'
-              }}
-            />
-            
-            {/* Corner grid lines */}
-            <div className="absolute top-0 left-0 w-32 h-1 bg-gradient-to-r from-green-400 to-transparent" />
-            <div className="absolute top-0 left-0 w-1 h-32 bg-gradient-to-b from-green-400 to-transparent" />
-            <div className="absolute top-0 right-0 w-32 h-1 bg-gradient-to-l from-green-400 to-transparent" />
-            <div className="absolute top-0 right-0 w-1 h-32 bg-gradient-to-b from-green-400 to-transparent" />
-            <div className="absolute bottom-0 left-0 w-32 h-1 bg-gradient-to-r from-green-400 to-transparent" />
-            <div className="absolute bottom-0 left-0 w-1 h-32 bg-gradient-to-t from-green-400 to-transparent" />
-            <div className="absolute bottom-0 right-0 w-32 h-1 bg-gradient-to-l from-green-400 to-transparent" />
-            <div className="absolute bottom-0 right-0 w-1 h-32 bg-gradient-to-t from-green-400 to-transparent" />
-            
-            {/* Glowing orbs */}
-            <div className="absolute top-20 left-20 w-4 h-4 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50" style={{ animationDuration: '3s' }} />
-            <div className="absolute top-40 right-32 w-3 h-3 bg-blue-400 rounded-full animate-pulse shadow-lg shadow-blue-400/50" style={{ animationDuration: '4s' }} />
-            <div className="absolute bottom-40 left-1/3 w-5 h-5 bg-purple-400 rounded-full animate-pulse shadow-lg shadow-purple-400/50" style={{ animationDuration: '2.5s' }} />
-            <div className="absolute top-1/2 right-20 w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50" style={{ animationDuration: '3.5s' }} />
-            <div className="absolute bottom-1/3 right-1/3 w-3 h-3 bg-yellow-400 rounded-full animate-pulse shadow-lg shadow-yellow-400/50" style={{ animationDuration: '2s' }} />
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
 
   // TV styles order for image posts, typed as a readonly tuple to preserve literal types
   const tvStylesOrder = ['retro', 'modern', 'futuristic', 'vintage', 'minimal'] as const;
+
+  // Gaming theme background
+  const renderThemeBackground = () => {
+    return (
+      <div className="absolute inset-0">
+        {/* Dark gaming background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-teal-900 to-slate-800" />
+        
+        {/* Grid pattern */}
+        <div className="absolute inset-0 opacity-30"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(0,255,0,0.15) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(0,255,0,0.15) 1px, transparent 1px)
+            `,
+            backgroundSize: '40px 40px'
+          }}
+        />
+        
+        {/* Prominent horizontal dividing lines */}
+        <div className="absolute top-1/3 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-green-400 to-transparent opacity-60" />
+        <div className="absolute top-2/3 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-green-400 to-transparent opacity-60" />
+        
+        {/* Corner grid lines */}
+        <div className="absolute top-0 left-0 w-32 h-1 bg-gradient-to-r from-green-400 to-transparent" />
+        <div className="absolute top-0 left-0 w-1 h-32 bg-gradient-to-b from-green-400 to-transparent" />
+        <div className="absolute top-0 right-0 w-32 h-1 bg-gradient-to-l from-green-400 to-transparent" />
+        <div className="absolute top-0 right-0 w-1 h-32 bg-gradient-to-b from-green-400 to-transparent" />
+        <div className="absolute bottom-0 left-0 w-32 h-1 bg-gradient-to-r from-green-400 to-transparent" />
+        <div className="absolute bottom-0 left-0 w-1 h-32 bg-gradient-to-t from-green-400 to-transparent" />
+        <div className="absolute bottom-0 right-0 w-32 h-1 bg-gradient-to-l from-green-400 to-transparent" />
+        <div className="absolute bottom-0 right-0 w-1 h-32 bg-gradient-to-t from-green-400 to-transparent" />
+        
+        {/* Subtle scanlines effect */}
+        <div className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,0,0.1) 2px, rgba(0,255,0,0.1) 4px)'
+          }}
+        />
+      </div>
+    );
+  };
 
   // Calendar states
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -1350,8 +1300,12 @@ export default function Dashboard({ address }: DashboardProps) {
         body: JSON.stringify({ journalId }),
       });
       if (commentResponse.ok) {
-        const comments = await commentResponse.json();
-        console.log('Engagement data - comments for', journalId, ':', comments);
+        const commentData = await commentResponse.json();
+        console.log('Engagement data - comments for', journalId, ':', commentData);
+        
+        // Handle both old array format and new { items, nextCursor } format
+        const comments = Array.isArray(commentData) ? commentData : (commentData.items || []);
+        
         setCommentCounts(prev => ({
           ...prev,
           [journalId]: comments.length
@@ -1398,7 +1352,9 @@ export default function Dashboard({ address }: DashboardProps) {
         body: JSON.stringify({ journalId }),
       });
       if (response.ok) {
-        const comments = await response.json();
+        const commentData = await response.json();
+        // Handle both old array format and new { items, nextCursor } format
+        const comments = Array.isArray(commentData) ? commentData : (commentData.items || []);
         return comments.length || 0;
       }
       return 0;
@@ -1953,7 +1909,7 @@ export default function Dashboard({ address }: DashboardProps) {
                           onRepost={() => handleRepost(entry.id)}
                           onDelete={() => handleDeletePost(entry.id)}
                           onArchive={() => handleArchivePost(entry.id)}
-                          theme={selectedTheme === 'night-mode' ? 'night' : 'dark'}
+                          theme={'dark'}
                         />
                       </TVPostContainer>
                         
@@ -2441,6 +2397,8 @@ export default function Dashboard({ address }: DashboardProps) {
       case "calculator":
        return (
          <div className="space-y-8">
+
+           
            <div className="text-center mb-12">
              <h1 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent drop-shadow-lg">
                Basio Calculator
@@ -2500,77 +2458,92 @@ export default function Dashboard({ address }: DashboardProps) {
            </div>
 
            {activeCalculatorTab === "gas" && (
-             <div className="max-w-4xl mx-auto">
+             <div className="max-w-4xl mx-auto bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800 p-8 border-2 border-purple-500 rounded-xl shadow-2xl shadow-purple-500/30 backdrop-blur-sm">
+
+               
                <div className="text-center mb-8">
-                 <h2 className="text-3xl font-bold text-green-100 mb-3 pixelated-text drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]">
-                   Gas Fee Calculator
+                 <div className="inline-block bg-gradient-to-r from-purple-500 to-cyan-500 p-1 rounded-full mb-4">
+                   <div className="bg-slate-900 px-6 py-2 rounded-full">
+                     <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 pixelated-text drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]">
+                       ⚡ Gas Fee Calculator ⚡
                  </h2>
-                 <p className="text-green-300/80 text-lg font-medium pixelated-text">
+                   </div>
+                 </div>
+                 <p className="text-purple-300/80 text-lg font-medium pixelated-text">
                    Calculate transaction costs with precision
                  </p>
                </div>
                <div className="space-y-6">
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
-                   <div className="space-y-2">
-                     <label className="text-sm font-bold text-green-100 pixelated-text">
-                       Gas Price (Gwei)
+                     <div className="space-y-2 group">
+                       <label className="text-sm font-bold text-purple-300 pixelated-text group-hover:text-purple-200 transition-colors">
+                         ⚡ Gas Price (Gwei)
                      </label>
+                       <div className="relative">
                      <input
                        type="number"
                        value={gasPrice}
                        onChange={(e) => setGasPrice(e.target.value)}
-                       className="w-full pixel-input text-green-100 px-4 py-3 rounded-lg transition-all duration-300 pixelated-text placeholder-green-300/50"
+                           className="w-full bg-slate-800/80 border-2 border-purple-500/50 text-purple-100 px-4 py-3 rounded-lg transition-all duration-300 pixelated-text placeholder-purple-300/50 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 focus:bg-slate-800"
                        placeholder="20"
                      />
+                         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent rounded-lg pointer-events-none"></div>
                    </div>
-                   <div className="space-y-2">
-                     <label className="text-sm font-bold text-green-100 pixelated-text">
-                       Gas Limit
+                     </div>
+                     <div className="space-y-2 group">
+                       <label className="text-sm font-bold text-cyan-300 pixelated-text group-hover:text-cyan-200 transition-colors">
+                         🔥 Gas Limit
                      </label>
+                       <div className="relative">
                      <input
                        type="number"
                        value={gasLimit}
                        onChange={(e) => setGasLimit(e.target.value)}
-                       className="w-full pixel-input text-green-100 px-4 py-3 rounded-lg transition-all duration-300 pixelated-text placeholder-green-300/50"
+                           className="w-full bg-slate-800/80 border-2 border-cyan-500/50 text-cyan-100 px-4 py-3 rounded-lg transition-all duration-300 pixelated-text placeholder-cyan-300/50 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 focus:bg-slate-800"
                        placeholder="21000"
                      />
+                         <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-transparent rounded-lg pointer-events-none"></div>
                    </div>
-                   <div className="space-y-2">
-                     <label className="text-sm font-bold text-green-100 pixelated-text">
-                       ETH Price (USD)
+                     </div>
+                     <div className="space-y-2 group">
+                       <label className="text-sm font-bold text-green-300 pixelated-text group-hover:text-green-200 transition-colors">
+                         💰 ETH Price (USD)
                      </label>
+                       <div className="relative">
                      <input
                        type="number"
                        value={ethPrice}
                        onChange={(e) => setEthPrice(e.target.value)}
-                       className="w-full pixel-input text-green-100 px-4 py-3 rounded-lg transition-all duration-300 pixelated-text placeholder-green-300/50"
+                           className="w-full bg-slate-800/80 border-2 border-green-500/50 text-green-100 px-4 py-3 rounded-lg transition-all duration-300 pixelated-text placeholder-green-300/50 focus:border-green-400 focus:ring-2 focus:ring-green-500/20 focus:bg-slate-800"
                        placeholder="2000"
                      />
+                         <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent rounded-lg pointer-events-none"></div>
+                       </div>
                    </div>
                  </div>
 
-                 <div className="pixel-card rounded-xl p-8 scanlines">
-                   <h4 className="text-green-100 font-bold mb-6 text-center text-xl pixelated-text">
-                     Calculation Results
+                                   <div className="bg-gradient-to-br from-slate-800/80 to-purple-900/30 rounded-xl p-8 border-2 border-purple-500/50 shadow-xl shadow-purple-500/20">
+                    <h4 className="text-purple-200 font-bold mb-6 text-center text-xl pixelated-text drop-shadow-[0_0_10px_rgba(168,85,247,0.3)]">
+                      🎯 Calculation Results
                    </h4>
                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
-                     <div className="text-center p-6 pixel-card rounded-lg pixel-animation hover:scale-105 transition-all duration-300">
-                       <div className="text-3xl font-bold text-green-300 mb-2 pixelated-text pixel-text-shadow">
+                      <div className="text-center p-6 bg-gradient-to-br from-purple-800/40 to-slate-700/60 rounded-lg border-2 border-purple-400/50 hover:scale-105 transition-all duration-300 shadow-lg shadow-purple-500/20 group">
+                        <div className="text-3xl font-bold text-purple-300 mb-2 pixelated-text drop-shadow-[0_0_10px_rgba(168,85,247,0.5)] group-hover:text-purple-200">
                          {gasFeeResult.gwei}
                        </div>
-                       <div className="text-sm text-green-100 font-bold pixelated-text pixel-text-shadow">Gwei</div>
+                        <div className="text-sm text-purple-200 font-bold pixelated-text">⚡ Gwei</div>
                      </div>
-                     <div className="text-center p-6 pixel-card rounded-lg pixel-animation hover:scale-105 transition-all duration-300">
-                       <div className="text-3xl font-bold text-green-400 mb-2 pixelated-text pixel-text-shadow">
+                      <div className="text-center p-6 bg-gradient-to-br from-cyan-800/40 to-slate-700/60 rounded-lg border-2 border-cyan-400/50 hover:scale-105 transition-all duration-300 shadow-lg shadow-cyan-500/20 group">
+                        <div className="text-3xl font-bold text-cyan-300 mb-2 pixelated-text drop-shadow-[0_0_10px_rgba(34,211,238,0.5)] group-hover:text-cyan-200">
                          {gasFeeResult.eth}
                        </div>
-                       <div className="text-sm text-green-100 font-bold pixelated-text pixel-text-shadow">ETH</div>
+                        <div className="text-sm text-cyan-200 font-bold pixelated-text">🔥 ETH</div>
                      </div>
-                     <div className="text-center p-6 pixel-card rounded-lg pixel-animation hover:scale-105 transition-all duration-300">
-                       <div className="text-3xl font-bold text-green-300 mb-2 pixelated-text pixel-text-shadow">
+                      <div className="text-center p-6 bg-gradient-to-br from-green-800/40 to-slate-700/60 rounded-lg border-2 border-green-400/50 hover:scale-105 transition-all duration-300 shadow-lg shadow-green-500/20 group">
+                        <div className="text-3xl font-bold text-green-300 mb-2 pixelated-text drop-shadow-[0_0_10px_rgba(34,197,94,0.5)] group-hover:text-green-200">
                          ${gasFeeResult.usd}
                        </div>
-                       <div className="text-sm text-green-100 font-bold pixelated-text pixel-text-shadow">USD</div>
+                        <div className="text-sm text-green-200 font-bold pixelated-text">💰 USD</div>
                      </div>
                    </div>
                  </div>
@@ -2579,15 +2552,19 @@ export default function Dashboard({ address }: DashboardProps) {
            )}
 
            {activeCalculatorTab === "currency" && (
-             <div className="max-w-4xl mx-auto">
+             <div className="max-w-4xl mx-auto bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 p-8 border-2 border-blue-500 rounded-xl shadow-2xl shadow-blue-500/30 backdrop-blur-sm">
                <div className="text-center mb-8">
-                 <h2 className="text-3xl font-semibold text-white mb-3 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent drop-shadow-md">
-                   Currency Converter
+                 <div className="inline-block bg-gradient-to-r from-blue-500 to-cyan-500 p-1 rounded-full mb-4">
+                   <div className="bg-slate-900 px-6 py-2 rounded-full">
+                     <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 pixelated-text drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]">
+                       🌍 Currency Converter 🌍
                  </h2>
-                 <p className="text-blue-100 text-lg font-medium">
+                   </div>
+                 </div>
+                 <p className="text-blue-300/80 text-lg font-medium pixelated-text">
                    Convert currencies with real-time exchange rates
                  </p>
-                 <div className="text-sm text-green-200 pixelated-text mt-3 font-medium">
+                 <div className="text-sm text-cyan-200 pixelated-text mt-3 font-medium bg-slate-800/50 px-3 py-1 rounded-full border border-cyan-500/30">
                    {Object.keys(liveExchangeRates).length > 0
                      ? "✅ Live rates active"
                      : "⚠️ Using backup rates"}
@@ -2596,14 +2573,15 @@ export default function Dashboard({ address }: DashboardProps) {
 
                <div className="space-y-6">
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
-                   <div className="space-y-2">
-                     <label className="text-sm font-medium text-slate-300">
-                       From Currency
+                   <div className="space-y-2 group">
+                     <label className="text-sm font-bold text-blue-300 pixelated-text group-hover:text-blue-200 transition-colors">
+                       🌍 From Currency
                      </label>
+                     <div className="relative">
                      <select
                        value={currencySwap.fromCurrency}
                        onChange={(e) => updateCurrencySwap("fromCurrency", e.target.value)}
-                       className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                         className="w-full bg-slate-800/80 border-2 border-blue-500/50 text-blue-100 px-4 py-3 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-800 transition-all duration-300 pixelated-text"
                      >
                        {currencies.map((currency) => (
                          <option key={currency.code} value={currency.code}>
@@ -2611,15 +2589,18 @@ export default function Dashboard({ address }: DashboardProps) {
                          </option>
                        ))}
                      </select>
+                       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent rounded-lg pointer-events-none"></div>
                    </div>
-                   <div className="space-y-2">
-                     <label className="text-sm font-medium text-slate-300">
-                       To Currency
+                   </div>
+                   <div className="space-y-2 group">
+                     <label className="text-sm font-bold text-cyan-300 pixelated-text group-hover:text-cyan-200 transition-colors">
+                       🎯 To Currency
                      </label>
+                     <div className="relative">
                      <select
                        value={currencySwap.toCurrency}
                        onChange={(e) => updateCurrencySwap("toCurrency", e.target.value)}
-                       className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                         className="w-full bg-slate-800/80 border-2 border-cyan-500/50 text-cyan-100 px-4 py-3 rounded-lg focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 focus:bg-slate-800 transition-all duration-300 pixelated-text"
                      >
                        {currencies.map((currency) => (
                          <option key={currency.code} value={currency.code}>
@@ -2627,49 +2608,54 @@ export default function Dashboard({ address }: DashboardProps) {
                          </option>
                        ))}
                      </select>
+                       <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-transparent rounded-lg pointer-events-none"></div>
+                     </div>
                    </div>
                  </div>
 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div className="space-y-2">
-                     <label className="text-sm font-medium text-slate-300">
-                       Amount
+                   <div className="space-y-2 group">
+                     <label className="text-sm font-bold text-green-300 pixelated-text group-hover:text-green-200 transition-colors">
+                       💰 Amount
                      </label>
+                     <div className="relative">
                      <input
                        type="number"
                        value={currencySwap.fromAmount}
                        onChange={(e) => updateCurrencySwap("fromAmount", e.target.value)}
-                       className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                         className="w-full bg-slate-800/80 border-2 border-green-500/50 text-green-100 px-4 py-3 rounded-lg focus:border-green-400 focus:ring-2 focus:ring-green-500/20 focus:bg-slate-800 transition-all duration-300 pixelated-text"
                        placeholder="1.00"
                        step="0.01"
                      />
+                       <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent rounded-lg pointer-events-none"></div>
+                     </div>
                    </div>
                    <div className="flex items-end gap-3">
                      <Button
                        onClick={swapCurrencies}
-                       className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 transition-colors"
+                       className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white py-3 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-blue-500/30 pixelated-text font-bold"
                      >
-                       Swap Currencies
+                       🔄 Swap Currencies
                      </Button>
                    </div>
                  </div>
 
-                 <div className="bg-slate-800/50 rounded-xl p-8 border border-slate-700">
-                   <h4 className="text-white font-semibold mb-6 text-center text-lg">
-                     Conversion Results
+                                   <div className="bg-gradient-to-br from-slate-800/80 to-blue-900/30 rounded-xl p-8 border-2 border-blue-500/50 shadow-xl shadow-blue-500/20">
+                    <h4 className="text-blue-200 font-bold mb-6 text-center text-lg pixelated-text drop-shadow-[0_0_10px_rgba(59,130,246,0.3)]">
+                      🎯 Conversion Results
                    </h4>
                    <div className="text-center">
-                     <div className="text-4xl font-bold text-blue-400 mb-3">
+                      <div className="text-4xl font-bold text-blue-400 mb-3 pixelated-text drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]">
                        {getCurrencySymbol(currencySwap.fromCurrency)}
                        {parseFloat(currencySwap.fromAmount || "0").toFixed(2)}
                      </div>
-                     <div className="text-slate-400 mb-4 text-lg">equals</div>
-                     <div className="text-4xl font-bold text-green-400 mb-4">
+                      <div className="text-blue-300 mb-4 text-lg pixelated-text">⚡ equals ⚡</div>
+                      <div className="text-4xl font-bold text-cyan-400 mb-4 pixelated-text drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
                        {getCurrencySymbol(currencySwap.toCurrency)}
                        {convertedAmount.toFixed(2)}
                      </div>
-                     <div className="text-sm text-slate-400 bg-slate-700/50 rounded-lg p-3 inline-block">
-                       Exchange Rate: 1 {currencySwap.fromCurrency} ={" "}
+                      <div className="text-sm text-cyan-300 bg-slate-700/50 rounded-lg p-3 inline-block border border-cyan-500/30 pixelated-text">
+                        💱 Exchange Rate: 1 {currencySwap.fromCurrency} ={" "}
                        {currencySwap.exchangeRate.toFixed(4)}{" "}
                        {currencySwap.toCurrency}
                      </div>
@@ -2680,40 +2666,48 @@ export default function Dashboard({ address }: DashboardProps) {
            )}
 
            {activeCalculatorTab === "expense" && (
-             <div className="max-w-4xl mx-auto">
+             <div className="max-w-4xl mx-auto bg-gradient-to-br from-slate-900 via-green-900 to-slate-800 p-8 border-2 border-green-500 rounded-xl shadow-2xl shadow-green-500/30 backdrop-blur-sm">
                <div className="text-center mb-8">
-                 <h2 className="text-2xl font-semibold text-white mb-2">
-                   Expense Journal
+                 <div className="inline-block bg-gradient-to-r from-green-500 to-emerald-500 p-1 rounded-full mb-4">
+                   <div className="bg-slate-900 px-6 py-2 rounded-full">
+                     <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400 pixelated-text drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]">
+                       📊 Expense Journal 📊
                  </h2>
-                 <p className="text-slate-400">
-                   Track and manage your crypto expenses
+                   </div>
+                 </div>
+                 <p className="text-green-300/80 text-lg font-medium pixelated-text">
+                   Track and manage your crypto expenses with calendar integration
                  </p>
                </div>
                <div className="space-y-6">
-                 <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
-                   <h3 className="text-white font-semibold text-lg mb-6 text-center">
-                     Add New Expense
+                 <div className="bg-gradient-to-br from-slate-800/80 to-green-900/30 rounded-xl p-6 border-2 border-green-500/50 shadow-xl shadow-green-500/20">
+                   <h3 className="text-green-200 font-bold text-lg mb-6 text-center pixelated-text drop-shadow-[0_0_10px_rgba(34,197,94,0.3)]">
+                     ➕ Add New Expense
                    </h3>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                     <div className="space-y-2">
-                       <label className="text-sm font-medium text-slate-300">
-                         Date
+                     <div className="space-y-2 group">
+                       <label className="text-sm font-bold text-green-300 pixelated-text group-hover:text-green-200 transition-colors">
+                         📅 Date
                        </label>
+                       <div className="relative">
                        <input
                          type="date"
                          value={newExpense.date}
                          onChange={(e) => setNewExpense({...newExpense, date: e.target.value})}
-                         className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                           className="w-full bg-slate-800/80 border-2 border-green-500/50 text-green-100 px-4 py-3 rounded-lg focus:border-green-400 focus:ring-2 focus:ring-green-500/20 focus:bg-slate-800 transition-all duration-300 pixelated-text"
                        />
+                         <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent rounded-lg pointer-events-none"></div>
                      </div>
-                     <div className="space-y-2">
-                       <label className="text-sm font-medium text-slate-300">
-                         Category
+                     </div>
+                     <div className="space-y-2 group">
+                       <label className="text-sm font-bold text-emerald-300 pixelated-text group-hover:text-emerald-200 transition-colors">
+                         🏷️ Category
                        </label>
+                       <div className="relative">
                        <select
                          value={newExpense.category}
                          onChange={(e) => setNewExpense({...newExpense, category: e.target.value})}
-                         className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                           className="w-full bg-slate-800/80 border-2 border-emerald-500/50 text-emerald-100 px-4 py-3 rounded-lg focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 focus:bg-slate-800 transition-all duration-300 pixelated-text"
                        >
                          {expenseCategories.map((category) => (
                            <option key={category} value={category}>
@@ -2721,84 +2715,163 @@ export default function Dashboard({ address }: DashboardProps) {
                            </option>
                          ))}
                        </select>
+                         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent rounded-lg pointer-events-none"></div>
+                       </div>
                      </div>
                    </div>
 
                    <div className="space-y-2 mb-6">
-                     <label className="text-sm font-medium text-slate-300">
-                       Description
+                     <label className="text-sm font-bold text-blue-300 pixelated-text group-hover:text-blue-200 transition-colors">
+                       📝 Description
                      </label>
+                     <div className="relative">
                      <input
                        type="text"
                        value={newExpense.description}
                        onChange={(e) => setNewExpense({...newExpense, description: e.target.value})}
-                       className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                         className="w-full bg-slate-800/80 border-2 border-blue-500/50 text-blue-100 px-4 py-3 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-800 transition-all duration-300 pixelated-text"
                        placeholder="What was this expense for?"
                      />
+                       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent rounded-lg pointer-events-none"></div>
+                     </div>
                    </div>
 
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                     <div className="space-y-2">
-                       <label className="text-sm font-medium text-slate-300">
-                         Amount (USD)
+                     <div className="space-y-2 group">
+                       <label className="text-sm font-bold text-yellow-300 pixelated-text group-hover:text-yellow-200 transition-colors">
+                         💰 Amount (USD)
                        </label>
+                       <div className="relative">
                        <input
                          type="number"
                          value={newExpense.amount}
                          onChange={(e) => setNewExpense({...newExpense, amount: e.target.value})}
-                         className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                           className="w-full bg-slate-800/80 border-2 border-yellow-500/50 text-yellow-100 px-4 py-3 rounded-lg focus:border-yellow-400 focus:ring-2 focus:ring-yellow-500/20 focus:bg-slate-800 transition-all duration-300 pixelated-text"
                          placeholder="0.00"
                          step="0.01"
                        />
+                         <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-transparent rounded-lg pointer-events-none"></div>
                      </div>
-                     <div className="space-y-2">
-                       <label className="text-sm font-medium text-slate-300">
-                         Gas Fee (USD)
+                     </div>
+                     <div className="space-y-2 group">
+                       <label className="text-sm font-bold text-orange-300 pixelated-text group-hover:text-orange-200 transition-colors">
+                         ⚡ Gas Fee (USD)
                        </label>
+                       <div className="relative">
                        <input
                          type="number"
                          value={newExpense.gasFee}
                          onChange={(e) => setNewExpense({...newExpense, gasFee: e.target.value})}
-                         className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                           className="w-full bg-slate-800/80 border-2 border-orange-500/50 text-orange-100 px-4 py-3 rounded-lg focus:border-orange-400 focus:ring-2 focus:ring-orange-500/20 focus:bg-slate-800 transition-all duration-300 pixelated-text"
                          placeholder="0.00"
                          step="0.01"
                        />
+                         <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent rounded-lg pointer-events-none"></div>
                      </div>
-                     <div className="space-y-2">
-                       <label className="text-sm font-medium text-slate-300">
-                         Transaction Hash
+                     </div>
+                     <div className="space-y-2 group">
+                       <label className="text-sm font-bold text-purple-300 pixelated-text group-hover:text-purple-200 transition-colors">
+                         🔗 Transaction Hash
                        </label>
+                       <div className="relative">
                        <input
                          type="text"
                          value={newExpense.transactionHash}
                          onChange={(e) => setNewExpense({...newExpense, transactionHash: e.target.value})}
-                         className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                           className="w-full bg-slate-800/80 border-2 border-purple-500/50 text-purple-100 px-4 py-3 rounded-lg focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 focus:bg-slate-800 transition-all duration-300 pixelated-text"
                          placeholder="0x..."
                        />
+                         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent rounded-lg pointer-events-none"></div>
+                       </div>
                      </div>
                    </div>
 
                    <div className="space-y-2 mb-6">
-                     <label className="text-sm font-medium text-slate-300">
-                       Notes
+                     <label className="text-sm font-bold text-cyan-300 pixelated-text group-hover:text-cyan-200 transition-colors">
+                       📝 Notes
                      </label>
+                     <div className="relative">
                      <textarea
                        value={newExpense.notes}
                        onChange={(e) => setNewExpense({...newExpense, notes: e.target.value})}
-                       className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                         className="w-full bg-slate-800/80 border-2 border-cyan-500/50 text-cyan-100 px-4 py-3 rounded-lg focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 focus:bg-slate-800 transition-all duration-300 pixelated-text"
                        placeholder="Additional notes about this expense..."
                        rows={3}
                      />
+                       <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-transparent rounded-lg pointer-events-none"></div>
+                     </div>
                    </div>
 
                    <Button
                      onClick={addExpenseEntry}
-                     className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg transition-colors"
+                     className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 text-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-green-500/30 pixelated-text font-bold"
                      disabled={!newExpense.description || !newExpense.amount}
                    >
                      <Plus className="w-5 h-5 mr-2" />
                      Add Expense
                    </Button>
+                 </div>
+
+                 {/* Calendar View */}
+                 <div className="bg-gradient-to-br from-slate-800/80 to-green-900/30 rounded-xl p-6 border-2 border-green-500/50 shadow-xl shadow-green-500/20">
+                   <h3 className="text-green-200 font-bold text-lg mb-6 text-center pixelated-text drop-shadow-[0_0_10px_rgba(34,197,94,0.3)]">
+                     📅 Monthly Expense Calendar
+                   </h3>
+                   <div className="grid grid-cols-7 gap-2 mb-4">
+                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                       <div key={day} className="text-center text-sm font-bold text-green-300 pixelated-text p-2">
+                         {day}
+                       </div>
+                     ))}
+                   </div>
+                   <div className="grid grid-cols-7 gap-2">
+                     {(() => {
+                       const today = new Date();
+                       const currentMonth = today.getMonth();
+                       const currentYear = today.getFullYear();
+                       const firstDay = new Date(currentYear, currentMonth, 1);
+                       const lastDay = new Date(currentYear, currentMonth + 1, 0);
+                       const startDate = new Date(firstDay);
+                       startDate.setDate(startDate.getDate() - firstDay.getDay());
+                       
+                       const days = [];
+                       for (let i = 0; i < 42; i++) {
+                         const date = new Date(startDate);
+                         date.setDate(startDate.getDate() + i);
+                         const dateString = date.toISOString().split('T')[0];
+                         const dayExpenses = expenseEntries.filter(expense => expense.date === dateString);
+                         const totalAmount = dayExpenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
+                         const isCurrentMonth = date.getMonth() === currentMonth;
+                         const isToday = dateString === today.toISOString().split('T')[0];
+                         
+                         days.push(
+                           <div
+                             key={i}
+                             className={`relative p-2 text-center text-sm rounded-lg transition-all duration-300 ${
+                               isCurrentMonth 
+                                 ? 'text-white' 
+                                 : 'text-slate-500'
+                             } ${
+                               isToday 
+                                 ? 'bg-green-500/30 border-2 border-green-400' 
+                                 : 'hover:bg-slate-700/50'
+                             }`}
+                           >
+                             <div className="font-bold">{date.getDate()}</div>
+                             {totalAmount > 0 && (
+                               <div className="text-xs text-green-400 font-bold">
+                                 ${totalAmount.toFixed(2)}
+                               </div>
+                             )}
+                             {dayExpenses.length > 0 && (
+                               <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                             )}
+                           </div>
+                         );
+                       }
+                       return days;
+                     })()}
+                   </div>
                  </div>
 
                  <Card className="bg-slate-800/50 border-slate-600 text-white backdrop-blur-sm card-glass">
@@ -2898,11 +2971,11 @@ export default function Dashboard({ address }: DashboardProps) {
                </div>
 
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                 <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
-                   <h4 className="text-white font-semibold mb-4 text-lg">
-                     Total Expenses
+                 <div className="bg-gradient-to-br from-slate-800/80 to-orange-900/30 rounded-xl p-6 border-2 border-orange-500/50 shadow-xl shadow-orange-500/20">
+                   <h4 className="text-orange-200 font-bold mb-4 text-lg pixelated-text drop-shadow-[0_0_10px_rgba(251,146,60,0.3)]">
+                     💰 Total Expenses
                    </h4>
-                   <div className="text-4xl font-bold text-blue-400 mb-6">
+                   <div className="text-4xl font-bold text-orange-400 mb-6 pixelated-text drop-shadow-[0_0_10px_rgba(251,146,60,0.5)]">
                      ${getTotalExpenses().toFixed(2)}
                    </div>
                    <div className="space-y-3">
@@ -2912,10 +2985,10 @@ export default function Dashboard({ address }: DashboardProps) {
                          return (
                            <div
                              key={category}
-                             className="flex justify-between items-center p-3 bg-slate-700/50 rounded-lg"
+                             className="flex justify-between items-center p-3 bg-gradient-to-r from-slate-700/50 to-orange-800/20 rounded-lg border border-orange-500/30 hover:scale-105 transition-all duration-300"
                            >
-                             <span className="text-slate-300">{category}</span>
-                             <span className="text-white font-semibold">
+                             <span className="text-orange-200 font-semibold pixelated-text">{category}</span>
+                             <span className="text-white font-bold pixelated-text">
                                ${total.toFixed(2)}
                              </span>
                            </div>
@@ -2925,30 +2998,79 @@ export default function Dashboard({ address }: DashboardProps) {
                      })}
                    </div>
                  </div>
-                 <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
-                   <h4 className="text-white font-semibold mb-4 text-lg">
-                     Recent Expenses
+                 <div className="bg-gradient-to-br from-slate-800/80 to-orange-900/30 rounded-xl p-6 border-2 border-orange-500/50 shadow-xl shadow-orange-500/20">
+                   <h4 className="text-orange-200 font-bold mb-4 text-lg pixelated-text drop-shadow-[0_0_10px_rgba(251,146,60,0.3)]">
+                     📊 Recent Expenses
                    </h4>
                    <div className="space-y-3">
                      {expenseEntries.slice(0, 5).map((expense) => (
                        <div
                          key={expense.id}
-                         className="flex justify-between items-center p-3 bg-slate-700/50 rounded-lg"
+                         className="flex justify-between items-center p-3 bg-gradient-to-r from-slate-700/50 to-orange-800/20 rounded-lg border border-orange-500/30 hover:scale-105 transition-all duration-300"
                        >
                          <div>
-                           <span className="text-white font-semibold">
+                           <span className="text-white font-semibold pixelated-text">
                              {expense.description}
                            </span>
-                           <span className="text-slate-400 ml-2 text-sm">
+                           <span className="text-orange-300 ml-2 text-sm pixelated-text">
                              ({expense.date})
                            </span>
                          </div>
-                         <span className="text-green-400 font-semibold">
+                         <span className="text-green-400 font-bold pixelated-text">
                            ${parseFloat(expense.amount).toFixed(2)}
                          </span>
                        </div>
                      ))}
                    </div>
+                 </div>
+               </div>
+
+               {/* Additional Analytics */}
+               <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                 <div className="bg-gradient-to-br from-slate-800/80 to-red-900/30 rounded-xl p-6 border-2 border-red-500/50 shadow-xl shadow-red-500/20">
+                   <h4 className="text-red-200 font-bold mb-4 text-lg pixelated-text drop-shadow-[0_0_10px_rgba(239,68,68,0.3)]">
+                     🔥 Monthly Trend
+                   </h4>
+                   <div className="text-2xl font-bold text-red-400 mb-2 pixelated-text">
+                     {(() => {
+                       const currentMonth = new Date().getMonth();
+                       const currentYear = new Date().getFullYear();
+                       const monthExpenses = expenseEntries.filter(expense => {
+                         const expenseDate = new Date(expense.date);
+                         return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+                       });
+                       const total = monthExpenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
+                       return `$${total.toFixed(2)}`;
+                     })()}
+                   </div>
+                   <div className="text-sm text-red-300 pixelated-text">This Month</div>
+                 </div>
+
+                 <div className="bg-gradient-to-br from-slate-800/80 to-purple-900/30 rounded-xl p-6 border-2 border-purple-500/50 shadow-xl shadow-purple-500/20">
+                   <h4 className="text-purple-200 font-bold mb-4 text-lg pixelated-text drop-shadow-[0_0_10px_rgba(168,85,247,0.3)]">
+                     🎯 Average Daily
+                   </h4>
+                   <div className="text-2xl font-bold text-purple-400 mb-2 pixelated-text">
+                     {(() => {
+                       const total = getTotalExpenses();
+                       const days = expenseEntries.length > 0 ? Math.max(1, expenseEntries.length) : 1;
+                       return `$${(total / days).toFixed(2)}`;
+                     })()}
+                   </div>
+                   <div className="text-sm text-purple-300 pixelated-text">Per Entry</div>
+                 </div>
+
+                 <div className="bg-gradient-to-br from-slate-800/80 to-cyan-900/30 rounded-xl p-6 border-2 border-cyan-500/50 shadow-xl shadow-cyan-500/20">
+                   <h4 className="text-cyan-200 font-bold mb-4 text-lg pixelated-text drop-shadow-[0_0_10px_rgba(34,211,238,0.3)]">
+                     ⚡ Gas Fees
+                   </h4>
+                   <div className="text-2xl font-bold text-cyan-400 mb-2 pixelated-text">
+                     {(() => {
+                       const totalGas = expenseEntries.reduce((sum, expense) => sum + parseFloat(expense.gasFee || "0"), 0);
+                       return `$${totalGas.toFixed(2)}`;
+                     })()}
+                   </div>
+                   <div className="text-sm text-cyan-300 pixelated-text">Total Spent</div>
                  </div>
                </div>
              </div>
@@ -2958,14 +3080,23 @@ export default function Dashboard({ address }: DashboardProps) {
      case "stats":
        return (
          <div className="space-y-8">
-           {/* Stats Header */}
+           {/* Gaming Theme Stats Header */}
            <div className="text-center mb-8">
-             <h1 className="text-3xl font-bold text-white pixelated-text mb-2">
-               Activity Statistics
-             </h1>
-             <p className="text-blue-300 pixelated-text">
-               Track your DailyBase journey and progress
+             <div className="inline-block bg-gradient-to-r from-green-500 to-cyan-500 p-1 rounded-full mb-4">
+               <div className="bg-slate-900 px-8 py-3 rounded-full">
+                 <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-cyan-400 pixelated-text drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]">
+                   📊 STATS DASHBOARD 📊
+                 </h1>
+               </div>
+             </div>
+             <p className="text-cyan-300 text-xl font-medium pixelated-text drop-shadow-sm">
+               Track your DailyBase journey and progress with gaming precision
              </p>
+             <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+               <Button variant="outline" size="sm" className="pixel-button pixel-rounded rgb-fringe">INSERT COIN</Button>
+               <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white pixel-rounded flicker">START</Button>
+               <Button variant="outline" size="sm" className="pixel-button pixel-rounded">SELECT</Button>
+             </div>
            </div>
 
            {/* Key Metrics */}
@@ -3939,46 +4070,7 @@ export default function Dashboard({ address }: DashboardProps) {
              </CardContent>
            </Card>
 
-                      {/* Theme Selection */}
-           <Card className="bg-white/8 border-white/20 text-white backdrop-blur-3xl card-glass shadow-2xl shadow-blue-400/30 border-opacity-30 hover:bg-white/12 hover:border-white/30 transition-all duration-500">
-             <CardHeader>
-               <CardTitle className="text-blue-100 pixelated-text">
-                 Theme & Background
-               </CardTitle>
-             </CardHeader>
-             <CardContent className="space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                   {[
-             
-                     { id: 'night-mode', name: 'Night Mode', description: 'Dark sky with stars and moon', color: 'from-slate-900 to-blue-900' },
-                     { id: 'dark-gaming', name: 'Dark Gaming', description: 'Classic gaming grid with neon orbs', color: 'from-gray-900 to-black' }
-                   ].map((theme) => (
-                   <div
-                     key={theme.id}
-                     onClick={() => setSelectedTheme(theme.id as any)}
-                     className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-300 hover:scale-105 ${
-                       selectedTheme === theme.id
-                         ? 'border-blue-400 bg-blue-500/20 shadow-lg shadow-blue-400/30'
-                         : 'border-white/20 bg-white/10 hover:border-white/40'
-                     }`}
-                   >
-                     <div className={`w-full h-16 rounded-md bg-gradient-to-r ${theme.color} mb-3`} />
-                     <h3 className="text-white pixelated-text font-semibold text-sm mb-1">
-                       {theme.name}
-                     </h3>
-                     <p className="text-blue-100/70 pixelated-text text-xs">
-                       {theme.description}
-                     </p>
-                     {selectedTheme === theme.id && (
-                       <div className="absolute top-2 right-2 w-4 h-4 bg-blue-400 rounded-full flex items-center justify-center">
-                         <div className="w-2 h-2 bg-white rounded-full" />
-                       </div>
-                     )}
-                   </div>
-                 ))}
-               </div>
-             </CardContent>
-           </Card>
+
 
            {/* Preferences */}
            <Card className="bg-white/8 border-white/20 text-white backdrop-blur-3xl card-glass shadow-2xl shadow-blue-400/30 border-opacity-30 hover:bg-white/12 hover:border-white/30 transition-all duration-500">
@@ -4251,8 +4343,12 @@ export default function Dashboard({ address }: DashboardProps) {
          100% { transform: translateX(calc(100vw + 100px)) translateY(0px); }
        }
      `}</style>
-     {/* Dynamic Theme Background */}
-     {renderThemeBackground()}
+
+     {/* Gaming Theme Background */}
+     <div data-gaming-bg>
+       {renderThemeBackground()}
+     </div>
+
      {/* Enhanced Toast Notifications with responsive positioning */}
      {toasts.map((toast) => (
        <div
@@ -4325,20 +4421,7 @@ export default function Dashboard({ address }: DashboardProps) {
                      // Handle notification click - could navigate to post, profile, etc.
                    }}
                  />
-                 <Button
-                   onClick={() => setSelectedTheme(prev => {
-                     const themes = ['night-mode', 'dark-gaming'];
-                     const currentIndex = themes.indexOf(prev);
-                     const nextIndex = (currentIndex + 1) % themes.length;
-                     return themes[nextIndex] as any;
-                   })}
-                   size="sm"
-                   variant="outline"
-                   className="bg-purple-500/20 border-purple-500 text-purple-300 hover:bg-purple-500/30 text-xs"
-                   title="Switch Theme"
-                 >
-                   🎨
-                 </Button>
+
                  <Button
                    onClick={() => setIsUserSwitcherOpen(true)}
                    size="sm"
@@ -4346,6 +4429,20 @@ export default function Dashboard({ address }: DashboardProps) {
                    className="bg-blue-500/20 border-blue-500 text-blue-300 hover:bg-blue-500/30 text-xs"
                  >
                    Switch
+                 </Button>
+                 <Button
+                   onClick={() => {
+                     const currentBg = document.querySelector('[data-gaming-bg]');
+                     if (currentBg) {
+                       currentBg.classList.toggle('hidden');
+                     }
+                   }}
+                   size="sm"
+                   variant="outline"
+                   className="bg-green-500/20 border-green-500 text-green-300 hover:bg-green-500/30 text-xs"
+                   title="Toggle Gaming Background"
+                 >
+                   🎮
                  </Button>
                </div>
              </div>

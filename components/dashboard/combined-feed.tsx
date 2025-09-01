@@ -36,8 +36,9 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect, useRef, useState } from "react";
 
-import { ContributionGrid } from "@/components/dashboard/contribution-grid";
+
 import { StreakTracker } from "@/components/dashboard/streak-tracker";
+import { ContributionGrid } from "@/components/dashboard/contribution-grid";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TVImageGrid } from "@/components/ui/tv-container";
 import { TVPostContainer, PostHeader, PostContent, PostTags, PostActions } from "@/components/ui/tv-post-container";
@@ -193,10 +194,13 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
       // Fetch immediately
       fetchJournalComments(currentJournalId);
 
-      // Then set up interval for every 5 seconds
+      // Then set up interval for every 30 seconds instead of 5 seconds
       intervalId = setInterval(() => {
-        fetchJournalComments(currentJournalId);
-      }, 5000);
+        // Only fetch if page is visible
+        if (!document.hidden) {
+          fetchJournalComments(currentJournalId);
+        }
+      }, 30000); // Changed from 5000ms to 30000ms
     }
 
     // Clean up interval on component unmount or when journalId changes
@@ -204,9 +208,6 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
       if (intervalId) clearInterval(intervalId);
     };
   }, [currentJournalId]);
-
-  
-
 
   //fetching ng mga journal sa database
   const fetchBaseUserJournal = async () => {
@@ -236,15 +237,18 @@ const [commentsCount, setCommentsCount] = useState<{[key: string]: number}>({});
     }
   };
 
-  // Set up the interval for fetchiung post journal of the user
+  // Set up the interval for fetching post journal of the user
   useEffect(() => {
     // Initial fetch
     fetchBaseUserJournal().catch(console.error);
 
-    // Set up periodic fetching
+    // Set up periodic fetching - increased from 7 seconds to 60 seconds
     fetchIntervalRef.current = setInterval(() => {
-      fetchBaseUserJournal().catch(console.error);
-    }, 7000); // 7 seconds
+      // Only fetch if page is visible and user is active
+      if (!document.hidden && document.hasFocus()) {
+        fetchBaseUserJournal().catch(console.error);
+      }
+    }, 60000); // Changed from 7000ms to 60000ms
 
     // Cleanup function to clear interval
     return () => {
