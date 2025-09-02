@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { Jersey_10 } from 'next/font/google'
 import { WalletProvider } from '@/components/providers/wallet-provider'
 import { AuthProvider } from '@/contexts/auth-context'
 import { WalletSync } from '@/components/providers/wallet-sync'
@@ -48,6 +47,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet" />
       </head>
       <body suppressHydrationWarning={true}>
         <ChunkErrorHandler>

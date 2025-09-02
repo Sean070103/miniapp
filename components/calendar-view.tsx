@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, Flame, CalendarIcon, TrendingUp, Target } fr
 
 export function CalendarView() {
   const [currentDate, setCurrentDate] = useState(new Date())
+  const contentRef = useRef<HTMLDivElement | null>(null)
   
   // Mock data for entries
   const entryDates = [
@@ -65,8 +66,45 @@ export function CalendarView() {
 
   return (
     <div className="space-y-8">
+      {/* Arcade Hero */}
+      <div className="text-center screen-curved pixel-rounded arcade-bezel relative p-6">
+        <div className="arcade-marquee pixel-text-shadow text-sm tracking-widest">
+          <span className="pixelated-text">CALENDAR</span>
+        </div>
+        <div className="mt-6">
+          <h1 className="text-4xl font-bold text-white mb-4 pixelated-text">Your Base Journey Calendar</h1>
+          <p className="text-blue-300 text-lg max-w-3xl mx-auto">Track entries with gaming precision. Jump to today, browse months, and keep your streak alive.</p>
+        </div>
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <Button
+            onClick={() => navigateMonth('prev')}
+            className="btn-arcade btn-arcade-green px-4 py-2 text-black font-semibold"
+          >
+            PREV
+          </Button>
+          <Button
+            onClick={() => contentRef.current?.scrollIntoView({ behavior: 'smooth' })}
+            className="btn-arcade btn-arcade-blue px-6 py-2 text-white font-semibold"
+          >
+            START
+          </Button>
+          <Button
+            onClick={() => navigateMonth('next')}
+            variant="outline"
+            className="btn-arcade btn-arcade-yellow px-6 py-2 text-black font-semibold"
+          >
+            SELECT
+          </Button>
+          <Button
+            onClick={() => setCurrentDate(new Date())}
+            className="btn-arcade btn-arcade-green px-6 py-2 text-black font-semibold"
+          >
+            TODAY
+          </Button>
+        </div>
+      </div>
       {/* Header with streak info */}
-      <div className="flex items-center justify-between">
+      <div ref={contentRef} className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent drop-shadow-lg">
             Your Base Journey Calendar

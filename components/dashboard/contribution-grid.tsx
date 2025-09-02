@@ -70,3 +70,5 @@ export function ContributionGrid({ entries, weeks = 20 }: ContributionGridProps)
   );
 }
 
+
+

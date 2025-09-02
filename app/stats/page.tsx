@@ -38,6 +38,7 @@ export default function StatsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const contentRef = React.useRef<HTMLDivElement | null>(null)
 
   const fetchAnalytics = async () => {
     try {
@@ -133,13 +134,50 @@ export default function StatsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
       <div className="max-w-6xl mx-auto">
+        {/* Arcade Hero */}
+        <div className="text-center mb-10 screen-curved pixel-rounded arcade-bezel relative p-6">
+          <div className="arcade-marquee pixel-text-shadow text-sm tracking-widest">
+            <span className="pixelated-text">STATS DASHBOARD</span>
+          </div>
+          <div className="mt-6">
+            <h1 className="text-4xl font-bold text-white mb-4 pixelated-text">Track your DailyBase journey and progress</h1>
+            <p className="text-blue-300 text-lg max-w-3xl mx-auto">Gain gaming-precision insights into your posting streaks, engagement, and milestones. Power up your consistency and level up your community impact.</p>
+          </div>
+          <div className="flex items-center justify-center gap-4 mt-6">
+            <Button
+              onClick={fetchAnalytics}
+              className="btn-arcade btn-arcade-green px-4 py-2 text-black font-semibold"
+            >
+              INSERT COIN
+            </Button>
+            <Button
+              onClick={() => contentRef.current?.scrollIntoView({ behavior: 'smooth' })}
+              className="btn-arcade btn-arcade-blue px-6 py-2 text-white font-semibold"
+            >
+              START
+            </Button>
+            <Button
+              onClick={() => fetchAnalytics()}
+              variant="outline"
+              className="btn-arcade btn-arcade-yellow px-6 py-2 text-black font-semibold"
+            >
+              SELECT
+            </Button>
+          </div>
+        </div>
+
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Your DailyBase Statistics</h1>
+        <div ref={contentRef} className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-white mb-2 pixelated-text">Your DailyBase Statistics</h2>
           <p className="text-blue-300 text-lg">Track your progress and engagement</p>
           {lastUpdated && (
             <p className="text-sm text-gray-400 mt-2">
               Last updated: {formatDate(lastUpdated.toISOString())}
+            </p>
+          )}
+          {userAnalytics?.lastActive && (
+            <p className="text-sm text-gray-400 mt-1 flex items-center justify-center">
+              <Clock className="w-4 h-4 mr-1 text-blue-300" /> Last Active: {formatDate(userAnalytics.lastActive)}
             </p>
           )}
         </div>
@@ -152,7 +190,7 @@ export default function StatsPage() {
               <MessageSquare className="h-4 w-4 text-blue-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{formatNumber(userAnalytics?.totalPosts || 0)}</div>
+              <div className="text-2xl font-bold text-white pixelated-text">{formatNumber(userAnalytics?.totalPosts || 0)}</div>
               <p className="text-xs text-gray-400 mt-1">Journal entries created</p>
             </CardContent>
           </Card>
@@ -163,7 +201,7 @@ export default function StatsPage() {
               <Heart className="h-4 w-4 text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{formatNumber(userAnalytics?.totalLikes || 0)}</div>
+              <div className="text-2xl font-bold text-white pixelated-text">{formatNumber(userAnalytics?.totalLikes || 0)}</div>
               <p className="text-xs text-gray-400 mt-1">Likes received</p>
             </CardContent>
           </Card>
@@ -174,7 +212,7 @@ export default function StatsPage() {
               <Zap className="h-4 w-4 text-purple-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{userAnalytics?.currentStreak || 0} days</div>
+              <div className="text-2xl font-bold text-white pixelated-text">{userAnalytics?.currentStreak || 0} days</div>
               <p className="text-xs text-gray-400 mt-1">
                 Longest: {userAnalytics?.longestStreak || 0} days
               </p>
@@ -187,7 +225,7 @@ export default function StatsPage() {
               <TrendingUp className="h-4 w-4 text-orange-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-white pixelated-text">
                 {((userAnalytics?.engagementRate || 0) * 100).toFixed(1)}%
               </div>
               <Progress 

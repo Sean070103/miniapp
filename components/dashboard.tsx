@@ -2077,6 +2077,9 @@ export default function Dashboard({ address }: DashboardProps) {
               <p className="text-green-300 pixelated-text text-lg font-medium pixel-text-shadow">
                 Track your daily entries and activities
               </p>
+              <p className="text-green-400/80 pixelated-text mt-2 text-sm">
+                Tip: Add expenses in Basio › Expense tab; review them here by date.
+              </p>
               <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                 <Button variant="outline" size="sm" className="pixel-button pixel-rounded rgb-fringe">INSERT COIN</Button>
                 <Button onClick={goToToday} size="sm" className="bg-green-600 hover:bg-green-700 text-white pixel-rounded flicker">START</Button>
@@ -2439,44 +2442,33 @@ export default function Dashboard({ address }: DashboardProps) {
                return (
                  <Button
                    key={tab.id}
-                   variant="outline"
-                   className={`pixelated-text relative overflow-hidden ${
+                   variant={activeCalculatorTab === tab.id ? "default" : "outline"}
+                   className={`pixelated-text ${
                      activeCalculatorTab === tab.id
-                       ? `bg-gradient-to-r ${tab.color} text-white border-0 shadow-lg shadow-blue-400/50 transform scale-105`
-                       : "bg-white/10 border-white/20 text-blue-100 hover:bg-white/20 hover:scale-105 transition-all duration-300 backdrop-blur-sm"
+                       ? "bg-blue-600 text-white border-blue-500"
+                       : "bg-slate-800/70 border-slate-700 text-slate-200 hover:bg-slate-700"
                    }`}
                    onClick={() => setActiveCalculatorTab(tab.id)}
                  >
                    <Icon className="w-4 h-4 mr-2" />
                    {tab.label}
-                   {activeCalculatorTab === tab.id && (
-                     <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-                   )}
                  </Button>
                );
              })}
            </div>
 
            {activeCalculatorTab === "gas" && (
-             <div className="max-w-4xl mx-auto bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800 p-8 border-2 border-purple-500 rounded-xl shadow-2xl shadow-purple-500/30 backdrop-blur-sm">
+             <div className="max-w-4xl mx-auto screen-curved arcade-bezel p-8">
 
                
                <div className="text-center mb-8">
-                 <div className="inline-block bg-gradient-to-r from-purple-500 to-cyan-500 p-1 rounded-full mb-4">
-                   <div className="bg-slate-900 px-6 py-2 rounded-full">
-                     <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 pixelated-text drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]">
-                       ⚡ Gas Fee Calculator ⚡
-                 </h2>
-                   </div>
-                 </div>
-                 <p className="text-purple-300/80 text-lg font-medium pixelated-text">
-                   Calculate transaction costs with precision
-                 </p>
+                <div className="arcade-marquee pixel-text-shadow">GAS FEE CALCULATOR</div>
+                <p className="text-slate-300 text-sm mt-4">Calculate transaction costs with precision</p>
                </div>
                <div className="space-y-6">
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
                      <div className="space-y-2 group">
-                       <label className="text-sm font-bold text-purple-300 pixelated-text group-hover:text-purple-200 transition-colors">
+                       <label className="text-sm font-semibold text-slate-300 pixelated-text">
                          ⚡ Gas Price (Gwei)
                      </label>
                        <div className="relative">
@@ -2484,14 +2476,14 @@ export default function Dashboard({ address }: DashboardProps) {
                        type="number"
                        value={gasPrice}
                        onChange={(e) => setGasPrice(e.target.value)}
-                           className="w-full bg-slate-800/80 border-2 border-purple-500/50 text-purple-100 px-4 py-3 rounded-lg transition-all duration-300 pixelated-text placeholder-purple-300/50 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 focus:bg-slate-800"
+                           className="w-full bg-slate-900 border border-slate-700 text-slate-100 px-4 py-3 rounded-lg pixelated-text focus:border-blue-500"
                        placeholder="20"
                      />
                          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent rounded-lg pointer-events-none"></div>
                    </div>
                      </div>
                      <div className="space-y-2 group">
-                       <label className="text-sm font-bold text-cyan-300 pixelated-text group-hover:text-cyan-200 transition-colors">
+                       <label className="text-sm font-semibold text-slate-300 pixelated-text">
                          🔥 Gas Limit
                      </label>
                        <div className="relative">
@@ -2499,14 +2491,14 @@ export default function Dashboard({ address }: DashboardProps) {
                        type="number"
                        value={gasLimit}
                        onChange={(e) => setGasLimit(e.target.value)}
-                           className="w-full bg-slate-800/80 border-2 border-cyan-500/50 text-cyan-100 px-4 py-3 rounded-lg transition-all duration-300 pixelated-text placeholder-cyan-300/50 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 focus:bg-slate-800"
+                           className="w-full bg-slate-900 border border-slate-700 text-slate-100 px-4 py-3 rounded-lg pixelated-text focus:border-blue-500"
                        placeholder="21000"
                      />
                          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-transparent rounded-lg pointer-events-none"></div>
                    </div>
                      </div>
                      <div className="space-y-2 group">
-                       <label className="text-sm font-bold text-green-300 pixelated-text group-hover:text-green-200 transition-colors">
+                       <label className="text-sm font-semibold text-slate-300 pixelated-text">
                          💰 ETH Price (USD)
                      </label>
                        <div className="relative">
@@ -2514,7 +2506,7 @@ export default function Dashboard({ address }: DashboardProps) {
                        type="number"
                        value={ethPrice}
                        onChange={(e) => setEthPrice(e.target.value)}
-                           className="w-full bg-slate-800/80 border-2 border-green-500/50 text-green-100 px-4 py-3 rounded-lg transition-all duration-300 pixelated-text placeholder-green-300/50 focus:border-green-400 focus:ring-2 focus:ring-green-500/20 focus:bg-slate-800"
+                           className="w-full bg-slate-900 border border-slate-700 text-slate-100 px-4 py-3 rounded-lg pixelated-text focus:border-blue-500"
                        placeholder="2000"
                      />
                          <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent rounded-lg pointer-events-none"></div>
@@ -2522,28 +2514,28 @@ export default function Dashboard({ address }: DashboardProps) {
                    </div>
                  </div>
 
-                                   <div className="bg-gradient-to-br from-slate-800/80 to-purple-900/30 rounded-xl p-8 border-2 border-purple-500/50 shadow-xl shadow-purple-500/20">
-                    <h4 className="text-purple-200 font-bold mb-6 text-center text-xl pixelated-text drop-shadow-[0_0_10px_rgba(168,85,247,0.3)]">
+                                   <div className="bg-slate-900 rounded-xl p-6 border border-slate-700">
+                    <h4 className="text-white font-semibold mb-4 text-center text-lg pixelated-text">
                       🎯 Calculation Results
                    </h4>
-                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
-                      <div className="text-center p-6 bg-gradient-to-br from-purple-800/40 to-slate-700/60 rounded-lg border-2 border-purple-400/50 hover:scale-105 transition-all duration-300 shadow-lg shadow-purple-500/20 group">
-                        <div className="text-3xl font-bold text-purple-300 mb-2 pixelated-text drop-shadow-[0_0_10px_rgba(168,85,247,0.5)] group-hover:text-purple-200">
+                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="text-center p-4 bg-slate-800 rounded-lg border border-slate-700">
+                        <div className="text-2xl font-bold text-white mb-1 pixelated-text">
                          {gasFeeResult.gwei}
                        </div>
-                        <div className="text-sm text-purple-200 font-bold pixelated-text">⚡ Gwei</div>
+                        <div className="text-xs text-slate-300 font-medium pixelated-text">Gwei</div>
                      </div>
-                      <div className="text-center p-6 bg-gradient-to-br from-cyan-800/40 to-slate-700/60 rounded-lg border-2 border-cyan-400/50 hover:scale-105 transition-all duration-300 shadow-lg shadow-cyan-500/20 group">
-                        <div className="text-3xl font-bold text-cyan-300 mb-2 pixelated-text drop-shadow-[0_0_10px_rgba(34,211,238,0.5)] group-hover:text-cyan-200">
+                      <div className="text-center p-4 bg-slate-800 rounded-lg border border-slate-700">
+                        <div className="text-2xl font-bold text-white mb-1 pixelated-text">
                          {gasFeeResult.eth}
                        </div>
-                        <div className="text-sm text-cyan-200 font-bold pixelated-text">🔥 ETH</div>
+                        <div className="text-xs text-slate-300 font-medium pixelated-text">ETH</div>
                      </div>
-                      <div className="text-center p-6 bg-gradient-to-br from-green-800/40 to-slate-700/60 rounded-lg border-2 border-green-400/50 hover:scale-105 transition-all duration-300 shadow-lg shadow-green-500/20 group">
-                        <div className="text-3xl font-bold text-green-300 mb-2 pixelated-text drop-shadow-[0_0_10px_rgba(34,197,94,0.5)] group-hover:text-green-200">
+                      <div className="text-center p-4 bg-slate-800 rounded-lg border border-slate-700">
+                        <div className="text-2xl font-bold text-white mb-1 pixelated-text">
                          ${gasFeeResult.usd}
                        </div>
-                        <div className="text-sm text-green-200 font-bold pixelated-text">💰 USD</div>
+                        <div className="text-xs text-slate-300 font-medium pixelated-text">USD</div>
                      </div>
                    </div>
                  </div>
@@ -2552,36 +2544,44 @@ export default function Dashboard({ address }: DashboardProps) {
            )}
 
            {activeCalculatorTab === "currency" && (
-             <div className="max-w-4xl mx-auto bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 p-8 border-2 border-blue-500 rounded-xl shadow-2xl shadow-blue-500/30 backdrop-blur-sm">
+             <div className="max-w-4xl mx-auto screen-curved arcade-bezel p-8">
                <div className="text-center mb-8">
-                 <div className="inline-block bg-gradient-to-r from-blue-500 to-cyan-500 p-1 rounded-full mb-4">
-                   <div className="bg-slate-900 px-6 py-2 rounded-full">
-                     <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 pixelated-text drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]">
-                       🌍 Currency Converter 🌍
-                 </h2>
-                   </div>
-                 </div>
-                 <p className="text-blue-300/80 text-lg font-medium pixelated-text">
-                   Convert currencies with real-time exchange rates
-                 </p>
-                 <div className="text-sm text-cyan-200 pixelated-text mt-3 font-medium bg-slate-800/50 px-3 py-1 rounded-full border border-cyan-500/30">
-                   {Object.keys(liveExchangeRates).length > 0
-                     ? "✅ Live rates active"
-                     : "⚠️ Using backup rates"}
-                 </div>
-               </div>
-
-               <div className="space-y-6">
+-                <div className="inline-block bg-gradient-to-r from-blue-500 to-cyan-500 p-1 rounded-full mb-4">
+-                  <div className="bg-slate-900 px-6 py-2 rounded-full">
+-                    <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 pixelated-text drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]">
+-                      🌍 Currency Converter 🌍
+-                </h2>
+-                  </div>
+-                </div>
+-                <p className="text-blue-300/80 text-lg font-medium pixelated-text">
+-                  Convert currencies with real-time exchange rates
+-                </p>
+-                <div className="text-sm text-cyan-200 pixelated-text mt-3 font-medium bg-slate-800/50 px-3 py-1 rounded-full border border-cyan-500/30">
+-                  {Object.keys(liveExchangeRates).length > 0
+-                    ? "✅ Live rates active"
+-                    : "⚠️ Using backup rates"}
+-                </div>
+-              </div>
+ 
+-              <div className="space-y-6">
++                <div className="arcade-marquee pixel-text-shadow">CURRENCY CONVERTER</div>
++                <p className="text-slate-300 text-sm mt-4">Convert currencies with real-time exchange rates</p>
++                <div className="text-xs text-slate-300 pixelated-text mt-3 font-medium bg-slate-900 px-3 py-1 rounded-full border border-slate-700 inline-block">
++                  {Object.keys(liveExchangeRates).length > 0 ? "✅ Live rates active" : "⚠️ Using backup rates"}
++                </div>
++              </div>
++
++              <div className="space-y-6">
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
                    <div className="space-y-2 group">
-                     <label className="text-sm font-bold text-blue-300 pixelated-text group-hover:text-blue-200 transition-colors">
+                     <label className="text-sm font-semibold text-slate-300 pixelated-text">
                        🌍 From Currency
                      </label>
                      <div className="relative">
                      <select
                        value={currencySwap.fromCurrency}
                        onChange={(e) => updateCurrencySwap("fromCurrency", e.target.value)}
-                         className="w-full bg-slate-800/80 border-2 border-blue-500/50 text-blue-100 px-4 py-3 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-800 transition-all duration-300 pixelated-text"
+                         className="w-full bg-slate-900 border border-slate-700 text-slate-100 px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-0 pixelated-text"
                      >
                        {currencies.map((currency) => (
                          <option key={currency.code} value={currency.code}>
@@ -2593,14 +2593,14 @@ export default function Dashboard({ address }: DashboardProps) {
                    </div>
                    </div>
                    <div className="space-y-2 group">
-                     <label className="text-sm font-bold text-cyan-300 pixelated-text group-hover:text-cyan-200 transition-colors">
+                     <label className="text-sm font-semibold text-slate-300 pixelated-text">
                        🎯 To Currency
                      </label>
                      <div className="relative">
                      <select
                        value={currencySwap.toCurrency}
                        onChange={(e) => updateCurrencySwap("toCurrency", e.target.value)}
-                         className="w-full bg-slate-800/80 border-2 border-cyan-500/50 text-cyan-100 px-4 py-3 rounded-lg focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 focus:bg-slate-800 transition-all duration-300 pixelated-text"
+                         className="w-full bg-slate-900 border border-slate-700 text-slate-100 px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-0 pixelated-text"
                      >
                        {currencies.map((currency) => (
                          <option key={currency.code} value={currency.code}>
@@ -2615,7 +2615,7 @@ export default function Dashboard({ address }: DashboardProps) {
 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div className="space-y-2 group">
-                     <label className="text-sm font-bold text-green-300 pixelated-text group-hover:text-green-200 transition-colors">
+                     <label className="text-sm font-semibold text-slate-300 pixelated-text">
                        💰 Amount
                      </label>
                      <div className="relative">
@@ -2623,7 +2623,7 @@ export default function Dashboard({ address }: DashboardProps) {
                        type="number"
                        value={currencySwap.fromAmount}
                        onChange={(e) => updateCurrencySwap("fromAmount", e.target.value)}
-                         className="w-full bg-slate-800/80 border-2 border-green-500/50 text-green-100 px-4 py-3 rounded-lg focus:border-green-400 focus:ring-2 focus:ring-green-500/20 focus:bg-slate-800 transition-all duration-300 pixelated-text"
+                         className="w-full bg-slate-900 border border-slate-700 text-slate-100 px-4 py-3 rounded-lg focus:border-blue-500 focus:ring-0 pixelated-text"
                        placeholder="1.00"
                        step="0.01"
                      />
@@ -2633,33 +2633,30 @@ export default function Dashboard({ address }: DashboardProps) {
                    <div className="flex items-end gap-3">
                      <Button
                        onClick={swapCurrencies}
-                       className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white py-3 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-blue-500/30 pixelated-text font-bold"
+                       className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 pixelated-text"
                      >
                        🔄 Swap Currencies
                      </Button>
                    </div>
                  </div>
 
-                                   <div className="bg-gradient-to-br from-slate-800/80 to-blue-900/30 rounded-xl p-8 border-2 border-blue-500/50 shadow-xl shadow-blue-500/20">
-                    <h4 className="text-blue-200 font-bold mb-6 text-center text-lg pixelated-text drop-shadow-[0_0_10px_rgba(59,130,246,0.3)]">
-                      🎯 Conversion Results
-                   </h4>
-                   <div className="text-center">
-                      <div className="text-4xl font-bold text-blue-400 mb-3 pixelated-text drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]">
-                       {getCurrencySymbol(currencySwap.fromCurrency)}
-                       {parseFloat(currencySwap.fromAmount || "0").toFixed(2)}
-                     </div>
-                      <div className="text-blue-300 mb-4 text-lg pixelated-text">⚡ equals ⚡</div>
-                      <div className="text-4xl font-bold text-cyan-400 mb-4 pixelated-text drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
-                       {getCurrencySymbol(currencySwap.toCurrency)}
-                       {convertedAmount.toFixed(2)}
-                     </div>
-                      <div className="text-sm text-cyan-300 bg-slate-700/50 rounded-lg p-3 inline-block border border-cyan-500/30 pixelated-text">
-                        💱 Exchange Rate: 1 {currencySwap.fromCurrency} ={" "}
-                       {currencySwap.exchangeRate.toFixed(4)}{" "}
-                       {currencySwap.toCurrency}
-                     </div>
-                   </div>
+                                   <div className="bg-slate-900 rounded-xl p-6 border border-slate-700">
+                    <h4 className="text-white font-semibold mb-4 text-center text-lg pixelated-text">🎯 Conversion Results</h4>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-white mb-2 pixelated-text">
+                        {getCurrencySymbol(currencySwap.fromCurrency)}
+                        {parseFloat(currencySwap.fromAmount || "0").toFixed(2)}
+                      </div>
+                      <div className="text-slate-300 mb-2 text-sm pixelated-text">equals</div>
+                      <div className="text-3xl font-bold text-white mb-3 pixelated-text">
+                        {getCurrencySymbol(currencySwap.toCurrency)}
+                        {convertedAmount.toFixed(2)}
+                      </div>
+                      <div className="text-xs text-slate-300 bg-slate-800 rounded-lg p-3 inline-block border border-slate-700 pixelated-text">
+                        💱 Exchange Rate: 1 {currencySwap.fromCurrency} = {currencySwap.exchangeRate.toFixed(4)} {currencySwap.toCurrency}
+                      </div>
+                    </div>
+                  </div>
                  </div>
                </div>
              </div>
@@ -3359,7 +3356,7 @@ export default function Dashboard({ address }: DashboardProps) {
                    <Avatar className="w-32 h-32 ring-4 ring-cyan-500/50 bg-slate-800 shadow-lg shadow-cyan-500/25">
                      {profileImage ? (
                        <img 
-                         src={profileImage} 
+                         src={profileImage || undefined} 
                          alt="Profile" 
                          className="w-full h-full object-cover rounded-full"
                        />
@@ -3685,7 +3682,7 @@ export default function Dashboard({ address }: DashboardProps) {
              user={{
                id: address,
                address: address,
-               displayName: user?.address ? `CryptoUser_${user.address.slice(0, 6)}` : `CryptoUser_${address.slice(0, 6)}`,
+               displayName: (user?.address ?? address) ? `CryptoUser_${(user?.address ?? address).slice(0, 6)}` : `CryptoUser_${address.slice(0, 6)}`,
                bio: "Crypto enthusiast and blockchain explorer",
                avatar: profileImage || undefined,
                location: "",
